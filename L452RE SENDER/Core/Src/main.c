@@ -22,6 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "string.h"
+#include "stdio.h"
 
 /* USER CODE END Includes */
 
@@ -47,14 +49,18 @@ UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-
+CAN_TxHeaderTypeDef TxHeader;
+CAN_RxHeaderTypeDef RxHeader;
+uint8_t TxData [8];
+uint8_t RxData [8];
+uint32_t TxMailbox;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_CAN1_Init(void);
+static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -63,6 +69,7 @@ void StartDefaultTask(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 
 /* USER CODE END 0 */
 
@@ -95,9 +102,13 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
   MX_CAN1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  HAL_CAN_Start(&hcan1);
+  // Activate notification
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+
 
   /* USER CODE END 2 */
 
@@ -215,7 +226,7 @@ static void MX_CAN1_Init(void)
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
+  hcan1.Init.AutoRetransmission = ENABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
@@ -223,6 +234,19 @@ static void MX_CAN1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN CAN1_Init 2 */
+  CAN_FilterTypeDef canfilterconfig;
+    canfilterconfig.FilterBank = 18;
+    canfilterconfig.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    canfilterconfig.FilterIdHigh = 0x446 << 5;     // correct: standard ID left-aligned to bits 5–15
+    canfilterconfig.FilterIdLow = 0;
+    canfilterconfig.FilterMaskIdHigh = 0x7FF << 5; // mask matches all 11 bits of std ID
+    canfilterconfig.FilterMaskIdLow = 0;
+    canfilterconfig.FilterMode = CAN_FILTERMODE_IDMASK;
+    canfilterconfig.FilterScale = CAN_FILTERSCALE_32BIT;
+    canfilterconfig.SlaveStartFilterBank = 20;
+    if (HAL_CAN_ConfigFilter(&hcan1, &canfilterconfig) != HAL_OK)
+    {
+        Error_Handler();}
 
   /* USER CODE END CAN1_Init 2 */
 
@@ -284,12 +308,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pin : LD4_Pin */
   GPIO_InitStruct.Pin = LD4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -316,11 +334,70 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+
+	  TxHeader.DLC=5; //datalength
+	  TxHeader.IDE= CAN_ID_STD;
+	  TxHeader.RTR= CAN_RTR_DATA;
+	  TxHeader.StdId= 0x446;//sender ID
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	  for(;;)
+	  {
+	      // Load "HELLO" into TxData buffer
+	      TxData[0] = 'f';
+	      TxData[1] = 'u';
+	      TxData[2] = 'c';
+	      TxData[3] = 'k';
+	      TxData[4] = '!';
+
+	      // Send the CAN message
+	      if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+	      {
+	          // Handle transmission error
+	          char errorBuffer[100];
+	          sprintf(errorBuffer, "CAN TX ERROR: Failed to add message to mailbox\r\n");
+	          HAL_UART_Transmit(&huart2, (uint8_t*)errorBuffer, strlen(errorBuffer), HAL_MAX_DELAY);
+
+	          // Try to recover CAN peripheral
+	          HAL_CAN_AbortTxRequest(&hcan1, TxMailbox);
+
+	          // Optional: You could implement a retry mechanism here
+	          uint8_t retryCount = 0;
+	          uint8_t maxRetries = 3;
+	          HAL_StatusTypeDef status;
+
+	          while(retryCount < maxRetries) {
+	              // Wait before retry
+	              osDelay(100);
+
+	              // Retry transmission
+	              status = HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
+	              if(status == HAL_OK) {
+	                  sprintf(errorBuffer, "CAN TX: Retry successful on attempt %d\r\n", retryCount + 1);
+	                  HAL_UART_Transmit(&huart2, (uint8_t*)errorBuffer, strlen(errorBuffer), HAL_MAX_DELAY);
+	                  break;
+	              }
+
+	              retryCount++;
+	              sprintf(errorBuffer, "CAN TX: Retry %d failed\r\n", retryCount);
+	              HAL_UART_Transmit(&huart2, (uint8_t*)errorBuffer, strlen(errorBuffer), HAL_MAX_DELAY);
+	          }
+
+	          if(retryCount >= maxRetries) {
+	              sprintf(errorBuffer, "CAN TX: All retries failed, calling Error_Handler()\r\n");
+	              HAL_UART_Transmit(&huart2, (uint8_t*)errorBuffer, strlen(errorBuffer), HAL_MAX_DELAY);
+	              Error_Handler();
+	          }
+	      }
+	      else {
+	          // Success case
+	          char buffer[50];
+	          sprintf(buffer, "Data sent successfully\r\n");
+	          HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+	      }
+
+	      // Wait 1 second before sending again
+	      osDelay(1000);
+	  }
   /* USER CODE END 5 */
 }
 
