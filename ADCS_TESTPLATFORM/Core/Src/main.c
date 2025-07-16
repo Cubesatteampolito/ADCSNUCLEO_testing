@@ -341,6 +341,7 @@ void StartDefaultTask(void const * argument)
  * and the check sum is check sum= 256(because we are using 8bit bytes duh)-(sum of BusID, MID, LEN, DATA)(sum of everything except preamble)mod256
  * NOTE TO MYSELF(HOANG) I WILL PUT A F*CKING HEADER FILE FOR ALL THIS HEX VALUE, THIS CODE IS UGLY
  * btw if you ask why its in default task, because i want to check if it works first then i can do tasking later
+ * test
  */
 	// This part of the code is to check the status of the sensor
 	//uint8_t wakeup[] = { 0xFA, 0xFF, 0x3E, 0x00, 0xC1 };
