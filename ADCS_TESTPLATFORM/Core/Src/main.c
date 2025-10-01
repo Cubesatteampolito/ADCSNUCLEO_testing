@@ -341,15 +341,15 @@ void StartDefaultTask(void const * argument)
  * and the check sum is check sum= 256(because we are using 8bit bytes duh)-(sum of BusID, MID, LEN, DATA)(sum of everything except preamble)mod256
  * NOTE TO MYSELF(HOANG) I WILL PUT A F*CKING HEADER FILE FOR ALL THIS HEX VALUE, THIS CODE IS UGLY
  * btw if you ask why its in default task, because i want to check if it works first then i can do tasking later
- * test
+ *helloworld
  */
 	// This part of the code is to check the status of the sensor
-	//uint8_t wakeup[] = { 0xFA, 0xFF, 0x3E, 0x00, 0xC1 };
+	uint8_t wakeup[] = { 0xFA, 0xFF, 0x3E, 0x00, 0xC1 };
 	uint8_t goToConfig[] = { 0xFA, 0xFF, 0x30, 0x00, 0xD1 };
 	uint8_t ReqDID[] = { 0xFA, 0xFF, 0x00, 0x00, 0xFF };
 	uint8_t rxBuffer[32];
 	// 0) Send Wake up
-	//HAL_UART_Transmit(&huart4, wakeup, sizeof(wakeup), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart4, wakeup, sizeof(wakeup), HAL_MAX_DELAY);
 	//HAL_Delay(10); // Small delay to let sensor switch modes
 	// 1) Send GoToConfig,  Switch the active state of the device from Measurement State to Config State. This message can also be used in Config State to confirm that Config State is currently the active state.
 	HAL_UART_Transmit(&huart4, goToConfig, sizeof(goToConfig), HAL_MAX_DELAY);
@@ -359,7 +359,7 @@ void StartDefaultTask(void const * argument)
 	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
 
 	// 3) Receive  DeviceID.  Acknowledge of ReqDID message. Data field contains device ID / serial number.
-	HAL_UART_Receive(&huart4, rxBuffer, 8, 100);  // Adjust length as needed
+	HAL_UART_Receive(&huart4, rxBuffer, sizeof(rxBuffer), 100);  // Adjust length as needed
 
 	// 4) Check response
 	// Buffer to hold the message
