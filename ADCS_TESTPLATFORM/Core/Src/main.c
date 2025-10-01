@@ -46,7 +46,11 @@
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
 
-osThreadId defaultTaskHandle;
+osThreadId SensorReadingHandle;
+osThreadId task02Handle;
+osThreadId task03Handle;
+osThreadId task04Handle;
+osMessageQId DataqueueHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -56,7 +60,10 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
-void StartDefaultTask(void const * argument);
+void SensorReadingTask(void const * argument);
+void StartTask02(void const * argument);
+void StartTask03(void const * argument);
+void StartTask04(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -118,14 +125,31 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* definition and creation of Dataqueue */
+  osMessageQDef(Dataqueue, 16, uint16_t);
+  DataqueueHandle = osMessageCreate(osMessageQ(Dataqueue), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* definition and creation of SensorReading */
+  osThreadDef(SensorReading, SensorReadingTask, osPriorityNormal, 0, 128);
+  SensorReadingHandle = osThreadCreate(osThread(SensorReading), NULL);
+
+  /* definition and creation of task02 */
+  osThreadDef(task02, StartTask02, osPriorityNormal, 0, 128);
+  task02Handle = osThreadCreate(osThread(task02), NULL);
+
+  /* definition and creation of task03 */
+  osThreadDef(task03, StartTask03, osPriorityNormal, 0, 128);
+  task03Handle = osThreadCreate(osThread(task03), NULL);
+
+  /* definition and creation of task04 */
+  osThreadDef(task04, StartTask04, osPriorityNormal, 0, 128);
+  task04Handle = osThreadCreate(osThread(task04), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -317,72 +341,96 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_SensorReadingTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the SensorReading thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+/* USER CODE END Header_SensorReadingTask */
+void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-/**
- * READ THIS SHI BEFORE YOU BECOME CRAZY
- * This section is controlling the mti-3 sensors
- * In order to understand the code please check the Xsense LLCP(Low Level Communication Protocol) as the Mti-3 communicate through this protocol.(thats where the hex content came from)
- * Also check the Mti-3 data sheet itself for more information
- * For the sake of everyone laziness, imma put it here so that no one have to go through the dirty work again
- * MESSAGE STRUCTURE
- * Preamble||BusID||MessageID||Length||Data||Checksum
- * for example: the goToConfig messageID is 0x30 therefore the message that you need to send is  0xFA, 0xFF, 0x30, 0x00, 0xD1
- * why is the preamble 0xFA and the busID is 0xFF you might ask. erm its in the document XD (its a constant) basically the busID is just saying that you re sending message from master device which is yourself 0xFF
- * length in this case is 0x00 because you dont send any data, you just send the messageID
- * and the check sum is check sum= 256(because we are using 8bit bytes duh)-(sum of BusID, MID, LEN, DATA)(sum of everything except preamble)mod256
- * NOTE TO MYSELF(HOANG) I WILL PUT A F*CKING HEADER FILE FOR ALL THIS HEX VALUE, THIS CODE IS UGLY
- * btw if you ask why its in default task, because i want to check if it works first then i can do tasking later
- *helloworld
- */
-	// This part of the code is to check the status of the sensor
-	uint8_t wakeup[] = { 0xFA, 0xFF, 0x3E, 0x00, 0xC1 };
-	uint8_t goToConfig[] = { 0xFA, 0xFF, 0x30, 0x00, 0xD1 };
-	uint8_t ReqDID[] = { 0xFA, 0xFF, 0x00, 0x00, 0xFF };
-	uint8_t rxBuffer[32];
-	// 0) Send Wake up
-	HAL_UART_Transmit(&huart4, wakeup, sizeof(wakeup), HAL_MAX_DELAY);
-	//HAL_Delay(10); // Small delay to let sensor switch modes
-	// 1) Send GoToConfig,  Switch the active state of the device from Measurement State to Config State. This message can also be used in Config State to confirm that Config State is currently the active state.
-	HAL_UART_Transmit(&huart4, goToConfig, sizeof(goToConfig), HAL_MAX_DELAY);
-	HAL_Delay(10); // Small delay to let sensor switch modes
+	uint8_t msg[] = "sensor reading task start";
+	char buffer[64];
+	uint8_t *buf;
+	int counter = 0;
+	for(;;){
+	int len = snprintf(buffer, sizeof(buffer),
+					   "[%lu xTaskGetTickCount()] %s\r\n",
+					   (unsigned long)xTaskGetTickCount(), msg);//unsigned long because that the tick can come in 16 or 32 bit depends on the setting/to be changed later
 
-	// 2) Send ReqDID, Request to send the device identifier (or serial number). MT acknowledges by sending the DeviceID message.
-	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);//i am using Hal_Transmit here becaue its too complicated to make more efficient code
+	//basically the problem with hal transmit it its a blocking task, it hog the cpu until the message is transmitted, we dont want that, that was the problem with the print function before with odysseus. will fix later
+	//what we need to do with this part is blown up the fucking message size and you will fucking see the time stamp blown up (probably) also when abunch of transmit work at the same time or close to eachother it blow everything up too
+	vTaskDelay(pdMS_TO_TICKS(200));//delay200tick basically to simulate sensor reading time
+	/* Wait for a free buffer (blocks until available) */
+	xQueueReceive(freeBuffers, &buf, portMAX_DELAY);   /* Wait for a free buffer (blocks until available) */
 
-	// 3) Receive  DeviceID.  Acknowledge of ReqDID message. Data field contains device ID / serial number.
-	HAL_UART_Receive(&huart4, rxBuffer, sizeof(rxBuffer), 100);  // Adjust length as needed
+	/* Fill buffer with some data */
+	int n = snprintf((char *)buf, BUFFER_SIZE,
+					 "Message %d (tick %lu)",
+					 counter++, (unsigned long)xTaskGetTickCount());
 
-	// 4) Check response
-	// Buffer to hold the message
-	char msg[64];
+	/* Send the filled buffer to the fullBuffers queue */
+	xQueueSend(fullBuffers, &buf, portMAX_DELAY);
 
-	// check for Device ID, if the ID is not 000000 the device is responding
-	if (1) // MID == DeviceID response
-	{
-	  snprintf(msg, sizeof(msg),
-	           "DeviceID: %02X%02X%02X%02X\r\n",
-	           rxBuffer[5], rxBuffer[6], rxBuffer[7], rxBuffer[8]);
-
-	  HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	vTaskDelay(pdMS_TO_TICKS(200)); // produce every 1 second
 	}
-	// For testing and debug purposes i will put a pair of ReqOutputConfiguration and SetOutputConfiguration here
-	// The ReqConfiguration is to understand the current output configuration
-	uint8_t ReqOutputConfiguration[] = { 0xFA, 0xFF, 0x0C, 0x00, 0xF5};
-	// Send ReqOutputConfiguration.Requests the output configuration settings of the device.
-	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
+}
 
+/* USER CODE BEGIN Header_StartTask02 */
+/**
+* @brief Function implementing the task02 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask02 */
+void StartTask02(void const * argument)
+{
+  /* USER CODE BEGIN StartTask02 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask02 */
+}
 
+/* USER CODE BEGIN Header_StartTask03 */
+/**
+* @brief Function implementing the task03 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask03 */
+void StartTask03(void const * argument)
+{
+  /* USER CODE BEGIN StartTask03 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask03 */
+}
 
-  /* USER CODE END 5 */
+/* USER CODE BEGIN Header_StartTask04 */
+/**
+* @brief Function implementing the task04 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask04 */
+void StartTask04(void const * argument)
+{
+  /* USER CODE BEGIN StartTask04 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask04 */
 }
 
 /**
