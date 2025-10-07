@@ -48,9 +48,12 @@ UART_HandleTypeDef huart2;
 
 osThreadId SensorReadingHandle;
 osThreadId task02Handle;
-osThreadId task03Handle;
-osThreadId task04Handle;
-osMessageQId DataqueueHandle;
+osThreadId myTask03Handle;
+osMessageQId queue1Handle;
+osMessageQId queue2Handle;
+osMessageQId queue3Handle;
+osMessageQId myQueue04Handle;
+osMessageQId myQueue05Handle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -63,7 +66,6 @@ static void MX_UART4_Init(void);
 void SensorReadingTask(void const * argument);
 void StartTask02(void const * argument);
 void StartTask03(void const * argument);
-void StartTask04(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -126,9 +128,25 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  /* definition and creation of Dataqueue */
-  osMessageQDef(Dataqueue, 16, uint16_t);
-  DataqueueHandle = osMessageCreate(osMessageQ(Dataqueue), NULL);
+  /* definition and creation of queue1 */
+  osMessageQDef(queue1, 16, uint16_t);
+  queue1Handle = osMessageCreate(osMessageQ(queue1), NULL);
+
+  /* definition and creation of queue2 */
+  osMessageQDef(queue2, 16, uint16_t);
+  queue2Handle = osMessageCreate(osMessageQ(queue2), NULL);
+
+  /* definition and creation of queue3 */
+  osMessageQDef(queue3, 16, uint16_t);
+  queue3Handle = osMessageCreate(osMessageQ(queue3), NULL);
+
+  /* definition and creation of myQueue04 */
+  osMessageQDef(myQueue04, 16, uint16_t);
+  myQueue04Handle = osMessageCreate(osMessageQ(myQueue04), NULL);
+
+  /* definition and creation of myQueue05 */
+  osMessageQDef(myQueue05, 16, uint16_t);
+  myQueue05Handle = osMessageCreate(osMessageQ(myQueue05), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -143,13 +161,9 @@ int main(void)
   osThreadDef(task02, StartTask02, osPriorityNormal, 0, 128);
   task02Handle = osThreadCreate(osThread(task02), NULL);
 
-  /* definition and creation of task03 */
-  osThreadDef(task03, StartTask03, osPriorityNormal, 0, 128);
-  task03Handle = osThreadCreate(osThread(task03), NULL);
-
-  /* definition and creation of task04 */
-  osThreadDef(task04, StartTask04, osPriorityNormal, 0, 128);
-  task04Handle = osThreadCreate(osThread(task04), NULL);
+  /* definition and creation of myTask03 */
+  osThreadDef(myTask03, StartTask03, osPriorityIdle, 0, 128);
+  myTask03Handle = osThreadCreate(osThread(myTask03), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -351,32 +365,23 @@ static void MX_GPIO_Init(void)
 void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+  /* Infinite loop */
 	uint8_t msg[] = "sensor reading task start";
 	char buffer[64];
 	uint8_t *buf;
 	int counter = 0;
-	for(;;){
-	int len = snprintf(buffer, sizeof(buffer),
-					   "[%lu xTaskGetTickCount()] %s\r\n",
-					   (unsigned long)xTaskGetTickCount(), msg);//unsigned long because that the tick can come in 16 or 32 bit depends on the setting/to be changed later
+	for(;;)
+	{
+		int len = snprintf(buffer, sizeof(buffer),
+						   "[%lu xTaskGetTickCount()] %s\r\n",
+						   (unsigned long)xTaskGetTickCount(), msg);//unsigned long because that the tick can come in 16 or 32 bit depends on the setting/to be changed later
 
-	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);//i am using Hal_Transmit here becaue its too complicated to make more efficient code
-	//basically the problem with hal transmit it its a blocking task, it hog the cpu until the message is transmitted, we dont want that, that was the problem with the print function before with odysseus. will fix later
-	//what we need to do with this part is blown up the fucking message size and you will fucking see the time stamp blown up (probably) also when abunch of transmit work at the same time or close to eachother it blow everything up too
-	vTaskDelay(pdMS_TO_TICKS(200));//delay200tick basically to simulate sensor reading time
-	/* Wait for a free buffer (blocks until available) */
-	xQueueReceive(freeBuffers, &buf, portMAX_DELAY);   /* Wait for a free buffer (blocks until available) */
-
-	/* Fill buffer with some data */
-	int n = snprintf((char *)buf, BUFFER_SIZE,
-					 "Message %d (tick %lu)",
-					 counter++, (unsigned long)xTaskGetTickCount());
-
-	/* Send the filled buffer to the fullBuffers queue */
-	xQueueSend(fullBuffers, &buf, portMAX_DELAY);
-
-	vTaskDelay(pdMS_TO_TICKS(200)); // produce every 1 second
+		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);//i am using Hal_Transmit here becaue its too complicated to make more efficient code
+		//basically the problem with hal transmit it its a blocking task, it hog the cpu until the message is transmitted, we dont want that, that was the problem with the print function before with odysseus. will fix later
+		//what we need to do with this part is blown up the fucking message size and you will fucking see the time stamp blown up (probably) also when abunch of transmit work at the same time or close to eachother it blow everything up too
+		vTaskDelay(pdMS_TO_TICKS(200));//delay200tick basically to simulate sensor reading time
 	}
+  /* USER CODE END 5 */
 }
 
 /* USER CODE BEGIN Header_StartTask02 */
@@ -413,24 +418,6 @@ void StartTask03(void const * argument)
     osDelay(1);
   }
   /* USER CODE END StartTask03 */
-}
-
-/* USER CODE BEGIN Header_StartTask04 */
-/**
-* @brief Function implementing the task04 thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTask04 */
-void StartTask04(void const * argument)
-{
-  /* USER CODE BEGIN StartTask04 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartTask04 */
 }
 
 /**
