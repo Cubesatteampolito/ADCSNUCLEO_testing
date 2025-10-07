@@ -380,6 +380,7 @@ void SensorReadingTask(void const * argument)
 		//basically the problem with hal transmit it its a blocking task, it hog the cpu until the message is transmitted, we dont want that, that was the problem with the print function before with odysseus. will fix later
 		//what we need to do with this part is blown up the fucking message size and you will fucking see the time stamp blown up (probably) also when abunch of transmit work at the same time or close to eachother it blow everything up too
 		vTaskDelay(pdMS_TO_TICKS(200));//delay200tick basically to simulate sensor reading time
+    //this is a push test 
 	}
   /* USER CODE END 5 */
 }
