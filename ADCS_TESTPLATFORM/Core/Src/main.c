@@ -377,8 +377,8 @@ void SensorReadingTask(void const * argument)
     
     char *messages[] = {message1, message2, message3};
     int msg_index = 0;
-    char buffer[64];  // Declare once at the top
-    int len;          // Declare once at the top
+    char buffer[64];  
+    int len;          
     
     for(;;)
     {
@@ -394,7 +394,7 @@ void SensorReadingTask(void const * argument)
                        (unsigned long)xTaskGetTickCount());
         HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
         
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(500));//simulate sensor read delay
         
         // Prepare message pointer
         char *msg_ptr = messages[msg_index];
@@ -438,15 +438,15 @@ void SensorReadingTask(void const * argument)
 void StartTask02(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
-  char buffer1[64];
+  //char buffer1[64];
   char *received_msg;
   int len;
-  
+  char buffer2[128];
   // Send startup message
-  len = snprintf(buffer1, sizeof(buffer1), 
-                     "[%lu] StartTask02 started\r\n", 
-                     (unsigned long)xTaskGetTickCount());
-  HAL_UART_Transmit(&huart2, (uint8_t*)buffer1, len, HAL_MAX_DELAY);
+  //len = snprintf(buffer1, sizeof(buffer1), 
+  //                   "[%lu] StartTask02 started\r\n", 
+  //                   (unsigned long)xTaskGetTickCount());
+  //HAL_UART_Transmit(&huart2, (uint8_t*)buffer1, len, HAL_MAX_DELAY);
   
   for(;;)
   {
