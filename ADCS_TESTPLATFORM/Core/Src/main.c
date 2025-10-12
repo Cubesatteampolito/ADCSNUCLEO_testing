@@ -443,10 +443,10 @@ void StartTask02(void const * argument)
   int len;
   
   // Send startup message
-  len = snprintf(buffer, sizeof(buffer), 
+  len = snprintf(buffer1, sizeof(buffer1), 
                      "[%lu] StartTask02 started\r\n", 
                      (unsigned long)xTaskGetTickCount());
-  HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+  HAL_UART_Transmit(&huart2, (uint8_t*)buffer1, len, HAL_MAX_DELAY);
   
   for(;;)
   {
