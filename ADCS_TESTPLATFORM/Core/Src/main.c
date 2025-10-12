@@ -423,7 +423,7 @@ void SensorReadingTask(void const * argument)
         
         // Cycle through messages
         msg_index = (msg_index + 1) % 3;        
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(800));
     }
   /* USER CODE END 5 */
 }
