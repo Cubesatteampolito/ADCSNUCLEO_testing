@@ -55,7 +55,7 @@ osMessageQId queue3Handle;
 osMessageQId myQueue04Handle;
 osMessageQId myQueue05Handle;
 /* USER CODE BEGIN PV */
-
+QueueHandle_t xQueue1;  // FreeRTOS queue handle
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -150,6 +150,11 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  xQueue1 = xQueueCreate(5, sizeof(void*));
+if (xQueue1 == NULL) {
+    // Queue creation failed
+    Error_Handler();
+}
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -366,22 +371,52 @@ void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-	uint8_t msg[] = "sensor reading task start";
-	char buffer[64];
-	uint8_t *buf;
-	int counter = 0;
-	for(;;)
-	{
-		int len = snprintf(buffer, sizeof(buffer),
-						   "[%lu xTaskGetTickCount()] %s\r\n",
-						   (unsigned long)xTaskGetTickCount(), msg);//unsigned long because that the tick can come in 16 or 32 bit depends on the setting/to be changed later
-
-		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);//i am using Hal_Transmit here becaue its too complicated to make more efficient code
-		//basically the problem with hal transmit it its a blocking task, it hog the cpu until the message is transmitted, we dont want that, that was the problem with the print function before with odysseus. will fix later
-		//what we need to do with this part is blown up the fucking message size and you will fucking see the time stamp blown up (probably) also when abunch of transmit work at the same time or close to eachother it blow everything up too
-		vTaskDelay(pdMS_TO_TICKS(200));//delay200tick basically to simulate sensor reading time
-    //this is a push test 2
-	}
+    static char message1[] = "Sensor Data 1";
+    static char message2[] = "Temperature Reading";
+    static char message3[] = "Gyroscope Data";
+    
+    char *messages[] = {message1, message2, message3};
+    int msg_index = 0;
+    
+    for(;;)
+    {
+        char buffer[64];
+        int len = snprintf(buffer, sizeof(buffer), 
+                            "[%lu] taskstart %s\r\n", 
+                            (unsigned long)xTaskGetTickCount());
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);// Start message
+        char buffer[64];
+        int len = snprintf(buffer, sizeof(buffer), 
+                            "[%lu] sensor reading start %s\r\n", 
+                            (unsigned long)xTaskGetTickCount());
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);// Sensor reading message
+        vTaskDelay(pdMS_TO_TICKS(500));// Delay 500 ms to simulate sensor reading time
+        // Prepare message pointer
+        char *msg_ptr = messages[msg_index];
+        
+        // Send pointer to queue (100ms timeout)
+        BaseType_t result = xQueueSend(xQueue1, &msg_ptr, pdMS_TO_TICKS(100));//putqueue
+        
+        if (result == pdPASS) {
+            //Send confirmation via UART
+            char buffer[64];
+            int len = snprintf(buffer, sizeof(buffer), 
+                               "[%lu] Queued: %s\r\n", 
+                               (unsigned long)xTaskGetTickCount(), msg_ptr);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        } else {
+            // Queue full - could log error
+            char buffer[64];
+            int len = snprintf(buffer, sizeof(buffer), 
+                               "[%lu] Queue FULL!\r\n", 
+                               (unsigned long)xTaskGetTickCount());
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        }
+        
+        // Cycle through messages
+        msg_index = (msg_index + 1) % 3;        
+        vTaskDelay(pdMS_TO_TICKS(100)); // Send every 1800ms since the total cycle is 3*(100+500)ms
+    }
   /* USER CODE END 5 */
 }
 
@@ -396,9 +431,24 @@ void StartTask02(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
+  char *received_msg;
+  char buffer[128];
+  
   for(;;)
   {
-    osDelay(1);
+    // Wait indefinitely for message from queue
+    BaseType_t result = xQueueReceive(xQueue1, &received_msg, portMAX_DELAY);
+    
+    if (result == pdPASS) {
+      // Format message with timestamp and send via UART
+      int len = snprintf(buffer, sizeof(buffer),
+                        "[%lu UART_TASK] Received: %s\r\n",
+                        (unsigned long)xTaskGetTickCount(), received_msg);
+      
+      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+    }
+    
+    // No delay needed here since xQueueReceive blocks until data available
   }
   /* USER CODE END StartTask02 */
 }
