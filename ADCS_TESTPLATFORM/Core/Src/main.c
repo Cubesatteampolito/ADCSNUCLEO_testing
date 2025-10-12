@@ -441,7 +441,7 @@ void StartTask02(void const * argument)
   //char buffer1[64];
   char *received_msg;
   int len;
-  char buffer1[64];
+  //char buffer1[64];
   // Send startup message
   //len = snprintf(buffer1, sizeof(buffer1), 
   //                  "[%lu] StartTask02 started\r\n", 
