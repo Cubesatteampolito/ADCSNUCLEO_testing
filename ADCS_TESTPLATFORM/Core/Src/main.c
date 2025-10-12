@@ -441,11 +441,12 @@ void StartTask02(void const * argument)
   //char buffer1[64];
   char *received_msg;
   int len;
+  char buffer1[64];
   // Send startup message
-  //len = snprintf(buffer1, sizeof(buffer1), 
-  //                   "[%lu] StartTask02 started\r\n", 
-  //                   (unsigned long)xTaskGetTickCount());
-  //HAL_UART_Transmit(&huart2, (uint8_t*)buffer1, len, HAL_MAX_DELAY);
+  len = snprintf(buffer1, sizeof(buffer1), 
+                    "[%lu] StartTask02 started\r\n", 
+                     (unsigned long)xTaskGetTickCount());
+  HAL_UART_Transmit(&huart2, (uint8_t*)buffer1, len, HAL_MAX_DELAY);
   
   for(;;)
   {
@@ -456,7 +457,7 @@ void StartTask02(void const * argument)
     if (result == pdPASS) {
       // Format message with timestamp and send via UART
       len = snprintf(buffer2, sizeof(buffer2),
-                    "[%lu UART_TASK] Received: %s\r\n",
+                    "[%lu] Received: %s\r\n",
                     (unsigned long)xTaskGetTickCount(), received_msg);
       
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer2, len, HAL_MAX_DELAY);
