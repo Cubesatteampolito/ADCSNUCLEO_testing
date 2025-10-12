@@ -400,11 +400,11 @@ void SensorReadingTask(void const * argument)
         char *msg_ptr = messages[msg_index];
         
         // Send pointer to queue (100ms timeout)
-        UBaseType_t spaces_available = uxQueueSpacesAvailable(xQueue1);
-        len = snprintf(buffer, sizeof(buffer), 
-                      "[%lu] Queue spaces: %d\r\n", 
-                      (unsigned long)xTaskGetTickCount(), (int)spaces_available);
-        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        //UBaseType_t spaces_available = uxQueueSpacesAvailable(xQueue1);
+        //len = snprintf(buffer, sizeof(buffer), 
+        //              "[%lu] Queue spaces: %d\r\n", 
+        //              (unsigned long)xTaskGetTickCount(), (int)spaces_available);
+        //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
         BaseType_t result = xQueueSend(xQueue1, &msg_ptr, pdMS_TO_TICKS(100));
         
         if (result == pdPASS) {
