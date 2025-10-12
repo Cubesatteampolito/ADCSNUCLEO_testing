@@ -441,7 +441,6 @@ void StartTask02(void const * argument)
   //char buffer1[64];
   char *received_msg;
   int len;
-  char buffer2[128];
   // Send startup message
   //len = snprintf(buffer1, sizeof(buffer1), 
   //                   "[%lu] StartTask02 started\r\n", 
@@ -450,6 +449,7 @@ void StartTask02(void const * argument)
   
   for(;;)
   {
+    char buffer2[128];
     // Wait indefinitely for message from queue
     BaseType_t result = xQueueReceive(xQueue1, &received_msg, portMAX_DELAY);
     
