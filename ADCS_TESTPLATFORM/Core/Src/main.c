@@ -411,7 +411,7 @@ void SensorReadingTask(void const * argument)
                                "[%lu] Queue FULL!\r\n", 
                                (unsigned long)xTaskGetTickCount());
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        }
+        }//hi
         
         // Cycle through messages
         msg_index = (msg_index + 1) % 3;        
