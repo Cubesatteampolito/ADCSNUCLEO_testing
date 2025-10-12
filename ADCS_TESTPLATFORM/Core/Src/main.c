@@ -438,7 +438,7 @@ void SensorReadingTask(void const * argument)
 void StartTask02(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
-  char buffer[128];
+  char buffer[1000];
   char *received_msg;
   
   // Send startup message
