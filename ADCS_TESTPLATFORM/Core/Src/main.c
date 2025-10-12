@@ -154,11 +154,7 @@ int main(void)
 if (xQueue1 == NULL) {
     // Queue creation failed
     Error_Handler();
-} else {
-    // Add debug message
-    char debug_msg[] = "Queue created successfully\r\n";
-    HAL_UART_Transmit(&huart2, (uint8_t*)debug_msg, strlen(debug_msg), HAL_MAX_DELAY);
-}
+  }
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
