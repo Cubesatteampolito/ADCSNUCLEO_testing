@@ -450,7 +450,6 @@ void StartTask02(void const * argument)
   
   for(;;)
   {
-    char buffer2[128];
     // Wait indefinitely for message from queue
     BaseType_t result = xQueueReceive(xQueue1, &received_msg, portMAX_DELAY);
     
