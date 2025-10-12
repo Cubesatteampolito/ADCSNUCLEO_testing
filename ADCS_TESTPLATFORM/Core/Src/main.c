@@ -154,6 +154,10 @@ int main(void)
 if (xQueue1 == NULL) {
     // Queue creation failed
     Error_Handler();
+} else {
+    // Add debug message
+    char debug_msg[] = "Queue created successfully\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t*)debug_msg, strlen(debug_msg), HAL_MAX_DELAY);
 }
   /* USER CODE END RTOS_QUEUES */
 
@@ -377,45 +381,53 @@ void SensorReadingTask(void const * argument)
     
     char *messages[] = {message1, message2, message3};
     int msg_index = 0;
+    char buffer[64];  // Declare once at the top
+    int len;          // Declare once at the top
     
     for(;;)
     {
-        char buffer[64];
-        int len = snprintf(buffer, sizeof(buffer), 
-                            "[%lu] taskstart %s\r\n", 
-                            (unsigned long)xTaskGetTickCount());
-        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);// Start message
-        char buffer[64];
-        int len = snprintf(buffer, sizeof(buffer), 
-                            "[%lu] sensor reading start %s\r\n", 
-                            (unsigned long)xTaskGetTickCount());
-        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);// Sensor reading message
-        vTaskDelay(pdMS_TO_TICKS(500));// Delay 500 ms to simulate sensor reading time
+        // Task start message
+        len = snprintf(buffer, sizeof(buffer), 
+                       "[%lu] taskstart\r\n", 
+                       (unsigned long)xTaskGetTickCount());
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        
+        // Sensor reading message
+        len = snprintf(buffer, sizeof(buffer), 
+                       "[%lu] sensor reading start\r\n", 
+                       (unsigned long)xTaskGetTickCount());
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        
+        vTaskDelay(pdMS_TO_TICKS(500));
+        
         // Prepare message pointer
         char *msg_ptr = messages[msg_index];
         
         // Send pointer to queue (100ms timeout)
-        BaseType_t result = xQueueSend(xQueue1, &msg_ptr, pdMS_TO_TICKS(100));//putqueue
+        UBaseType_t spaces_available = uxQueueSpacesAvailable(xQueue1);
+        len = snprintf(buffer, sizeof(buffer), 
+                      "[%lu] Queue spaces: %d\r\n", 
+                      (unsigned long)xTaskGetTickCount(), (int)spaces_available);
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        BaseType_t result = xQueueSend(xQueue1, &msg_ptr, pdMS_TO_TICKS(100));
         
         if (result == pdPASS) {
-            //Send confirmation via UART
-            char buffer[64];
-            int len = snprintf(buffer, sizeof(buffer), 
-                               "[%lu] Queued: %s\r\n", 
-                               (unsigned long)xTaskGetTickCount(), msg_ptr);
+            // Send confirmation via UART
+            len = snprintf(buffer, sizeof(buffer), 
+                           "[%lu] Queued: %s\r\n", 
+                           (unsigned long)xTaskGetTickCount(), msg_ptr);
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
         } else {
-            // Queue full - could log error
-            char buffer[64];
-            int len = snprintf(buffer, sizeof(buffer), 
-                               "[%lu] Queue FULL!\r\n", 
-                               (unsigned long)xTaskGetTickCount());
+            // Queue full - log error
+            len = snprintf(buffer, sizeof(buffer), 
+                           "[%lu] Queue FULL!\r\n", 
+                           (unsigned long)xTaskGetTickCount());
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        }//hi
+        }
         
         // Cycle through messages
         msg_index = (msg_index + 1) % 3;        
-        vTaskDelay(pdMS_TO_TICKS(100)); // Send every 1800ms since the total cycle is 3*(100+500)ms
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
   /* USER CODE END 5 */
 }
@@ -430,9 +442,14 @@ void SensorReadingTask(void const * argument)
 void StartTask02(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
-  /* Infinite loop */
-  char *received_msg;
   char buffer[128];
+  char *received_msg;
+  
+  // Send startup message
+  int len = snprintf(buffer, sizeof(buffer), 
+                     "[%lu] StartTask02 started\r\n", 
+                     (unsigned long)xTaskGetTickCount());
+  HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
   
   for(;;)
   {
@@ -441,14 +458,12 @@ void StartTask02(void const * argument)
     
     if (result == pdPASS) {
       // Format message with timestamp and send via UART
-      int len = snprintf(buffer, sizeof(buffer),
-                        "[%lu UART_TASK] Received: %s\r\n",
-                        (unsigned long)xTaskGetTickCount(), received_msg);
+      len = snprintf(buffer, sizeof(buffer),
+                    "[%lu UART_TASK] Received: %s\r\n",
+                    (unsigned long)xTaskGetTickCount(), received_msg);
       
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
     }
-    
-    // No delay needed here since xQueueReceive blocks until data available
   }
   /* USER CODE END StartTask02 */
 }
