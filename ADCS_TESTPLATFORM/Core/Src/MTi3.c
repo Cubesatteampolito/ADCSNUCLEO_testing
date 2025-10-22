@@ -1,4 +1,4 @@
-#include "mti3.h"
+#include "MTi3.h"
 #include <string.h>
 
 static UART_HandleTypeDef *mhuart;
