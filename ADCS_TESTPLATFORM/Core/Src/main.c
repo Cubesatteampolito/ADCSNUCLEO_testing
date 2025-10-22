@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "usart.h"
 #include "MTi3.h"
 
 /* Private includes ----------------------------------------------------------*/
