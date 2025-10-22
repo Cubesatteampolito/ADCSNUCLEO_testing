@@ -24,7 +24,6 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
-#include "usart.h"
 #include "MTi1.h"
 #include "UARTdriver.h"
 
