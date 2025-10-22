@@ -98,7 +98,7 @@ void MTI3_Poll(void) {
         while (used < avail) {
             uint16_t c = parse_one(span + used, avail - used);
             if (c == 0) break;
-            used += c;
+            used += c; 
         }
         dma_last = (dma_last + used) % MTI3_RX_BUF_SZ;
     } else {

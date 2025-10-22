@@ -10,7 +10,7 @@
 extern volatile float mti3_accel[3];
 
 // Call once after HAL init
-void MTI3_Init(UART_HandleTypeDef *huart);
+void MTI3_Init(UART_HandleTypeDef *huart); 
 
 // Call often (e.g., in the main loop) to parse new bytes from DMA buffer
 void MTI3_Poll(void);
