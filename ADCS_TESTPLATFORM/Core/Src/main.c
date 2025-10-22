@@ -263,7 +263,7 @@ static void MX_UART4_Init(void)
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
   huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
@@ -380,7 +380,7 @@ void SensorReadingTask(void const * argument)
     
     // char *messages[] = {message1, message2, message3};
     // int msg_index = 0;
-    char buffer[64];  
+  char buffer[128];  
     int len;          
     // float gyro[3]={1,2,3};
     // float mag[3]={4,5,6};
