@@ -103,7 +103,7 @@ int main(void)
 
   
   /* USER CODE BEGIN 2 */
-  MTI3_Init(&huart4);               // MTi-3 UART
+  MTI3_Init(&huart2);               
   // Bring device to Config and request DID
   MTI3_SendGoToConfig();
   HAL_Delay(10);
