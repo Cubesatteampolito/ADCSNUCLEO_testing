@@ -226,10 +226,10 @@ uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle){
     }
 
     //set output config
-    cmd.mid=IMU_SET_OCONFIG_MID;
+    cmd.mid=IMU_SET_OUTPUTCONFIG_MID ;
     cmd.len=IMU_SET_OCONFIG_LEN;
     cmd.data=(uint8_t *)outputConfigData;
-	ack.mid=IMU_SET_OCONFIG_ACK_MID;
+	ack.mid=IMU_SET_OUTPUTCONFIG_ACK_MID;
 	ack.len=IMU_SET_OCONFIG_ACK_LEN;
 	for(uint32_t retry=0;retry<IMU_CONFIG_RETRY;retry++){
 		if(imuAckTransaction(IMUhandle,&cmd,&ack,IMU_ACK_DELAY)) break;
