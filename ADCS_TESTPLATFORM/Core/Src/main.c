@@ -381,7 +381,7 @@ void SensorReadingTask(void const * argument)
     // char *messages[] = {message1, message2, message3};
     // int msg_index = 0;
     char buffer[64];  
-    int len;          
+    int len=256;          
     // float gyro[3]={1,2,3};
     // float mag[3]={4,5,6};
     // float acc[3] = {7,8,9};
