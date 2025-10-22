@@ -395,7 +395,7 @@ void SensorReadingTask(void const * argument)
         else {
         len = snprintf(buffer, sizeof(buffer), 
                         "[%lu] meow\r\n", 
-                        (unsigned long)xTaskGetTickCount(),mtistatus);
+                        (unsigned long)xTaskGetTickCount());
           HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
         }
 
