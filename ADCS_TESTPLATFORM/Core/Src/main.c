@@ -102,7 +102,7 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   // Activate notification
-  MTI3_Init(&huart2);
+  MTI3_Init(&huart4);
 
 
   /* USER CODE END 2 */
