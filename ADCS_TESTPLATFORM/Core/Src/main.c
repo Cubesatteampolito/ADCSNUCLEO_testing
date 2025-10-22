@@ -385,7 +385,7 @@ void SensorReadingTask(void const * argument)
     float gyro[3]={1,2,3};
     float mag[3]={4,5,6};
     float acc[3] = {7,8,9};
-    uint8_t buffer1[64];  
+    uint8_t buffer1[10];  
     uint8_t meow;
     
     for(;;)
