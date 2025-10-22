@@ -1,26 +1,18 @@
-#ifndef MTI13_H
-#define MTI13_H
+#ifndef MTI3_H
+#define MTI3_H
 
-/* Function to manage a MTI-2 / MTI-3 imu
- * protocol description: https://www.xsens.com/hubfs/Downloads/Manuals/MT_Low-Level_Documentation.pdf
- *
- * only the limited subset of needed functionalieties has been implemented
- * */
-
+#include "main.h"
 #include <stdint.h>
 
-/* ------------------- WARNING -------------------- */
+typedef struct {
+  float ax_ms2;
+  float ay_ms2;
+  float az_ms2;
+  uint8_t valid;   // 1 when a fresh sample was parsed
+} MTI3_Accel_t;
 
-
-/* Function to parse a msg(PREAMBLE, PACKET) thru UART and compute checksum*/
-static int read_xbus_full_message(uint8_t *out_buf, uint8_t out_buf_size, uint8_t expected_mid, uint32_t timeout_per_byte);
-
-/* Send reduced xbus message: raw data without preamble/BID, but including checksum.
-   msg points to [MID, LEN, DATA...], msg_len is count of those bytes (MID..lastData)
-*/
-static HAL_StatusTypeDef xbus_send_reduced(const uint8_t *msg, uint8_t msg_len, uint32_t timeout);
-
-static void imu_wakeUp(void);
-
+void MTI3_Init(UART_HandleTypeDef *huart);
+void MTI3_Poll(void);                 // call in main loop
+const MTI3_Accel_t* MTI3_GetAccel(void);
 
 #endif

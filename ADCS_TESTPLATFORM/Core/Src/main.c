@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
+#include "mti3.h"
 
 /* USER CODE END Includes */
 
@@ -101,7 +102,7 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   // Activate notification
-
+  MTI3_Init(&huart2);
 
 
   /* USER CODE END 2 */
@@ -138,13 +139,19 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+ while (1)
   {
-    /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
+    MTI3_Poll();
+
+    // Example: consume fresh sample
+    const MTI3_Accel_t *a = MTI3_GetAccel();
+    if (a->valid) {
+      // copy or log a->ax_ms2, a->ay_ms2, a->az_ms2
+      ((MTI3_Accel_t*)a)->valid = 0; // mark consumed
+    }
+    /* USER CODE END 3 */
   }
-  /* USER CODE END 3 */
 }
 
 /**
