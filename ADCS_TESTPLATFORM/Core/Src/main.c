@@ -387,6 +387,7 @@ void SensorReadingTask(void const * argument)
     // float acc[3] = {7,8,9};
     uint8_t meow;
     uint8_t buffer1[5];  
+    int msg_index=0
     
     for(;;)
     {
@@ -401,6 +402,7 @@ void SensorReadingTask(void const * argument)
                       "[%lu] THIS IS THE BYTE2:%d\r\n", 
                       (unsigned long)xTaskGetTickCount(),buffer1);
         HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        msg_index=msg_index+1;
         // uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
         // if (mtistatus==1){
         //   len = snprintf(buffer, sizeof(buffer), 
