@@ -394,17 +394,30 @@ void SensorReadingTask(void const * argument)
     {
     vTaskDelay(pdMS_TO_TICKS(100));
     
-    // Read byte by byte
+    // Clear buffer
+    memset(rx_buffer, 0, sizeof(rx_buffer));
+    
+    // Read byte by byte with delay
     for(int i = 0; i < 4; i++) {
       status = HAL_UART_Receive(&huart4, &rx_buffer[i], 1, 1000);
+      
       if (status != HAL_OK) {
         len = snprintf(buffer, sizeof(buffer), 
-                      "[%lu] Failed at byte %d, status=%d\r\n", 
-                      (unsigned long)xTaskGetTickCount(), i, status);
+                      "[%lu] Failed at byte %d, status=%d, ErrorCode=0x%08lX\r\n", 
+                      (unsigned long)xTaskGetTickCount(), i, status, huart4.ErrorCode);
         HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        
+        // Clear error flags and try to reset UART state
+        if (huart4.ErrorCode != HAL_UART_ERROR_NONE) {
+          __HAL_UART_CLEAR_FLAG(&huart4, UART_CLEAR_OREF | UART_CLEAR_NEF | UART_CLEAR_PEF | UART_CLEAR_FEF);
+          huart4.ErrorCode = HAL_UART_ERROR_NONE;
+          huart4.gState = HAL_UART_STATE_READY;
+          huart4.RxState = HAL_UART_STATE_READY;
+        }
         break;
       }
     }
+    vTaskDelay(pdMS_TO_TICKS(2));
     
     if (status == HAL_OK) {
       len = snprintf(buffer, sizeof(buffer), 
@@ -416,8 +429,6 @@ void SensorReadingTask(void const * argument)
     
     vTaskDelay(pdMS_TO_TICKS(800));
 
-    
-    vTaskDelay(pdMS_TO_TICKS(100));
       
         // len = snprintf(buffer, sizeof(buffer), 
         //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
