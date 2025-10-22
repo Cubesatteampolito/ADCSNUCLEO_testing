@@ -388,17 +388,30 @@ void SensorReadingTask(void const * argument)
     uint8_t meow;
     uint8_t buffer1[64];  
     // int msg_index=0
+    HAL_StatusTypeDef status;
     
     for(;;)
     {
         // Task start message//meow
-        vTaskDelay(pdMS_TO_TICKS(800));
-        meow=HAL_UART_Receive_IT(&huart4,buffer1,1);
-        len = snprintf(buffer, sizeof(buffer), 
-                      "[%lu] THIS IS THE BYTE:%d %x\r\n", 
-                      (unsigned long)xTaskGetTickCount(),meow,buffer1 );
-        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-        vTaskDelay(pdMS_TO_TICKS(800));
+    vTaskDelay(pdMS_TO_TICKS(800));
+    
+    // Blocking receive with timeout
+    status = HAL_UART_Receive(&huart4, buffer1, 1, 1000);
+    
+    if (status == HAL_OK) {
+      len = snprintf(buffer, sizeof(buffer), 
+                    "[%lu] Received byte: 0x%02X (%c)\r\n", 
+                    (unsigned long)xTaskGetTickCount(), buffer1[0], 
+                    (buffer1[0] >= 32 && buffer1[0] < 127) ? buffer1[0] : '.');
+      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+    } else {
+      len = snprintf(buffer, sizeof(buffer), 
+                    "[%lu] UART Receive Error: %d\r\n", 
+                    (unsigned long)xTaskGetTickCount(), status);
+      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+    }
+    
+    vTaskDelay(pdMS_TO_TICKS(800));
       
         // len = snprintf(buffer, sizeof(buffer), 
         //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
