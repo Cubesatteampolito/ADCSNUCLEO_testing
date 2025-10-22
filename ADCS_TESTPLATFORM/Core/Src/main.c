@@ -263,7 +263,7 @@ static void MX_UART4_Init(void)
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
   huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
@@ -392,31 +392,29 @@ void SensorReadingTask(void const * argument)
     
     for(;;)
     {
-        // Task start message//meow
     vTaskDelay(pdMS_TO_TICKS(100));
     
-    // Read 4 bytes: FA FF BID MID
-    status = HAL_UART_Receive(&huart4, rx_buffer, 4, 1000);
+    // Read byte by byte
+    for(int i = 0; i < 4; i++) {
+      status = HAL_UART_Receive(&huart4, &rx_buffer[i], 1, 1000);
+      if (status != HAL_OK) {
+        len = snprintf(buffer, sizeof(buffer), 
+                      "[%lu] Failed at byte %d, status=%d\r\n", 
+                      (unsigned long)xTaskGetTickCount(), i, status);
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        break;
+      }
+    }
     
     if (status == HAL_OK) {
-      // Check if it's a valid MTi packet (starts with 0xFA 0xFF)
-      if (rx_buffer[0] == 0xFA && rx_buffer[1] == 0xFF) {
-        len = snprintf(buffer, sizeof(buffer), 
-                      "[%lu] MTi Packet: Preamble=0xFA 0xFF, BID=0x%02X, MID=0x%02X\r\n", 
-                      (unsigned long)xTaskGetTickCount(), 
-                      rx_buffer[2], rx_buffer[3]);
-      } else {
-        len = snprintf(buffer, sizeof(buffer), 
-                      "[%lu] Invalid packet: 0x%02X 0x%02X 0x%02X 0x%02X\r\n", 
-                      (unsigned long)xTaskGetTickCount(), 
-                      rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
-      }
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-    } else {
       len = snprintf(buffer, sizeof(buffer), 
-                    "[%lu] UART Receive Error: %d\r\n", 
-                    (unsigned long)xTaskGetTickCount(), status);
+                    "[%lu] Received: 0x%02X 0x%02X 0x%02X 0x%02X\r\n", 
+                    (unsigned long)xTaskGetTickCount(), 
+                    rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+    }
+    
+    vTaskDelay(pdMS_TO_TICKS(800));
     }
     
     vTaskDelay(pdMS_TO_TICKS(100));
