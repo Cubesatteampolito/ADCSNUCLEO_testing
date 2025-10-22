@@ -385,12 +385,12 @@ void SensorReadingTask(void const * argument)
     // float gyro[3]={1,2,3};
     // float mag[3]={4,5,6};
     // float acc[3] = {7,8,9};
-    uint8_t buffer1[64]={0};  
     uint8_t meow;
     
     for(;;)
     {
         // Task start message//meow
+        uint8_t buffer1[64]={0};
         vTaskDelay(pdMS_TO_TICKS(800));
         meow=HAL_UART_Receive(&huart4,buffer1,2,1000);
         len = snprintf(buffer, sizeof(buffer), 
