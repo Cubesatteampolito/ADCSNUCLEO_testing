@@ -396,7 +396,7 @@ void SensorReadingTask(void const * argument)
     vTaskDelay(pdMS_TO_TICKS(800));
     
     // Blocking receive with timeout
-    status = HAL_UART_Receive(&huart4, buffer1, 1, 1000);
+    status = HAL_UART_Receive(&huart4, buffer1, 4, 1000);
     
     if (status == HAL_OK) {
       len = snprintf(buffer, sizeof(buffer), 
