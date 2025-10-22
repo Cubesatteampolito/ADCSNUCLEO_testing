@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include "UARTdriver.h"
 #include <stddef.h>
-#include "usart.h"
+#include "main.h"
 
 #define IMU_BUFFER_LEN 100	//local buffer length
 
