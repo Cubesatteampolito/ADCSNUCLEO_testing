@@ -395,11 +395,11 @@ void SensorReadingTask(void const * argument)
         vTaskDelay(pdMS_TO_TICKS(800));
         meow=HAL_UART_Receive_IT(&huart4,buffer1,1);
         len = snprintf(buffer, sizeof(buffer), 
-                      "[%lu] THIS IS THE BYTE:%d %d\r\n", 
+                      "[%lu] THIS IS THE BYTE:%d %x\r\n", 
                       (unsigned long)xTaskGetTickCount(),meow,buffer1 );
         HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
         vTaskDelay(pdMS_TO_TICKS(800));
-        buffer1[360]=0;
+        buffer1[360]->elemNum=0;
         // len = snprintf(buffer, sizeof(buffer), 
         //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
         //               (unsigned long)xTaskGetTickCount(),buffer1);
