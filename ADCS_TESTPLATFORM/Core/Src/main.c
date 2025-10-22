@@ -386,6 +386,7 @@ void SensorReadingTask(void const * argument)
     for(;;)
     {
         // Task start message//meow
+        vTaskDelay(pdMS_TO_TICKS(800));
         uint8_t mtistatus=initIMUConfig(&huart4);
         if (mtistatus==1){
           len = snprintf(buffer, sizeof(buffer), 
