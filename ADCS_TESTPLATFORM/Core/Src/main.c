@@ -378,8 +378,8 @@ void SensorReadingTask(void const * argument)
     // static char message2[] = "Temperature Reading";
     // static char message3[] = "Gyroscope Data";
     
-    char *messages[] = {message1, message2, message3};
-    int msg_index = 0;
+    // char *messages[] = {message1, message2, message3};
+    // int msg_index = 0;
     char buffer[64];  
     int len;          
     // float gyro[3]={1,2,3};
