@@ -22,8 +22,8 @@ typedef struct{
 #define IMU_PREAMBLE 	0xfa
 #define IMU_BID			0xff
 //MID definitions
-#define IMU_GOTO_CONFIG_MID			0x30
-#define IMU_GOTO_CONFIG_ACK_MID		0x31
+#define IMU_GOTO_CONFIG_MID			0x40
+#define IMU_GOTO_CONFIG_ACK_MID		0x41
 #define IMU_SET_OUTPUTCONFIG_MID 		0xC0
 #define IMU_SET_OUTPUTCONFIG_ACK_MID		0xC1
 #define IMU_GOTO_MEAS_MID 			0x10
