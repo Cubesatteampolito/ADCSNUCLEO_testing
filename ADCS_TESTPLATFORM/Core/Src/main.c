@@ -415,7 +415,7 @@ void SensorReadingTask(void const * argument)
     }
     
     vTaskDelay(pdMS_TO_TICKS(800));
-    }
+
     
     vTaskDelay(pdMS_TO_TICKS(100));
       
