@@ -394,8 +394,8 @@ void SensorReadingTask(void const * argument)
           HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);}
         else {
         len = snprintf(buffer, sizeof(buffer), 
-                        "[%lu] failed config\r\n", 
-                        (unsigned long)xTaskGetTickCount());
+                        "[%lu] %d\r\n", 
+                        (unsigned long)xTaskGetTickCount(),mtistatus);
           HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
         }
 
