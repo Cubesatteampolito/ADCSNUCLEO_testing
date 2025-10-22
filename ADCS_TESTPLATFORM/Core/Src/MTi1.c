@@ -222,7 +222,7 @@ uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle){
     ack.mid=IMU_GOTO_CONFIG_ACK_MID;
     for(uint32_t retry=0;retry<IMU_CONFIG_RETRY;retry++){
     	if(imuAckTransaction(IMUhandle,&cmd,&ack,IMU_ACK_DELAY)) break;
-    	else if(retry==(IMU_CONFIG_RETRY-1)) return 0x01;
+    	else if(retry==(IMU_CONFIG_RETRY-1)) return 0;
     }
 
     //set output config
@@ -233,7 +233,7 @@ uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle){
 	ack.len=IMU_SET_OCONFIG_ACK_LEN;
 	for(uint32_t retry=0;retry<IMU_CONFIG_RETRY;retry++){
 		if(imuAckTransaction(IMUhandle,&cmd,&ack,IMU_ACK_DELAY)) break;
-		else if(retry==(IMU_CONFIG_RETRY-1)) return 0x02;
+		else if(retry==(IMU_CONFIG_RETRY-1)) return 0;
 	}
 
     //go to measurement state
@@ -243,7 +243,7 @@ uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle){
 	ack.len=0;
 	for(uint32_t retry=0;retry<IMU_CONFIG_RETRY;retry++){
 		if(imuAckTransaction(IMUhandle,&cmd,&ack,IMU_ACK_DELAY)) break;
-		else if(retry==(IMU_CONFIG_RETRY-1)) return 0x03;
+		else if(retry==(IMU_CONFIG_RETRY-1)) return 0;
 	}
 
 	return 1;
