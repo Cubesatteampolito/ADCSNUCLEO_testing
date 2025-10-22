@@ -389,6 +389,7 @@ void SensorReadingTask(void const * argument)
     uint8_t rx_buffer[4];   
     // int msg_index=0
     HAL_StatusTypeDef status;
+    int bytes_received = 0;
     
     for(;;)
     {
@@ -396,6 +397,7 @@ void SensorReadingTask(void const * argument)
     
     // Clear buffer
     memset(rx_buffer, 0, sizeof(rx_buffer));
+    bytes_received = 0;
     
     // Read byte by byte with delay
     for(int i = 0; i < 4; i++) {
@@ -416,19 +418,30 @@ void SensorReadingTask(void const * argument)
         }
         break;
       }
+      bytes_received++;
     }
-    vTaskDelay(pdMS_TO_TICKS(2));
-    
-    if (status == HAL_OK) {
+    if (bytes_received > 0) {
       len = snprintf(buffer, sizeof(buffer), 
-                    "[%lu] Received: 0x%02X 0x%02X 0x%02X 0x%02X\r\n", 
+                    "[%lu] Received %d byte(s): 0x%02X", 
                     (unsigned long)xTaskGetTickCount(), 
-                    rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+                    bytes_received, rx_buffer[0]);
+      
+      // Add additional bytes if received
+      if (bytes_received > 1) {
+        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[1]);
+      }
+      if (bytes_received > 2) {
+        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[2]);
+      }
+      if (bytes_received > 3) {
+        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[3]);
+      }
+      
+      len += snprintf(buffer + len, sizeof(buffer) - len, "\r\n");
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
     }
     
     vTaskDelay(pdMS_TO_TICKS(800));
-
       
         // len = snprintf(buffer, sizeof(buffer), 
         //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
