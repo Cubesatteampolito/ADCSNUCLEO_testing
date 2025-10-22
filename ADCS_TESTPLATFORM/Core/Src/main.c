@@ -400,9 +400,12 @@ void SensorReadingTask(void const * argument)
     
     if (status == HAL_OK) {
       len = snprintf(buffer, sizeof(buffer), 
-                    "[%lu] Received byte: 0x%02X (%c)\r\n", 
-                    (unsigned long)xTaskGetTickCount(), buffer1[0], 
-                    (buffer1[0] >= 32 && buffer1[0] < 127) ? buffer1[0] : '.');
+                    "[%lu] Received 3 bytes: 0x%02X 0x%02X 0x%02X | '%c' '%c' '%c'\r\n", 
+                    (unsigned long)xTaskGetTickCount(), 
+                    buffer1[0], buffer1[1], buffer1[2],
+                    (buffer1[0] >= 32 && buffer1[0] < 127) ? buffer1[0] : '.',
+                    (buffer1[1] >= 32 && buffer1[1] < 127) ? buffer1[1] : '.',
+                    (buffer1[2] >= 32 && buffer1[2] < 127) ? buffer1[2] : '.');
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
     } else {
       len = snprintf(buffer, sizeof(buffer), 
