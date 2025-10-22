@@ -393,20 +393,24 @@ void SensorReadingTask(void const * argument)
     for(;;)
     {
         // Task start message//meow
-    vTaskDelay(pdMS_TO_TICKS(800));
+    vTaskDelay(pdMS_TO_TICKS(100));
     
-    // Blocking receive with timeout
-    status = HAL_UART_Receive(&huart4, buffer1, 1, 1000);
+    // Read 4 bytes: FA FF BID MID
+    status = HAL_UART_Receive(&huart4, rx_buffer, 4, 1000);
     
     if (status == HAL_OK) {
-      len = snprintf(buffer, sizeof(buffer), 
-                    "[%lu] Received 4 bytes: 0x%02X 0x%02X 0x%02X 0x%02X | '%c' '%c' '%c' '%c'\r\n", 
-                    (unsigned long)xTaskGetTickCount(), 
-                    buffer1[0], buffer1[1], buffer1[2], buffer1[3],
-                    (buffer1[0] >= 32 && buffer1[0] < 127) ? buffer1[0] : '.',
-                    (buffer1[1] >= 32 && buffer1[1] < 127) ? buffer1[1] : '.',
-                    (buffer1[2] >= 32 && buffer1[2] < 127) ? buffer1[2] : '.',
-                    (buffer1[3] >= 32 && buffer1[3] < 127) ? buffer1[3] : '.');
+      // Check if it's a valid MTi packet (starts with 0xFA 0xFF)
+      if (rx_buffer[0] == 0xFA && rx_buffer[1] == 0xFF) {
+        len = snprintf(buffer, sizeof(buffer), 
+                      "[%lu] MTi Packet: Preamble=0xFA 0xFF, BID=0x%02X, MID=0x%02X\r\n", 
+                      (unsigned long)xTaskGetTickCount(), 
+                      rx_buffer[2], rx_buffer[3]);
+      } else {
+        len = snprintf(buffer, sizeof(buffer), 
+                      "[%lu] Invalid packet: 0x%02X 0x%02X 0x%02X 0x%02X\r\n", 
+                      (unsigned long)xTaskGetTickCount(), 
+                      rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+      }
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
     } else {
       len = snprintf(buffer, sizeof(buffer), 
@@ -415,7 +419,7 @@ void SensorReadingTask(void const * argument)
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
     }
     
-    vTaskDelay(pdMS_TO_TICKS(800));
+    vTaskDelay(pdMS_TO_TICKS(100));
       
         // len = snprintf(buffer, sizeof(buffer), 
         //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
