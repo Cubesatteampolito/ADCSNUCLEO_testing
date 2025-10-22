@@ -385,11 +385,18 @@ void SensorReadingTask(void const * argument)
     float gyro[3]={1,2,3};
     float mag[3]={4,5,6};
     float acc[3] = {7,8,9};
+    uint8_t buffer1[64];  
+    uint8_t meow;
     
     for(;;)
     {
         // Task start message//meow
         vTaskDelay(pdMS_TO_TICKS(800));
+        meow=Hal_UART_Receive(&huart4,buffer1,1,100);
+        len = snprintf(buffer, sizeof(buffer), 
+                      "[%lu] %d\r\n", 
+                      (unsigned long)xTaskGetTickCount(),meow);
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
         uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
         if (mtistatus==1){
           len = snprintf(buffer, sizeof(buffer), 
