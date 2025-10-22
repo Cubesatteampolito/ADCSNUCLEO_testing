@@ -24,7 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
-#include "mti3.h"
+#include "MTi3.h"
 
 /* USER CODE END Includes */
 
