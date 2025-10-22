@@ -380,7 +380,7 @@ void SensorReadingTask(void const * argument)
     
     char *messages[] = {message1, message2, message3};
     int msg_index = 0;
-    char buffer[64];  
+    char buffer[5];  
     int len;          
     // float gyro[3]={1,2,3};
     // float mag[3]={4,5,6};
@@ -390,7 +390,6 @@ void SensorReadingTask(void const * argument)
     for(;;)
     {
         // Task start message//meow
-        uint8_t buffer1[64]={0};
         vTaskDelay(pdMS_TO_TICKS(800));
         meow=HAL_UART_Receive(&huart4,buffer1,2,1000);
         len = snprintf(buffer, sizeof(buffer), 
