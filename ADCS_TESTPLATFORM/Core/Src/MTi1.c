@@ -226,7 +226,7 @@ uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle){
     }
 
     //set output config
-    cmd.mid=IMU_SET_OUTPUTCONFIG_MID ;
+    cmd.mid=IMU_SET_OUTPUTCONFIG_MID;
     cmd.len=IMU_SET_OCONFIG_LEN;
     cmd.data=(uint8_t *)outputConfigData;
 	ack.mid=IMU_SET_OUTPUTCONFIG_ACK_MID;
