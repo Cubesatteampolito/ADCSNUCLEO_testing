@@ -386,7 +386,7 @@ void SensorReadingTask(void const * argument)
     // float mag[3]={4,5,6};
     // float acc[3] = {7,8,9};
     uint8_t meow;
-    uint8_t buffer1[128];  
+    uint8_t buffer1[360];  
     // int msg_index=0
     
     for(;;)
