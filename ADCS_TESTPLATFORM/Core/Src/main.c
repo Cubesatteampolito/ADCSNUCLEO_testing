@@ -397,18 +397,18 @@ void SensorReadingTask(void const * argument)
                       "[%lu] THIS IS THE BYTE:%d\r\n", 
                       (unsigned long)xTaskGetTickCount(),meow);
         HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
-        if (mtistatus==1){
-          len = snprintf(buffer, sizeof(buffer), 
-                        "[%lu] config\r\n", 
-                        (unsigned long)xTaskGetTickCount());
-          HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);}
-        else {
-        len = snprintf(buffer, sizeof(buffer), 
-                        "[%lu] %d\r\n", 
-                        (unsigned long)xTaskGetTickCount(),mtistatus);
-          HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        }
+        // uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
+        // if (mtistatus==1){
+        //   len = snprintf(buffer, sizeof(buffer), 
+        //                 "[%lu] config\r\n", 
+        //                 (unsigned long)xTaskGetTickCount());
+        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);}
+        // else {
+        // len = snprintf(buffer, sizeof(buffer), 
+        //                 "[%lu] %d\r\n", 
+        //                 (unsigned long)xTaskGetTickCount(),mtistatus);
+        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // }
 
         // Sensor reading message
         len = snprintf(buffer, sizeof(buffer), 
