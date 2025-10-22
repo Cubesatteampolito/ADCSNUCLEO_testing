@@ -393,7 +393,7 @@ void SensorReadingTask(void const * argument)
     {
         // Task start message//meow
         vTaskDelay(pdMS_TO_TICKS(800));
-        meow=HAL_UART_Receive(&huart4,buffer1,5,1000);
+        meow=HAL_UART_Receive_IT(&huart4,buffer1,1);
         len = snprintf(buffer, sizeof(buffer), 
                       "[%lu] THIS IS THE BYTE:%d %d\r\n", 
                       (unsigned long)xTaskGetTickCount(),meow,buffer1 );
