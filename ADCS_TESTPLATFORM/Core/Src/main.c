@@ -19,12 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "usart.h"
+#include "mti3.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
-#include "MTi3.h"
 
 /* USER CODE END Includes */
 
@@ -84,6 +85,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+  
 
   /* USER CODE BEGIN Init */
 
@@ -100,14 +102,12 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_UART4_Init();
-
-  
   /* USER CODE BEGIN 2 */
-  MTI3_Init(&huart2);               
-  // Bring device to Config and request DID
-  MTI3_SendGoToConfig();
-  HAL_Delay(10);
-  MTI3_ReqDeviceID();
+  MTI3_Init(&huart2);
+  // Activate notification
+
+
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -142,19 +142,23 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
- while (1)
+  while (1)
   {
-    /* USER CODE BEGIN 3 */
     MTI3_Poll();
 
-    // Example: consume fresh sample
-    const MTI3_Accel_t *a = MTI3_GetAccel();
-    if (a->valid) {
-      // copy or log a->ax_ms2, a->ay_ms2, a->az_ms2
-      ((MTI3_Accel_t*)a)->valid = 0; // mark consumed
-    }
-    /* USER CODE END 3 */
+    // now mti3_accel[0..2] hold latest ax, ay, az in m/s^2 when packets arrive
+    // optional: breakpoint or lightweight check
+    // volatile float ax = mti3_accel[0];
+    
+
+    HAL_Delay(5);
+
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
   }
+  /* USER CODE END 3 */
 }
 
 /**
@@ -227,7 +231,7 @@ static void MX_UART4_Init(void)
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
   huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
@@ -337,38 +341,61 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  uint32_t t0 = HAL_GetTick();
-  for(;;)
-  {
-    MTI3_Poll();
+/**
+ * READ THIS SHI BEFORE YOU BECOME CRAZY
+ * This section is controlling the mti-3 sensors
+ * In order to understand the code please check the Xsense LLCP(Low Level Communication Protocol) as the Mti-3 communicate through this protocol.(thats where the hex content came from)
+ * Also check the Mti-3 data sheet itself for more information
+ * For the sake of everyone laziness, imma put it here so that no one have to go through the dirty work again
+ * MESSAGE STRUCTURE
+ * Preamble||BusID||MessageID||Length||Data||Checksum
+ * for example: the goToConfig messageID is 0x30 therefore the message that you need to send is  0xFA, 0xFF, 0x30, 0x00, 0xD1
+ * why is the preamble 0xFA and the busID is 0xFF you might ask. erm its in the document XD (its a constant) basically the busID is just saying that you re sending message from master device which is yourself 0xFF
+ * length in this case is 0x00 because you dont send any data, you just send the messageID
+ * and the check sum is check sum= 256(because we are using 8bit bytes duh)-(sum of BusID, MID, LEN, DATA)(sum of everything except preamble)mod256
+ * NOTE TO MYSELF(HOANG) I WILL PUT A F*CKING HEADER FILE FOR ALL THIS HEX VALUE, THIS CODE IS UGLY
+ * btw if you ask why its in default task, because i want to check if it works first then i can do tasking later
+ * test
+ */
+	// This part of the code is to check the status of the sensor
+	//uint8_t wakeup[] = { 0xFA, 0xFF, 0x3E, 0x00, 0xC1 };
+	uint8_t goToConfig[] = { 0xFA, 0xFF, 0x30, 0x00, 0xD1 };
+	uint8_t ReqDID[] = { 0xFA, 0xFF, 0x00, 0x00, 0xFF };
+	uint8_t rxBuffer[32];
+	// 0) Send Wake up
+	//HAL_UART_Transmit(&huart4, wakeup, sizeof(wakeup), HAL_MAX_DELAY);
+	//HAL_Delay(10); // Small delay to let sensor switch modes
+	// 1) Send GoToConfig,  Switch the active state of the device from Measurement State to Config State. This message can also be used in Config State to confirm that Config State is currently the active state.
+	HAL_UART_Transmit(&huart4, goToConfig, sizeof(goToConfig), HAL_MAX_DELAY);
+	HAL_Delay(10); // Small delay to let sensor switch modes
 
-    // Print DeviceID once
-    static uint8_t did_printed = 0;
-    const MTI3_DeviceID_t *d = MTI3_GetDeviceID();
-    if (d->valid && !did_printed){
-      char msg[48];
-      snprintf(msg, sizeof(msg), "DeviceID: %08lX\r\n", (unsigned long)d->device_id);
-      HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-      did_printed = 1;
+	// 2) Send ReqDID, Request to send the device identifier (or serial number). MT acknowledges by sending the DeviceID message.
+	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
 
-      // Switch to Measurement after we confirmed DID
-      MTI3_SendGoToMeasurement();
-    }
+	// 3) Receive  DeviceID.  Acknowledge of ReqDID message. Data field contains device ID / serial number.
+	HAL_UART_Receive(&huart4, rxBuffer, 8, 100);  // Adjust length as needed
 
-    // Periodic accel print (10 Hz)
-    if (HAL_GetTick() - t0 >= 100){
-      t0 += 100;
-      const MTI3_Accel_t *a = MTI3_GetAccel();
-      if (a->valid){
-        char line[80];
-        snprintf(line, sizeof(line), "ACC[m/s^2]: %.4f %.4f %.4f\r\n",
-                 a->ax_ms2, a->ay_ms2, a->az_ms2);
-        HAL_UART_Transmit(&huart2, (uint8_t*)line, strlen(line), 100);
-        ((MTI3_Accel_t*)a)->valid = 0; // mark consumed
-      }
-    }
-    osDelay(1);
-  }
+	// 4) Check response
+	// Buffer to hold the message
+	char msg[64];
+
+	// check for Device ID, if the ID is not 000000 the device is responding
+	if (1) // MID == DeviceID response
+	{
+	  snprintf(msg, sizeof(msg),
+	           "DeviceID: %02X%02X%02X%02X\r\n",
+	           rxBuffer[5], rxBuffer[6], rxBuffer[7], rxBuffer[8]);
+
+	  HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+	}
+	// For testing and debug purposes i will put a pair of ReqOutputConfiguration and SetOutputConfiguration here
+	// The ReqConfiguration is to understand the current output configuration
+	uint8_t ReqOutputConfiguration[] = { 0xFA, 0xFF, 0x0C, 0x00, 0xF5};
+	// Send ReqOutputConfiguration.Requests the output configuration settings of the device.
+	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
+
+
+
   /* USER CODE END 5 */
 }
 

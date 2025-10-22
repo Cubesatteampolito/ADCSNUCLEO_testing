@@ -1,136 +1,127 @@
-#include "MTi3.h"
+#include "mti3.h"
 #include <string.h>
 
-#define XBUS_PRE   0xFA
-#define XBUS_BID   0xFF
-#define MID_GOTOCONFIG     0x30
-#define MID_GOTOMEAS       0x10
-#define MID_REQ_DID        0x00
-#define MID_DEVICEID       0x01
-#define MID_MTDATA2        0x36
-#define DID_ACCEL          0x4030u
+static UART_HandleTypeDef *mhuart;
+static uint8_t rx_dma_buf[MTI3_RX_BUF_SZ];
+static volatile uint16_t dma_last = 0;
 
-#define PAY_MAX 256
+volatile float mti3_accel[3] = {0.f, 0.f, 0.f};
 
-static UART_HandleTypeDef *s_huart;
-static uint8_t rx;
-static volatile uint8_t rx_arm = 0;
-
-static uint8_t pkt[4 + PAY_MAX + 1];
-static uint16_t pkt_idx = 0;
-static uint16_t pay_len = 0;
-
-static enum { P_PRE, P_BID, P_MID, P_LEN, P_PAY, P_CHK } st;
-
-static MTI3_Accel_t acc = {0};
-static MTI3_DeviceID_t did = {0};
-
-static uint8_t checksum(uint8_t *buf, uint16_t n) {
-  uint32_t sum = 0;
-  for (uint16_t i = 1; i < n-1; ++i) sum += buf[i];
-  return (uint8_t)(-((int32_t)sum));
+// --- helpers ---
+static uint16_t dma_pos(void) {
+    // Number of bytes already received by DMA in circular mode
+    return (uint16_t)(MTI3_RX_BUF_SZ - __HAL_DMA_GET_COUNTER(mhuart->hdmarx));
 }
-static float be_f32(const uint8_t *p){
-  uint32_t u = (uint32_t)p[0]<<24 | (uint32_t)p[1]<<16 | (uint32_t)p[2]<<8 | p[3];
-  float f; memcpy(&f,&u,4); return f;
+static uint8_t checksum_xbus(const uint8_t *p, uint16_t len) {
+    uint32_t s = 0;
+    for (uint16_t i = 0; i < len; i++) s += p[i];
+    return (uint8_t)(-((int8_t)(s & 0xFF)));
 }
-static uint32_t be_u32(const uint8_t *p){
-  return (uint32_t)p[0]<<24 | (uint32_t)p[1]<<16 | (uint32_t)p[2]<<8 | p[3];
+static float be_f32(const uint8_t *b) {
+    uint32_t u = ((uint32_t)b[0]<<24)|((uint32_t)b[1]<<16)|((uint32_t)b[2]<<8)|b[3];
+    float f;
+    memcpy(&f, &u, 4);
+    return f;
 }
 
-static void parse_mtdata2(const uint8_t *pay, uint16_t len){
-  uint16_t i=0;
-  while (i+4 <= len){
-    uint16_t did_be = (uint16_t)pay[i]<<8 | pay[i+1];
-    uint16_t flen   = (uint16_t)pay[i+2]<<8 | pay[i+3];
-    i += 4;
-    if (i+flen > len) break;
-    if (did_be == DID_ACCEL && flen == 12){
-      acc.ax_ms2 = be_f32(&pay[i+0]);
-      acc.ay_ms2 = be_f32(&pay[i+4]);
-      acc.az_ms2 = be_f32(&pay[i+8]);
-      acc.valid  = 1;
+// Parse one Xbus packet if available. Returns bytes consumed.
+static uint16_t parse_one(const uint8_t *buf, uint16_t avail) {
+    // Xbus: 0xFA 0xFF MID LEN [LEN bytes] CHK
+    if (avail < 5) return 0;
+    // search preamble 0xFA 0xFF
+    uint16_t i = 0;
+    while (i + 5 <= avail) {
+        if (buf[i] == 0xFA && buf[i+1] == 0xFF) break;
+        i++;
     }
-    i += flen;
-  }
-}
+    if (i + 5 > avail) return i; // skip garbage
 
-static void feed(uint8_t b){
-  switch(st){
-    case P_PRE:
-      if (b == XBUS_PRE){ pkt_idx = 0; pkt[pkt_idx++] = b; st = P_BID; }
-      break;
-    case P_BID:
-      pkt[pkt_idx++] = b;
-      st = (b == XBUS_BID) ? P_MID : P_PRE;
-      break;
-    case P_MID:
-      pkt[pkt_idx++] = b;
-      st = P_LEN;
-      break;
-    case P_LEN:
-      pkt[pkt_idx++] = b;
-      pay_len = b;
-      if (pay_len > PAY_MAX){ st = P_PRE; break; }
-      st = pay_len ? P_PAY : P_CHK;
-      break;
-    case P_PAY:
-      pkt[pkt_idx++] = b;
-      if (pkt_idx == 4 + pay_len) st = P_CHK;
-      break;
-    case P_CHK:
-      pkt[pkt_idx++] = b;
-      if (checksum(pkt, pkt_idx) == 0){
-        uint8_t mid = pkt[2];
-        const uint8_t *pay = &pkt[4];
-        if (mid == MID_DEVICEID && pay_len == 4){
-          did.device_id = be_u32(pay);
-          did.valid = 1;
-        } else if (mid == MID_MTDATA2){
-          parse_mtdata2(pay, pay_len);
+    uint16_t pos = i;
+    if (pos + 5 > avail) return pos; // not enough
+
+    uint8_t MID  = buf[pos+2];
+    uint8_t LEN  = buf[pos+3];
+    uint16_t need = 5 + LEN; // includes CHK
+    if (pos + need > avail) return pos; // wait for more
+
+    // Verify checksum on [0..3+LEN], CHK at [4+LEN]
+    if (checksum_xbus(&buf[pos], 4 + LEN) != buf[pos + 4 + LEN]) {
+        // bad frame, drop preamble
+        return pos + 1;
+    }
+
+    // MID 0x36 = MTData2
+    if (MID == 0x36 && LEN >= 2) {
+        // MTData2 payload: repeating blocks: [XDI (2B)][FMTLEN(1B)][data...]
+        uint16_t p = pos + 4;              // start of payload
+        uint16_t end = pos + 4 + LEN;
+        while (p + 3 <= end) {
+            uint16_t XDI = ((uint16_t)buf[p]<<8) | buf[p+1];
+            uint8_t  fl  = buf[p+2];       // format+length (Xsens packs length here)
+            p += 3;
+            // For Acceleration (m/s^2): XDI = 0x4020, length = 12 bytes (3x float32 BE)
+            if (XDI == 0x4020 && p + 12 <= end) {
+                mti3_accel[0] = be_f32(&buf[p+0]);
+                mti3_accel[1] = be_f32(&buf[p+4]);
+                mti3_accel[2] = be_f32(&buf[p+8]);
+            }
+            // Advance by declared data length. For floats block this is 12.
+            // If unsure, use remaining-to-next-block = (fl & 0x1F) * 4 for float fields.
+            // Minimal path: try common 12B, fall back to skip by (fl & 0x1F).
+            uint8_t words = (fl & 0x1F);   // number of 32-bit words per Xsens doc
+            uint16_t dlen = (uint16_t)words * 4;
+            if (p + dlen > end) break;
+            p += dlen;
         }
-      }
-      st = P_PRE;
-      break;
-  }
+    }
+
+    return pos + need; // consume whole frame
 }
 
-void MTI3_Init(UART_HandleTypeDef *huart){
-  s_huart = huart;
-  st = P_PRE; pkt_idx = 0; pay_len = 0;
-  acc.valid = 0; did.valid = 0;
-  rx_arm = 1;
-  HAL_UART_Receive_IT(s_huart, &rx, 1);
+void MTI3_Init(UART_HandleTypeDef *huart) {
+    mhuart = huart;
+    __HAL_UART_FLUSH_DRREGISTER(mhuart);
+    HAL_UART_Receive_DMA(mhuart, rx_dma_buf, MTI3_RX_BUF_SZ);
+    // enable circular mode in CubeMX on DMA; no further config here
 }
 
-void MTI3_Poll(void){
-  if (rx_arm){ rx_arm = 0; HAL_UART_Receive_IT(s_huart, &rx, 1); }
-}
+void MTI3_Poll(void) {
+    uint16_t pos = dma_pos();
+    if (pos == dma_last) return;
 
-const MTI3_Accel_t* MTI3_GetAccel(void){ return &acc; }
-const MTI3_DeviceID_t* MTI3_GetDeviceID(void){ return &did; }
+    // Linearize the ring into a small temp window and parse
+    if (pos > dma_last) {
+        // single span
+        const uint8_t *span = &rx_dma_buf[dma_last];
+        uint16_t avail = pos - dma_last;
+        uint16_t used = 0;
+        while (used < avail) {
+            uint16_t c = parse_one(span + used, avail - used);
+            if (c == 0) break;
+            used += c;
+        }
+        dma_last = (dma_last + used) % MTI3_RX_BUF_SZ;
+    } else {
+        // wrap-around: first tail
+        const uint8_t *span1 = &rx_dma_buf[dma_last];
+        uint16_t avail1 = MTI3_RX_BUF_SZ - dma_last;
+        uint16_t used1 = 0;
+        while (used1 < avail1) {
+            uint16_t c = parse_one(span1 + used1, avail1 - used1);
+            if (c == 0) break;
+            used1 += c;
+        }
+        dma_last = (dma_last + used1) % MTI3_RX_BUF_SZ;
 
-/* Simple command helpers */
-static void send_frame(uint8_t mid, const uint8_t *data, uint8_t len){
-  uint8_t buf[4 + PAY_MAX + 1];
-  uint16_t n = 0;
-  buf[n++] = XBUS_PRE;
-  buf[n++] = XBUS_BID;
-  buf[n++] = mid;
-  buf[n++] = len;
-  if (len && data) { memcpy(&buf[n], data, len); n += len; }
-  buf[n++] = checksum(buf, n+1);
-  HAL_UART_Transmit(s_huart, buf, n, 100);
-}
-
-void MTI3_SendGoToConfig(void){ send_frame(MID_GOTOCONFIG, NULL, 0); }
-void MTI3_SendGoToMeasurement(void){ send_frame(MID_GOTOMEAS, NULL, 0); }
-void MTI3_ReqDeviceID(void){ send_frame(MID_REQ_DID, NULL, 0); }
-
-/* HAL weak callback override */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-  if (huart == s_huart){
-    feed(rx);
-    rx_arm = 1;
-  }
+        // then head
+        const uint8_t *span2 = &rx_dma_buf[0];
+        uint16_t avail2 = pos;
+        uint16_t used2 = 0;
+        while (used2 < avail2) {
+            uint16_t c = parse_one(span2 + used2, avail2 - used2);
+            if (c == 0) break;
+            used2 += c;
+        }
+        dma_last = (dma_last + used2) % MTI3_RX_BUF_SZ;
+    }
 }

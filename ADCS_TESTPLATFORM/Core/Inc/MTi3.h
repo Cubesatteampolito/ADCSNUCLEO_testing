@@ -4,23 +4,15 @@
 #include "main.h"
 #include <stdint.h>
 
-typedef struct {
-  float ax_ms2, ay_ms2, az_ms2;
-  uint8_t valid;
-} MTI3_Accel_t;
+#define MTI3_RX_BUF_SZ 512
 
-typedef struct {
-  uint32_t device_id;  // big-endian parsed to native
-  uint8_t valid;
-} MTI3_DeviceID_t;
+// Latest acceleration [ax, ay, az] in m/s^2. Updated when a valid packet is parsed.
+extern volatile float mti3_accel[3];
 
+// Call once after HAL init
 void MTI3_Init(UART_HandleTypeDef *huart);
-void MTI3_Poll(void);                      // call in loop or a task
-void MTI3_SendGoToConfig(void);
-void MTI3_SendGoToMeasurement(void);
-void MTI3_ReqDeviceID(void);
 
-const MTI3_Accel_t*   MTI3_GetAccel(void);
-const MTI3_DeviceID_t* MTI3_GetDeviceID(void);
+// Call often (e.g., in the main loop) to parse new bytes from DMA buffer
+void MTI3_Poll(void);
 
 #endif
