@@ -1,112 +1,136 @@
-#include "MTi3.h" 
+#include "mti3.h"
 #include <string.h>
 
-#define XBUS_PREAMBLE 0xFA
-#define XBUS_BID      0xFF
-#define MID_MTDATA2   0x36
-#define DID_ACCEL     0x4030u  // Acceleration (m/s^2), 3x float32 big-endian
-#define PAY_MAX       256
+#define XBUS_PRE   0xFA
+#define XBUS_BID   0xFF
+#define MID_GOTOCONFIG     0x30
+#define MID_GOTOMEAS       0x10
+#define MID_REQ_DID        0x00
+#define MID_DEVICEID       0x01
+#define MID_MTDATA2        0x36
+#define DID_ACCEL          0x4030u
+
+#define PAY_MAX 256
 
 static UART_HandleTypeDef *s_huart;
 static uint8_t rx;
-static volatile uint8_t rx_ready = 0;
+static volatile uint8_t rx_arm = 0;
 
-static uint8_t pkt[4 + PAY_MAX + 1]; // preamble + BID + MID + LEN + payload + checksum
-static uint16_t pkt_len = 0;
+static uint8_t pkt[4 + PAY_MAX + 1];
 static uint16_t pkt_idx = 0;
-static enum { S_WAIT_PREAMBLE, S_BID, S_MID, S_LEN, S_PAYLOAD, S_CHECK } st = S_WAIT_PREAMBLE;
+static uint16_t pay_len = 0;
 
-static MTI3_Accel_t out = {0};
+static enum { P_PRE, P_BID, P_MID, P_LEN, P_PAY, P_CHK } st;
 
-static uint8_t xbus_checksum(uint8_t *buf, uint16_t n) {
-  // Sum of BID..payload, checksum makes sum % 256 == 0
+static MTI3_Accel_t acc = {0};
+static MTI3_DeviceID_t did = {0};
+
+static uint8_t checksum(uint8_t *buf, uint16_t n) {
   uint32_t sum = 0;
   for (uint16_t i = 1; i < n-1; ++i) sum += buf[i];
   return (uint8_t)(-((int32_t)sum));
 }
-
-static float be_f32(const uint8_t *p) {
-  uint32_t u = ((uint32_t)p[0]<<24) | ((uint32_t)p[1]<<16) | ((uint32_t)p[2]<<8) | p[3];
-  float f;
-  memcpy(&f, &u, sizeof(f));
-  return f;
+static float be_f32(const uint8_t *p){
+  uint32_t u = (uint32_t)p[0]<<24 | (uint32_t)p[1]<<16 | (uint32_t)p[2]<<8 | p[3];
+  float f; memcpy(&f,&u,4); return f;
+}
+static uint32_t be_u32(const uint8_t *p){
+  return (uint32_t)p[0]<<24 | (uint32_t)p[1]<<16 | (uint32_t)p[2]<<8 | p[3];
 }
 
-static void parse_mtdata2_fields(const uint8_t *payload, uint16_t len) {
-  uint16_t i = 0;
-  while (i + 4 <= len) {
-    uint16_t did = ((uint16_t)payload[i]<<8) | payload[i+1];  // big-endian
-    uint16_t flen = ((uint16_t)payload[i+2]<<8) | payload[i+3];
+static void parse_mtdata2(const uint8_t *pay, uint16_t len){
+  uint16_t i=0;
+  while (i+4 <= len){
+    uint16_t did_be = (uint16_t)pay[i]<<8 | pay[i+1];
+    uint16_t flen   = (uint16_t)pay[i+2]<<8 | pay[i+3];
     i += 4;
-    if (i + flen > len) break;
-
-    if (did == DID_ACCEL && flen == 12) {
-      out.ax_ms2 = be_f32(&payload[i+0]);
-      out.ay_ms2 = be_f32(&payload[i+4]);
-      out.az_ms2 = be_f32(&payload[i+8]);
-      out.valid = 1;
+    if (i+flen > len) break;
+    if (did_be == DID_ACCEL && flen == 12){
+      acc.ax_ms2 = be_f32(&pay[i+0]);
+      acc.ay_ms2 = be_f32(&pay[i+4]);
+      acc.az_ms2 = be_f32(&pay[i+8]);
+      acc.valid  = 1;
     }
     i += flen;
   }
 }
 
-static void feed(uint8_t b) {
-  switch (st) {
-    case S_WAIT_PREAMBLE:
-      if (b == XBUS_PREAMBLE) {
-        pkt_idx = 0;
-        pkt[pkt_idx++] = b;
-        st = S_BID;
+static void feed(uint8_t b){
+  switch(st){
+    case P_PRE:
+      if (b == XBUS_PRE){ pkt_idx = 0; pkt[pkt_idx++] = b; st = P_BID; }
+      break;
+    case P_BID:
+      pkt[pkt_idx++] = b;
+      st = (b == XBUS_BID) ? P_MID : P_PRE;
+      break;
+    case P_MID:
+      pkt[pkt_idx++] = b;
+      st = P_LEN;
+      break;
+    case P_LEN:
+      pkt[pkt_idx++] = b;
+      pay_len = b;
+      if (pay_len > PAY_MAX){ st = P_PRE; break; }
+      st = pay_len ? P_PAY : P_CHK;
+      break;
+    case P_PAY:
+      pkt[pkt_idx++] = b;
+      if (pkt_idx == 4 + pay_len) st = P_CHK;
+      break;
+    case P_CHK:
+      pkt[pkt_idx++] = b;
+      if (checksum(pkt, pkt_idx) == 0){
+        uint8_t mid = pkt[2];
+        const uint8_t *pay = &pkt[4];
+        if (mid == MID_DEVICEID && pay_len == 4){
+          did.device_id = be_u32(pay);
+          did.valid = 1;
+        } else if (mid == MID_MTDATA2){
+          parse_mtdata2(pay, pay_len);
+        }
       }
-      break;
-    case S_BID:
-      pkt[pkt_idx++] = b;
-      st = (b == XBUS_BID) ? S_MID : S_WAIT_PREAMBLE;
-      break;
-    case S_MID:
-      pkt[pkt_idx++] = b;
-      st = S_LEN;
-      break;
-    case S_LEN:
-      pkt[pkt_idx++] = b;
-      pkt_len = b;                // 1-byte LEN (sufficient for our minimal case)
-      if (pkt_len > PAY_MAX) { st = S_WAIT_PREAMBLE; break; }
-      st = (pkt_len == 0) ? S_CHECK : S_PAYLOAD;
-      break;
-    case S_PAYLOAD:
-      pkt[pkt_idx++] = b;
-      if (pkt_idx == 4 + pkt_len) st = S_CHECK;
-      break;
-    case S_CHECK:
-      pkt[pkt_idx++] = b;         // checksum
-      if (xbus_checksum(pkt, pkt_idx)) { /* bad */ }
-      else if (pkt[2] == MID_MTDATA2) {
-        parse_mtdata2_fields(&pkt[4], pkt_len);
-      }
-      st = S_WAIT_PREAMBLE;
+      st = P_PRE;
       break;
   }
 }
 
-void MTI3_Init(UART_HandleTypeDef *huart) {
+void MTI3_Init(UART_HandleTypeDef *huart){
   s_huart = huart;
-  st = S_WAIT_PREAMBLE;
-  pkt_idx = 0;
-  out.valid = 0;
+  st = P_PRE; pkt_idx = 0; pay_len = 0;
+  acc.valid = 0; did.valid = 0;
+  rx_arm = 1;
   HAL_UART_Receive_IT(s_huart, &rx, 1);
 }
 
-void MTI3_Poll(void) {
-  // no-op; parser runs in IRQ callback
-  if (rx_ready) { rx_ready = 0; HAL_UART_Receive_IT(s_huart, &rx, 1); }
+void MTI3_Poll(void){
+  if (rx_arm){ rx_arm = 0; HAL_UART_Receive_IT(s_huart, &rx, 1); }
 }
 
-const MTI3_Accel_t* MTI3_GetAccel(void) { return &out; }
+const MTI3_Accel_t* MTI3_GetAccel(void){ return &acc; }
+const MTI3_DeviceID_t* MTI3_GetDeviceID(void){ return &did; }
 
-// HAL weak override: call from IRQ when a byte arrives
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-  if (huart == s_huart) {
+/* Simple command helpers */
+static void send_frame(uint8_t mid, const uint8_t *data, uint8_t len){
+  uint8_t buf[4 + PAY_MAX + 1];
+  uint16_t n = 0;
+  buf[n++] = XBUS_PRE;
+  buf[n++] = XBUS_BID;
+  buf[n++] = mid;
+  buf[n++] = len;
+  if (len && data) { memcpy(&buf[n], data, len); n += len; }
+  buf[n++] = checksum(buf, n+1);
+  HAL_UART_Transmit(s_huart, buf, n, 100);
+}
+
+void MTI3_SendGoToConfig(void){ send_frame(MID_GOTOCONFIG, NULL, 0); }
+void MTI3_SendGoToMeasurement(void){ send_frame(MID_GOTOMEAS, NULL, 0); }
+void MTI3_ReqDeviceID(void){ send_frame(MID_REQ_DID, NULL, 0); }
+
+/* HAL weak callback override */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+  if (huart == s_huart){
     feed(rx);
-    rx_ready = 1;
+    rx_arm = 1;
   }
 }
