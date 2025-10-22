@@ -386,7 +386,7 @@ void SensorReadingTask(void const * argument)
     // float mag[3]={4,5,6};
     // float acc[3] = {7,8,9};
     uint8_t meow;
-    uint8_t buffer1[64];  
+    uint8_t buffer1[4]];  
     // int msg_index=0
     HAL_StatusTypeDef status;
     
@@ -402,10 +402,11 @@ void SensorReadingTask(void const * argument)
       len = snprintf(buffer, sizeof(buffer), 
                     "[%lu] Received 3 bytes: 0x%02X 0x%02X 0x%02X | '%c' '%c' '%c'\r\n", 
                     (unsigned long)xTaskGetTickCount(), 
-                    buffer1[0], buffer1[1], buffer1[2],
+                    buffer1[0], buffer1[1], buffer1[2],buffer1[4],
                     (buffer1[0] >= 32 && buffer1[0] < 127) ? buffer1[0] : '.',
                     (buffer1[1] >= 32 && buffer1[1] < 127) ? buffer1[1] : '.',
-                    (buffer1[2] >= 32 && buffer1[2] < 127) ? buffer1[2] : '.');
+                    (buffer1[2] >= 32 && buffer1[2] < 127) ? buffer1[2] : '.',
+                    (buffer1[3] >= 32 && buffer1[3] < 127) ? buffer1[3] : '.');
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
     } else {
       len = snprintf(buffer, sizeof(buffer), 
