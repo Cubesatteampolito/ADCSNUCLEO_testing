@@ -382,12 +382,15 @@ void SensorReadingTask(void const * argument)
     int msg_index = 0;
     char buffer[64];  
     int len;          
+    float gyro[3]={1,2,3};
+    float mag[3]={4,5,6};
+    float acc[3] = {7,8,9};
     
     for(;;)
     {
         // Task start message//meow
         vTaskDelay(pdMS_TO_TICKS(800));
-        uint8_t mtistatus=initIMUConfig(&huart4);
+        uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
         if (mtistatus==1){
           len = snprintf(buffer, sizeof(buffer), 
                         "[%lu] config\r\n", 
