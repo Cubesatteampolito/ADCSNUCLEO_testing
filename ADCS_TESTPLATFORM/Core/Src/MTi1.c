@@ -7,7 +7,7 @@
 #endif
 
 #define IMU_ACK_DELAY 100	//maximum time to wait for ack
-#define IMU_CONFIG_RETRY 10 //number of times configuration commands will be sent if ack is not received
+#define IMU_CONFIG_RETRY 2 //number of times configuration commands will be sent if ack is not received
 
 
 //structure to pass message data
@@ -19,8 +19,8 @@ typedef struct{
 } imu_packet_struct;
 
 //defines
-#define IMU_PREAMBLE 	0xfa
-#define IMU_BID			0xff
+#define IMU_PREAMBLE 	0xFF
+#define IMU_BID			0xFA
 //MID definitions
 #define IMU_GOTO_CONFIG_MID			0x40
 #define IMU_GOTO_CONFIG_ACK_MID		0x41
