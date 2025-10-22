@@ -387,7 +387,7 @@ void SensorReadingTask(void const * argument)
     for(;;)
     {
         // Task start message
-        uint8_t mtistatus=initIMUConfig(UART_HandleTypeDef* IMUhandle);
+        uint8_t mtistatus=initIMUConfig(&huart4);
         if (mtistatus==1){
           len = snprintf(buffer, sizeof(buffer), 
                         "[%lu] config\r\n", 
