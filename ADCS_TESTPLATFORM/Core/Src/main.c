@@ -385,17 +385,17 @@ void SensorReadingTask(void const * argument)
     
     for(;;)
     {
-        // Task start message
-        uint8_t mtistatus=receiveMsg(&huart4,NULL,0x3E,1,100);
+        // Task start message//meow
+        uint8_t mtistatus=initIMUConfig(&huart4);
         if (mtistatus==1){
           len = snprintf(buffer, sizeof(buffer), 
-                        "[%lu] wakeup\r\n", 
+                        "[%lu] config\r\n", 
                         (unsigned long)xTaskGetTickCount());
           HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);}
         else {
         len = snprintf(buffer, sizeof(buffer), 
-                        "[%lu] meow\r\n", 
-                        (unsigned long)xTaskGetTickCount());
+                        "[%lu] %d\r\n", 
+                        (unsigned long)xTaskGetTickCount(),mtistatus);
           HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
         }
 
