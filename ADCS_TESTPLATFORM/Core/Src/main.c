@@ -400,9 +400,9 @@ void SensorReadingTask(void const * argument)
     
     if (status == HAL_OK) {
       len = snprintf(buffer, sizeof(buffer), 
-                    "[%lu] Received 3 bytes: 0x%02X 0x%02X 0x%02X | '%c' '%c' '%c'\r\n", 
+                    "[%lu] Received 4 bytes: 0x%02X 0x%02X 0x%02X 0x%02X | '%c' '%c' '%c' '%c'\r\n", 
                     (unsigned long)xTaskGetTickCount(), 
-                    buffer1[0], buffer1[1], buffer1[2],buffer1[4],
+                    buffer1[0], buffer1[1], buffer1[2], buffer1[3],
                     (buffer1[0] >= 32 && buffer1[0] < 127) ? buffer1[0] : '.',
                     (buffer1[1] >= 32 && buffer1[1] < 127) ? buffer1[1] : '.',
                     (buffer1[2] >= 32 && buffer1[2] < 127) ? buffer1[2] : '.',
