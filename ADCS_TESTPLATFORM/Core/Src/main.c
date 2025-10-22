@@ -374,18 +374,19 @@ void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-    static char message1[] = "Sensor Data 1";
-    static char message2[] = "Temperature Reading";
-    static char message3[] = "Gyroscope Data";
+    // static char message1[] = "Sensor Data 1";
+    // static char message2[] = "Temperature Reading";
+    // static char message3[] = "Gyroscope Data";
     
     char *messages[] = {message1, message2, message3};
     int msg_index = 0;
-    char buffer[5];  
+    char buffer[64];  
     int len;          
     // float gyro[3]={1,2,3};
     // float mag[3]={4,5,6};
     // float acc[3] = {7,8,9};
     uint8_t meow;
+    uint8_t buffer1[5];  
     
     for(;;)
     {
