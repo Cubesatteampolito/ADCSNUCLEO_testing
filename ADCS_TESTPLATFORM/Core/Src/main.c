@@ -421,12 +421,129 @@ void SensorReadingTask(void const * argument)
   }
   
   /* Infinite loop */
-  for(;;)
-  {
-    // Wait for data (task will be notified by UART callback)
-    // For now, just delay - you may want to add task notifications
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-  }
+    // static char message1[] = "Sensor Data 1";
+    // static char message2[] = "Temperature Reading";
+    // static char message3[] = "Gyroscope Data";
+    
+    // char *messages[] = {message1, message2, message3};
+    // int msg_index = 0;
+  char buffer[128];  
+    int len;          
+    // float gyro[3]={1,2,3};
+    // float mag[3]={4,5,6};
+    // float acc[3] = {7,8,9};
+    uint8_t meow;
+    uint8_t rx_buffer[4];   
+    // int msg_index=0
+    HAL_StatusTypeDef status;
+    int bytes_received = 0;
+    
+    for(;;)
+    {
+    vTaskDelay(pdMS_TO_TICKS(100));
+    
+    // Clear buffer
+    memset(rx_buffer, 0, sizeof(rx_buffer));
+    bytes_received = 0;
+    
+    // Read byte by byte with delay
+    for(int i = 0; i < 4; i++) {
+      status = HAL_UART_Receive(&huart4, &rx_buffer[i], 1, 1000);
+      
+      if (status != HAL_OK) {
+        len = snprintf(buffer, sizeof(buffer), 
+                      "[%lu] Failed at byte %d, status=%d, ErrorCode=0x%08lX\r\n", 
+                      (unsigned long)xTaskGetTickCount(), i, status, huart4.ErrorCode);
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        
+        // Clear error flags and try to reset UART state
+        if (huart4.ErrorCode != HAL_UART_ERROR_NONE) {
+          __HAL_UART_CLEAR_FLAG(&huart4, UART_CLEAR_OREF | UART_CLEAR_NEF | UART_CLEAR_PEF | UART_CLEAR_FEF);
+          huart4.ErrorCode = HAL_UART_ERROR_NONE;
+          huart4.gState = HAL_UART_STATE_READY;
+          huart4.RxState = HAL_UART_STATE_READY;
+        }
+        break;
+      }
+      bytes_received++;
+    }
+    if (bytes_received > 0) {
+      len = snprintf(buffer, sizeof(buffer), 
+                    "[%lu] Received %d byte(s): 0x%02X", 
+                    (unsigned long)xTaskGetTickCount(), 
+                    bytes_received, rx_buffer[0]);
+      
+      // Add additional bytes if received
+      if (bytes_received > 1) {
+        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[1]);
+      }
+      if (bytes_received > 2) {
+        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[2]);
+      }
+      if (bytes_received > 3) {
+        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[3]);
+      }
+      
+      len += snprintf(buffer + len, sizeof(buffer) - len, "\r\n");
+      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+    }
+    
+    vTaskDelay(pdMS_TO_TICKS(800));
+      
+        // len = snprintf(buffer, sizeof(buffer), 
+        //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
+        //               (unsigned long)xTaskGetTickCount(),buffer1);
+        // HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        // uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
+        // if (mtistatus==1){
+        //   len = snprintf(buffer, sizeof(buffer), 
+        //                 "[%lu] config\r\n", 
+        //                 (unsigned long)xTaskGetTickCount());
+        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);}
+        // else {
+        // len = snprintf(buffer, sizeof(buffer), 
+        //                 "[%lu] %d\r\n", 
+        //                 (unsigned long)xTaskGetTickCount(),mtistatus);
+        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // }
+        vTaskDelay(pdMS_TO_TICKS(800));
+        // Sensor reading message
+        // len = snprintf(buffer, sizeof(buffer), 
+        //                "[%lu] sensor reading start\r\n", 
+        //                (unsigned long)xTaskGetTickCount());
+        // HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        
+        // vTaskDelay(pdMS_TO_TICKS(500));//simulate sensor read delay
+        
+        // Prepare message pointer
+        // char *msg_ptr = messages[msg_index];
+        
+        // Send pointer to queue (100ms timeout)
+        //UBaseType_t spaces_available = uxQueueSpacesAvailable(xQueue1);
+        //len = snprintf(buffer, sizeof(buffer), 
+        //              "[%lu] Queue spaces: %d\r\n", 
+        //              (unsigned long)xTaskGetTickCount(), (int)spaces_available);
+        //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // BaseType_t result = xQueueSend(xQueue1, &msg_ptr, pdMS_TO_TICKS(100));
+        
+        // if (result == pdPASS) {
+        //     // Send confirmation via UART
+        //     len = snprintf(buffer, sizeof(buffer), 
+        //                    "[%lu] Queued: %s\r\n", 
+        //                    (unsigned long)xTaskGetTickCount(), msg_ptr);
+        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // } else {
+        //     // Queue full - log error
+        //     len = snprintf(buffer, sizeof(buffer), 
+        //                    "[%lu] Queue FULL!\r\n", 
+        //                    (unsigned long)xTaskGetTickCount());
+        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // }
+        
+        // // Cycle through messages
+        // msg_index = (msg_index + 1) % 3;        
+        // vTaskDelay(pdMS_TO_TICKS(800));
+    }
   /* USER CODE END 5 */
 }
 
