@@ -59,6 +59,9 @@ osMessageQId myQueue04Handle;
 osMessageQId myQueue05Handle;
 /* USER CODE BEGIN PV */
 QueueHandle_t xQueue1;  // FreeRTOS queue handle
+#define RX_BUFFER_SIZE 64  // Adjust based on expected MTi packet size
+
+uint8_t UART4_RxBuffer[RX_BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -380,68 +383,30 @@ void SensorReadingTask(void const * argument)
     
     // char *messages[] = {message1, message2, message3};
     // int msg_index = 0;
-  char buffer[128];  
-    int len;          
-    // float gyro[3]={1,2,3};
-    // float mag[3]={4,5,6};
-    // float acc[3] = {7,8,9};
-    uint8_t meow;
-    uint8_t rx_buffer[4];   
-    // int msg_index=0
-    HAL_StatusTypeDef status;
-    int bytes_received = 0;
-    
-    for(;;)
+  if (huart->Instance == UART4)
     {
-    vTaskDelay(pdMS_TO_TICKS(100));
-    
-    // Clear buffer
-    memset(rx_buffer, 0, sizeof(rx_buffer));
-    bytes_received = 0;
-    
-    // Read byte by byte with delay
-    for(int i = 0; i < 4; i++) {
-      status = HAL_UART_Receive(&huart4, &rx_buffer[i], 1, 1000);
-      
-      if (status != HAL_OK) {
-        len = snprintf(buffer, sizeof(buffer), 
-                      "[%lu] Failed at byte %d, status=%d, ErrorCode=0x%08lX\r\n", 
-                      (unsigned long)xTaskGetTickCount(), i, status, huart4.ErrorCode);
-        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-        
-        // Clear error flags and try to reset UART state
-        if (huart4.ErrorCode != HAL_UART_ERROR_NONE) {
-          __HAL_UART_CLEAR_FLAG(&huart4, UART_CLEAR_OREF | UART_CLEAR_NEF | UART_CLEAR_PEF | UART_CLEAR_FEF);
-          huart4.ErrorCode = HAL_UART_ERROR_NONE;
-          huart4.gState = HAL_UART_STATE_READY;
-          huart4.RxState = HAL_UART_STATE_READY;
+        char msg[256];
+        int len;
+
+        // Print a timestamp and notification
+        len = snprintf(msg, sizeof(msg),
+                       "[%lu] UART4 received %d bytes:\r\n",
+                       (unsigned long)xTaskGetTickCount(), RX_BUFFER_SIZE);
+        HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, HAL_MAX_DELAY);
+
+        // Print bytes in hex
+        for (int i = 0; i < RX_BUFFER_SIZE; i++)
+        {
+            len = snprintf(msg, sizeof(msg), "0x%02X ", UART4_RxBuffer[i]);
+            HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, HAL_MAX_DELAY);
         }
-        break;
-      }
-      bytes_received++;
+
+        const char newline[] = "\r\n\r\n";
+        HAL_UART_Transmit(&huart2, (uint8_t*)newline, sizeof(newline) - 1, HAL_MAX_DELAY);
+
+        // Re-arm UART reception
+        HAL_UART_Receive_IT(&huart4, UART4_RxBuffer, RX_BUFFER_SIZE);
     }
-    if (bytes_received > 0) {
-      len = snprintf(buffer, sizeof(buffer), 
-                    "[%lu] Received %d byte(s): 0x%02X", 
-                    (unsigned long)xTaskGetTickCount(), 
-                    bytes_received, rx_buffer[0]);
-      
-      // Add additional bytes if received
-      if (bytes_received > 1) {
-        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[1]);
-      }
-      if (bytes_received > 2) {
-        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[2]);
-      }
-      if (bytes_received > 3) {
-        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[3]);
-      }
-      
-      len += snprintf(buffer + len, sizeof(buffer) - len, "\r\n");
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-    }
-    
-    vTaskDelay(pdMS_TO_TICKS(800));
       
         // len = snprintf(buffer, sizeof(buffer), 
         //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
