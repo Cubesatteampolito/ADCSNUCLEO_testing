@@ -417,31 +417,7 @@ void SensorReadingTask(void const * argument)
 void StartTask02(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
-  //char buffer1[64];
-  char *received_msg;
-  int len;
-  char buffer1[64];
-  // Send startup message
-  len = snprintf(buffer1, sizeof(buffer1), 
-                    "[%lu] StartTask02 started\r\n", 
-                     (unsigned long)xTaskGetTickCount());
-  HAL_UART_Transmit(&huart2, (uint8_t*)buffer1, len, HAL_MAX_DELAY);
-  
-  for(;;)
-  {
-    char buffer2[128];
-    // Wait indefinitely for message from queue
-    BaseType_t result = xQueueReceive(xQueue1, &received_msg, portMAX_DELAY);
-    
-    if (result == pdPASS) {
-      // Format message with timestamp and send via UART
-      len = snprintf(buffer2, sizeof(buffer2),
-                    "[%lu] Received: %s\r\n",
-                    (unsigned long)xTaskGetTickCount(), received_msg);
-      
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer2, len, HAL_MAX_DELAY);
-    }
-  }
+
   /* USER CODE END StartTask02 */
 }
 
