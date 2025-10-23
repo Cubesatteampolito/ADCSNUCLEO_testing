@@ -368,27 +368,35 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == UART4)
     {
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        
+        // Notify the sensor reading task (do this from ISR context)
+        vTaskNotifyGiveFromISR(SensorReadingHandle, &xHigherPriorityTaskWoken);
+        
+        // Print received bytes (consider moving this to the task instead)
+        // Transmitting from ISR with HAL_MAX_DELAY is problematic
         char msg[256];
         int len;
 
-        // Print received bytes
         len = snprintf(msg, sizeof(msg),
                        "[%lu] UART4 received %d bytes:\r\n",
                        (unsigned long)xTaskGetTickCount(), RX_BUFFER_SIZE);
-        HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, 100); // Use timeout instead of HAL_MAX_DELAY
 
-        // Print bytes in hex
         for (int i = 0; i < RX_BUFFER_SIZE; i++)
         {
             len = snprintf(msg, sizeof(msg), "0x%02X ", UART4_RxBuffer[i]);
-            HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, HAL_MAX_DELAY);
+            HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, 100);
         }
 
         const char newline[] = "\r\n\r\n";
-        HAL_UART_Transmit(&huart2, (uint8_t*)newline, sizeof(newline) - 1, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart2, (uint8_t*)newline, sizeof(newline) - 1, 100);
 
         // Re-arm UART reception
         HAL_UART_Receive_IT(&huart4, UART4_RxBuffer, RX_BUFFER_SIZE);
+        
+        // Request context switch if needed
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
 }
 /* USER CODE END 4 */
@@ -407,14 +415,17 @@ void SensorReadingTask(void const * argument)
   int len;
   
   // Start UART4 reception in interrupt mode
-  HAL_UART_Receive_IT(&huart4, UART4_RxBuffer, RX_BUFFER_SIZE);
+  if (HAL_UART_Receive_IT(&huart4, UART4_RxBuffer, RX_BUFFER_SIZE) != HAL_OK)
+  {
+    Error_Handler();
+  }
   
   /* Infinite loop */
   for(;;)
   {
     // Wait for data (task will be notified by UART callback)
     // For now, just delay - you may want to add task notifications
-    vTaskDelay(pdMS_TO_TICKS(100));
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
   }
   /* USER CODE END 5 */
 }
