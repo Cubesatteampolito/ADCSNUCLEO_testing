@@ -506,21 +506,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   * @retval None
   */USE_FULL_ASSERT
 void Error_Handler(void)
-{ the source line number
-  /* USER CODE BEGIN Error_Handler_Debug */as occurred.
-  /* User can add his own implementation to report the HAL error return state */param  file: pointer to the source file name
-  __disable_irq();t_param error line source number
-        //     // Queue full - log error * @retval None
-        //     len = snprintf(buffer, sizeof(buffer),   */
-        //                    "[%lu] Queue FULL!\r\n", _t line)
-        //                    (unsigned long)xTaskGetTickCount());
-        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // }mplementation to report the file name and line number,
-        f("Wrong parameters value: file %s on line %d\r\n", file, line) */
-        // // Cycle through messages/* USER CODE END 6 */
-        // msg_index = (msg_index + 1) % 3;        
-        // vTaskDelay(pdMS_TO_TICKS(800));
-    }  /* USER CODE END 5 */}/* USER CODE BEGIN Header_StartTask02 *//*** @brief Function implementing the task02 thread.* @param argument: Not used* @retval None*//* USER CODE END Header_StartTask02 */void StartTask02(void const * argument){  /* USER CODE BEGIN StartTask02 */  //char buffer1[64];  char *received_msg;  int len;  char buffer1[64];  // Send startup message  len = snprintf(buffer1, sizeof(buffer1),                     "[%lu] StartTask02 started\r\n",                      (unsigned long)xTaskGetTickCount());  HAL_UART_Transmit(&huart2, (uint8_t*)buffer1, len, HAL_MAX_DELAY);    for(;;)  {    char buffer2[128];    // Wait indefinitely for message from queue    BaseType_t result = xQueueReceive(xQueue1, &received_msg, portMAX_DELAY);        if (result == pdPASS) {      // Format message with timestamp and send via UART      len = snprintf(buffer2, sizeof(buffer2),                    "[%lu] Received: %s\r\n",                    (unsigned long)xTaskGetTickCount(), received_msg);            HAL_UART_Transmit(&huart2, (uint8_t*)buffer2, len, HAL_MAX_DELAY);    }  }  /* USER CODE END StartTask02 */}/* USER CODE BEGIN Header_StartTask03 *//*** @brief Function implementing the task03 thread.* @param argument: Not used* @retval None*//* USER CODE END Header_StartTask03 */void StartTask03(void const * argument){  /* USER CODE BEGIN StartTask03 */  /* Infinite loop */  for(;;)  {    osDelay(1);  }  /* USER CODE END StartTask03 */}/**  * @brief  Period elapsed callback in non blocking mode  * @note   This function is called  when TIM1 interrupt took place, inside  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment  * a global variable "uwTick" used as application time base.  * @param  htim : TIM handle  * @retval None  */void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){  /* USER CODE BEGIN Callback 0 */  /* USER CODE END Callback 0 */  if (htim->Instance == TIM1)  {    HAL_IncTick();  }  /* USER CODE BEGIN Callback 1 */  /* USER CODE END Callback 1 */}/**  * @brief  This function is executed in case of error occurrence.  * @retval None  */void Error_Handler(void){  /* USER CODE BEGIN Error_Handler_Debug */  /* User can add his own implementation to report the HAL error return state */  __disable_irq();  while (1)  {  }  /* USER CODE END Error_Handler_Debug */}#ifdef  USE_FULL_ASSERT/**  * @brief  Reports the name of the source file and the source line number  *         where the assert_param error has occurred.  * @param  file: pointer to the source file name
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
   * @param  line: assert_param error line source number
   * @retval None
   */
