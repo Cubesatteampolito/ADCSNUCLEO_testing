@@ -58,13 +58,12 @@ osMessageQId queue3Handle;
 osMessageQId myQueue04Handle;
 osMessageQId myQueue05Handle;
 /* USER CODE BEGIN PV */
-QueueHandle_t xQueue1;  // FreeRTOS queue handle
-
-#define UART4_RX_BUF_SIZE 256
-static uint8_t uart4_rx_ring[UART4_RX_BUF_SIZE];
-static volatile size_t uart4_rx_head = 0;
-static volatile size_t uart4_rx_tail = 0;
-static uint8_t uart4_rx_byte;
+// Defer RX buffering to UARTdriver.c
+// #define UART4_RX_BUF_SIZE 256
+// static uint8_t uart4_rx_ring[UART4_RX_BUF_SIZE];
+// static volatile size_t uart4_rx_head = 0;
+// static volatile size_t uart4_rx_tail = 0;
+// static uint8_t uart4_rx_byte;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -118,11 +117,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-  // Activate notification
-  
-
-
-
+  // Init and register UART4 with the custom driver
+  initDriver_UART();
+  addDriver_UART(&huart4, UART4_IRQn, keep_new); // or keep_old per your policy
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -367,19 +364,8 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_UART_RxCpltCallback2(UART_HandleTypeDef *huart)
-{
-  if (huart == &huart4)
-  {
-    size_t next_head = (uart4_rx_head + 1) % UART4_RX_BUF_SIZE;
-    if (next_head != uart4_rx_tail)
-    {
-      uart4_rx_ring[uart4_rx_head] = uart4_rx_byte;
-      uart4_rx_head = next_head;
-    }
-    HAL_UART_Receive_IT(&huart4, &uart4_rx_byte, 1);
-  }
-}
+// Remove local HAL UART RX callback to avoid conflicts with UARTdriver.c
+// void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) { /* not used */ }
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_SensorReadingTask */
@@ -394,31 +380,29 @@ void SensorReadingTask(void const * argument)
   /* USER CODE BEGIN 5 */
   char buffer[128];
   uint16_t len;
-  static uint8_t frame[4];
-  static size_t frame_idx = 0;
+  uint8_t frame[4];
+  size_t got = 0;
 
-  HAL_UART_Receive_IT(&huart4, &uart4_rx_byte, 1);
+  // Optional: drop any stale bytes before capturing the first 4 from MTi-3
+  flushRXDriver_UART(&huart4);
 
   for(;;)
   {
-    vTaskDelay(pdMS_TO_TICKS(10));
+    // Non-blocking fetch from driver; accumulate until we have 4 bytes
+    got += receiveDriver_UART(&huart4, &frame[got], sizeof(frame) - got);
 
-    while (uart4_rx_head != uart4_rx_tail)
-    {
-      uint8_t byte = uart4_rx_ring[uart4_rx_tail];
-      uart4_rx_tail = (uart4_rx_tail + 1) % UART4_RX_BUF_SIZE;
-
-      frame[frame_idx++] = byte;
-      if (frame_idx == sizeof(frame))
-      {
-        len = snprintf(buffer, sizeof(buffer),
-                       "[%lu] Received: 0x%02X 0x%02X 0x%02X 0x%02X\r\n",
-                       (unsigned long)xTaskGetTickCount(),
-                       frame[0], frame[1], frame[2], frame[3]);
-        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-        frame_idx = 0;
-      }
+    if (got < sizeof(frame)) {
+      vTaskDelay(pdMS_TO_TICKS(5));
+      continue;
     }
+
+    len = snprintf(buffer, sizeof(buffer),
+                   "[%lu] Received: 0x%02X 0x%02X 0x%02X 0x%02X\r\n",
+                   (unsigned long)xTaskGetTickCount(),
+                   frame[0], frame[1], frame[2], frame[3]);
+    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+
+    got = 0; // capture next 4-byte chunk
   }
   /* USER CODE END 5 */
 }
