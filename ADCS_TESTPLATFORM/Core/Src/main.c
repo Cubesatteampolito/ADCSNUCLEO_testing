@@ -504,7 +504,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 /**
   * @brief  This function is executed in case of error occurrence.
   * @retval None
-  */USE_FULL_ASSERT
+  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
