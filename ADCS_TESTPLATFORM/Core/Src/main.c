@@ -156,12 +156,7 @@ int main(void)
   myQueue05Handle = osMessageCreate(osMessageQ(myQueue05), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  xQueue1 = xQueueCreate(5, sizeof(void*));
-if (xQueue1 == NULL) {
-    // Queue creation failed
-    Error_Handler();
-  }
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
