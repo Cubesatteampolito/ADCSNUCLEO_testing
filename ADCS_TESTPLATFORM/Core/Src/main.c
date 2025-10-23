@@ -416,8 +416,12 @@ void SensorReadingTask(void const * argument)
 /* USER CODE END Header_StartTask02 */
 void StartTask02(void const * argument)
 {
-  /* USER CODE BEGIN StartTask02 */
 
+  
+  for(;;)
+  {
+  
+  }
   /* USER CODE END StartTask02 */
 }
 
