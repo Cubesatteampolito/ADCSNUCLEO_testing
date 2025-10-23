@@ -116,6 +116,7 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   // Activate notification
+  
 
 
 
@@ -363,32 +364,14 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-/* USER CODE BEGIN Header_SensorReadingTask */
-/**
-  * @brief  Function implementing the SensorReading thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_SensorReadingTask */
-void SensorReadingTask(void const * argument)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-    // static char message1[] = "Sensor Data 1";
-    // static char message2[] = "Temperature Reading";
-    // static char message3[] = "Gyroscope Data";
-    
-    // char *messages[] = {message1, message2, message3};
-    // int msg_index = 0;
-  if (huart->Instance == UART4)
+    if (huart->Instance == UART4)
     {
         char msg[256];
         int len;
 
-        // Print a timestamp and notification
+        // Print received bytes
         len = snprintf(msg, sizeof(msg),
                        "[%lu] UART4 received %d bytes:\r\n",
                        (unsigned long)xTaskGetTickCount(), RX_BUFFER_SIZE);
@@ -407,61 +390,32 @@ void SensorReadingTask(void const * argument)
         // Re-arm UART reception
         HAL_UART_Receive_IT(&huart4, UART4_RxBuffer, RX_BUFFER_SIZE);
     }
-      
-        // len = snprintf(buffer, sizeof(buffer), 
-        //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
-        //               (unsigned long)xTaskGetTickCount(),buffer1);
-        // HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-        // uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
-        // if (mtistatus==1){
-        //   len = snprintf(buffer, sizeof(buffer), 
-        //                 "[%lu] config\r\n", 
-        //                 (unsigned long)xTaskGetTickCount());
-        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);}
-        // else {
-        // len = snprintf(buffer, sizeof(buffer), 
-        //                 "[%lu] %d\r\n", 
-        //                 (unsigned long)xTaskGetTickCount(),mtistatus);
-        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // }
-        vTaskDelay(pdMS_TO_TICKS(800));
-        // Sensor reading message
-        // len = snprintf(buffer, sizeof(buffer), 
-        //                "[%lu] sensor reading start\r\n", 
-        //                (unsigned long)xTaskGetTickCount());
-        // HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        
-        // vTaskDelay(pdMS_TO_TICKS(500));//simulate sensor read delay
-        
-        // Prepare message pointer
-        // char *msg_ptr = messages[msg_index];
-        
-        // Send pointer to queue (100ms timeout)
-        //UBaseType_t spaces_available = uxQueueSpacesAvailable(xQueue1);
-        //len = snprintf(buffer, sizeof(buffer), 
-        //              "[%lu] Queue spaces: %d\r\n", 
-        //              (unsigned long)xTaskGetTickCount(), (int)spaces_available);
-        //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // BaseType_t result = xQueueSend(xQueue1, &msg_ptr, pdMS_TO_TICKS(100));
-        
-        // if (result == pdPASS) {
-        //     // Send confirmation via UART
-        //     len = snprintf(buffer, sizeof(buffer), 
-        //                    "[%lu] Queued: %s\r\n", 
-        //                    (unsigned long)xTaskGetTickCount(), msg_ptr);
-        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // } else {
-        //     // Queue full - log error
-        //     len = snprintf(buffer, sizeof(buffer), 
-        //                    "[%lu] Queue FULL!\r\n", 
-        //                    (unsigned long)xTaskGetTickCount());
-        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // }
-        
-        // // Cycle through messages
-        // msg_index = (msg_index + 1) % 3;        
-        // vTaskDelay(pdMS_TO_TICKS(800));
-    }
+}
+/* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_SensorReadingTask */
+/**
+  * @brief  Function implementing the SensorReading thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_SensorReadingTask */
+void SensorReadingTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  char msg[256];
+  int len;
+  
+  // Start UART4 reception in interrupt mode
+  HAL_UART_Receive_IT(&huart4, UART4_RxBuffer, RX_BUFFER_SIZE);
+  
+  /* Infinite loop */
+  for(;;)
+  {
+    // Wait for data (task will be notified by UART callback)
+    // For now, just delay - you may want to add task notifications
+    vTaskDelay(pdMS_TO_TICKS(100));
+  }
   /* USER CODE END 5 */
 }
 
