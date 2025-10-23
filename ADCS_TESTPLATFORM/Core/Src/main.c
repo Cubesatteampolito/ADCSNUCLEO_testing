@@ -119,7 +119,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
   // Init and register UART4 with the custom driver
   initDriver_UART();
-  addDriver_UART(&huart4, UART4_IRQn, keep_new); // or keep_old per your policy
+  if (addDriver_UART(&huart4, UART4_IRQn, keep_new) != 0) {
+    const char* err = "addDriver_UART failed\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t*)err, strlen(err), 100);
+  }
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -373,31 +376,29 @@ static void MX_GPIO_Init(void)
 void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  char buffer[128];
-  uint16_t len;
-  uint8_t frame[4];
-  size_t got = 0;
+  uint8_t rx[64];
+  char line[256];
 
-  // Optional: drop any stale bytes before capturing the first 4 from MTi-3
   flushRXDriver_UART(&huart4);
+  const char* startMsg = "UART4 sniffer running...\r\n";
+  HAL_UART_Transmit(&huart2, (uint8_t*)startMsg, strlen(startMsg), 100);
 
   for(;;)
   {
-    // Non-blocking fetch from driver; accumulate until we have 4 bytes
-    got += receiveDriver_UART(&huart4, &frame[got], sizeof(frame) - got);
-
-    if (got < sizeof(frame)) {
-      vTaskDelay(pdMS_TO_TICKS(5));
+    uint32_t n = receiveDriver_UART(&huart4, rx, sizeof(rx));
+    if (n == 0) {
+      osDelay(2);
       continue;
     }
 
-    len = snprintf(buffer, sizeof(buffer),
-                   "[%lu] Received: 0x%02X 0x%02X 0x%02X 0x%02X\r\n",
-                   (unsigned long)xTaskGetTickCount(),
-                   frame[0], frame[1], frame[2], frame[3]);
-    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-
-    got = 0; // capture next 4-byte chunk
+    int pos = 0;
+    pos += snprintf(&line[pos], sizeof(line) - pos, "[%lu] %lu byte(s):",
+                    (unsigned long)xTaskGetTickCount(), (unsigned long)n);
+    for (uint32_t i = 0; i < n && pos < (int)(sizeof(line) - 4); i++) {
+      pos += snprintf(&line[pos], sizeof(line) - pos, " %02X", rx[i]);
+    }
+    pos += snprintf(&line[pos], sizeof(line) - pos, "\r\n");
+    HAL_UART_Transmit(&huart2, (uint8_t*)line, pos, 1000);
   }
   /* USER CODE END 5 */
 }
