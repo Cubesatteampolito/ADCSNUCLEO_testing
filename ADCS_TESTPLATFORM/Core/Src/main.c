@@ -375,8 +375,8 @@ static void MX_GPIO_Init(void)
 void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  char msg[256];
-  int len;
+
+
   
   // Start UART4 reception in interrupt mode
 
@@ -387,8 +387,8 @@ void SensorReadingTask(void const * argument)
     
     // char *messages[] = {message1, message2, message3};
     // int msg_index = 0;
-  char buffer[128];  
-    int len;          
+    char buffer[128];  
+    uint16_t len;          
     // float gyro[3]={1,2,3};
     // float mag[3]={4,5,6};
     // float acc[3] = {7,8,9};
@@ -396,7 +396,7 @@ void SensorReadingTask(void const * argument)
     uint8_t rx_buffer[4];   
     // int msg_index=0
     HAL_StatusTypeDef status;
-    int bytes_received = 0;
+    uint16_t bytes_received = 0;
     
     for(;;)
     {
