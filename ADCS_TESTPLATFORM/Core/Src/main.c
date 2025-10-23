@@ -102,7 +102,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-  MTI3_Init(&huart2);
+  MTI3_Init(&huart4);
   // Activate notification
 
 
@@ -230,7 +230,7 @@ static void MX_UART4_Init(void)
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
   huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
@@ -339,59 +339,28 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
-  /* USER CODE BEGIN 5 */
-/**
- * READ THIS SHI BEFORE YOU BECOME CRAZY
- * This section is controlling the mti-3 sensors
- * In order to understand the code please check the Xsense LLCP(Low Level Communication Protocol) as the Mti-3 communicate through this protocol.(thats where the hex content came from)
- * Also check the Mti-3 data sheet itself for more information
- * For the sake of everyone laziness, imma put it here so that no one have to go through the dirty work again
- * MESSAGE STRUCTURE
- * Preamble||BusID||MessageID||Length||Data||Checksum
- * for example: the goToConfig messageID is 0x30 therefore the message that you need to send is  0xFA, 0xFF, 0x30, 0x00, 0xD1
- * why is the preamble 0xFA and the busID is 0xFF you might ask. erm its in the document XD (its a constant) basically the busID is just saying that you re sending message from master device which is yourself 0xFF
- * length in this case is 0x00 because you dont send any data, you just send the messageID
- * and the check sum is check sum= 256(because we are using 8bit bytes duh)-(sum of BusID, MID, LEN, DATA)(sum of everything except preamble)mod256
- * NOTE TO MYSELF(HOANG) I WILL PUT A F*CKING HEADER FILE FOR ALL THIS HEX VALUE, THIS CODE IS UGLY
- * btw if you ask why its in default task, because i want to check if it works first then i can do tasking later
- * test
- */
-	// This part of the code is to check the status of the sensor
-	//uint8_t wakeup[] = { 0xFA, 0xFF, 0x3E, 0x00, 0xC1 };
-	uint8_t goToConfig[] = { 0xFA, 0xFF, 0x30, 0x00, 0xD1 };
-	uint8_t ReqDID[] = { 0xFA, 0xFF, 0x00, 0x00, 0xFF };
-	uint8_t rxBuffer[32];
-	// 0) Send Wake up
-	//HAL_UART_Transmit(&huart4, wakeup, sizeof(wakeup), HAL_MAX_DELAY);
-	//HAL_Delay(10); // Small delay to let sensor switch modes
-	// 1) Send GoToConfig,  Switch the active state of the device from Measurement State to Config State. This message can also be used in Config State to confirm that Config State is currently the active state.
-	HAL_UART_Transmit(&huart4, goToConfig, sizeof(goToConfig), HAL_MAX_DELAY);
-	HAL_Delay(10); // Small delay to let sensor switch modes
+  uint8_t goToConfig[] = { 0xFA, 0xFF, 0x30, 0x00, 0xD1 };
+  // change checksum to 0x01 (256 - (0xFF+0x00+0x00) mod 256)
+  uint8_t ReqDID[]     = { 0xFA, 0xFF, 0x00, 0x00, 0x01 };
+  uint8_t rxBuffer[16];
 
-	// 2) Send ReqDID, Request to send the device identifier (or serial number). MT acknowledges by sending the DeviceID message.
-	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
+  HAL_UART_Transmit(&huart4, goToConfig, sizeof(goToConfig), HAL_MAX_DELAY);
+  HAL_Delay(10);
 
-	// 3) Receive  DeviceID.  Acknowledge of ReqDID message. Data field contains device ID / serial number.
-	HAL_UART_Receive(&huart4, rxBuffer, 8, 100);  // Adjust length as needed
+  HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
 
-	// 4) Check response
-	// Buffer to hold the message
-	char msg[64];
+  // change length to 9 (FA FF 01 04 [4 bytes DID] CHK)
+  HAL_UART_Receive(&huart4, rxBuffer, 9, 200);
 
-	// check for Device ID, if the ID is not 000000 the device is responding
-	if (1) // MID == DeviceID response
-	{
-	  snprintf(msg, sizeof(msg),
-	           "DeviceID: %02X%02X%02X%02X\r\n",
-	           rxBuffer[5], rxBuffer[6], rxBuffer[7], rxBuffer[8]);
+  char msg[64];
+  // change indices: DID is at bytes 4..7
+  snprintf(msg, sizeof(msg), "DeviceID: %02X%02X%02X%02X\r\n",
+           rxBuffer[4], rxBuffer[5], rxBuffer[6], rxBuffer[7]);
+  HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 
-	  HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-	}
-	// For testing and debug purposes i will put a pair of ReqOutputConfiguration and SetOutputConfiguration here
-	// The ReqConfiguration is to understand the current output configuration
-	uint8_t ReqOutputConfiguration[] = { 0xFA, 0xFF, 0x0C, 0x00, 0xF5};
-	// Send ReqOutputConfiguration.Requests the output configuration settings of the device.
-	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
+  // optional: go to measurement so MTData2 starts if already configured
+  uint8_t goToMeas[] = { 0xFA, 0xFF, 0x10, 0x00, 0xF1 };
+  HAL_UART_Transmit(&huart4, goToMeas, sizeof(goToMeas), HAL_MAX_DELAY);
 
 
 
