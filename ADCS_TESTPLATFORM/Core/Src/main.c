@@ -59,9 +59,7 @@ osMessageQId myQueue04Handle;
 osMessageQId myQueue05Handle;
 /* USER CODE BEGIN PV */
 QueueHandle_t xQueue1;  // FreeRTOS queue handle
-#define RX_BUFFER_SIZE 64  // Adjust based on expected MTi packet size
 
-uint8_t UART4_RxBuffer[RX_BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -364,41 +362,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == UART4)
-    {
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        
-        // Notify the sensor reading task (do this from ISR context)
-        vTaskNotifyGiveFromISR(SensorReadingHandle, &xHigherPriorityTaskWoken);
-        
-        // Print received bytes (consider moving this to the task instead)
-        // Transmitting from ISR with HAL_MAX_DELAY is problematic
-        char msg[256];
-        int len;
 
-        len = snprintf(msg, sizeof(msg),
-                       "[%lu] UART4 received %d bytes:\r\n",
-                       (unsigned long)xTaskGetTickCount(), RX_BUFFER_SIZE);
-        HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, 100); // Use timeout instead of HAL_MAX_DELAY
-
-        for (int i = 0; i < RX_BUFFER_SIZE; i++)
-        {
-            len = snprintf(msg, sizeof(msg), "0x%02X ", UART4_RxBuffer[i]);
-            HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, 100);
-        }
-
-        const char newline[] = "\r\n\r\n";
-        HAL_UART_Transmit(&huart2, (uint8_t*)newline, sizeof(newline) - 1, 100);
-
-        // Re-arm UART reception
-        HAL_UART_Receive_IT(&huart4, UART4_RxBuffer, RX_BUFFER_SIZE);
-        
-        // Request context switch if needed
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    }
-}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_SensorReadingTask */
@@ -415,11 +379,7 @@ void SensorReadingTask(void const * argument)
   int len;
   
   // Start UART4 reception in interrupt mode
-  if (HAL_UART_Receive_IT(&huart4, UART4_RxBuffer, RX_BUFFER_SIZE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  
+
   /* Infinite loop */
     // static char message1[] = "Sensor Data 1";
     // static char message2[] = "Temperature Reading";
@@ -488,7 +448,7 @@ void SensorReadingTask(void const * argument)
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
     }
     
-    vTaskDelay(pdMS_TO_TICKS(800));
+
       
         // len = snprintf(buffer, sizeof(buffer), 
         //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
@@ -506,7 +466,7 @@ void SensorReadingTask(void const * argument)
         //                 (unsigned long)xTaskGetTickCount(),mtistatus);
         //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
         // }
-        vTaskDelay(pdMS_TO_TICKS(800));
+    
         // Sensor reading message
         // len = snprintf(buffer, sizeof(buffer), 
         //                "[%lu] sensor reading start\r\n", 
