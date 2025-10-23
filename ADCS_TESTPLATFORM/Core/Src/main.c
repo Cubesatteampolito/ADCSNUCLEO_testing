@@ -60,6 +60,11 @@ osMessageQId myQueue05Handle;
 /* USER CODE BEGIN PV */
 QueueHandle_t xQueue1;  // FreeRTOS queue handle
 
+#define UART4_RX_BUF_SIZE 256
+static uint8_t uart4_rx_ring[UART4_RX_BUF_SIZE];
+static volatile size_t uart4_rx_head = 0;
+static volatile size_t uart4_rx_tail = 0;
+static uint8_t uart4_rx_byte;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -362,7 +367,19 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart == &huart4)
+  {
+    size_t next_head = (uart4_rx_head + 1) % UART4_RX_BUF_SIZE;
+    if (next_head != uart4_rx_tail)
+    {
+      uart4_rx_ring[uart4_rx_head] = uart4_rx_byte;
+      uart4_rx_head = next_head;
+    }
+    HAL_UART_Receive_IT(&huart4, &uart4_rx_byte, 1);
+  }
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_SensorReadingTask */
@@ -375,135 +392,34 @@ static void MX_GPIO_Init(void)
 void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+  char buffer[128];
+  uint16_t len;
+  static uint8_t frame[4];
+  static size_t frame_idx = 0;
 
+  HAL_UART_Receive_IT(&huart4, &uart4_rx_byte, 1);
 
-  
-  // Start UART4 reception in interrupt mode
+  for(;;)
+  {
+    vTaskDelay(pdMS_TO_TICKS(10));
 
-  /* Infinite loop */
-    // static char message1[] = "Sensor Data 1";
-    // static char message2[] = "Temperature Reading";
-    // static char message3[] = "Gyroscope Data";
-    
-    // char *messages[] = {message1, message2, message3};
-    // int msg_index = 0;
-    char buffer[128];  
-    uint16_t len;          
-    // float gyro[3]={1,2,3};
-    // float mag[3]={4,5,6};
-    // float acc[3] = {7,8,9};
-    uint8_t meow;
-    uint8_t rx_buffer[4];   
-    // int msg_index=0
-    HAL_StatusTypeDef status;
-    uint16_t bytes_received = 0;
-    
-    for(;;)
+    while (uart4_rx_head != uart4_rx_tail)
     {
-    vTaskDelay(pdMS_TO_TICKS(100));
-    
-    // Clear buffer
-    memset(rx_buffer, 0, sizeof(rx_buffer));
-    bytes_received = 0;
-    
-    // Read byte by byte with delay
-    for(int i = 0; i < 4; i++) {
-      status = HAL_UART_Receive(&huart4, &rx_buffer[i], 1, 1000);
-      
-      if (status != HAL_OK) {
-        len = snprintf(buffer, sizeof(buffer), 
-                      "[%lu] Failed at byte %d, status=%d, ErrorCode=0x%08lX\r\n", 
-                      (unsigned long)xTaskGetTickCount(), i, status, huart4.ErrorCode);
-        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-        
-        // Clear error flags and try to reset UART state
-        if (huart4.ErrorCode != HAL_UART_ERROR_NONE) {
-          __HAL_UART_CLEAR_FLAG(&huart4, UART_CLEAR_OREF | UART_CLEAR_NEF | UART_CLEAR_PEF | UART_CLEAR_FEF);
-          huart4.ErrorCode = HAL_UART_ERROR_NONE;
-          huart4.gState = HAL_UART_STATE_READY;
-          huart4.RxState = HAL_UART_STATE_READY;
-        }
-        break;
-      }
-      bytes_received++;
-    }
-    if (bytes_received > 0) {
-      len = snprintf(buffer, sizeof(buffer), 
-                    "[%lu] Received %d byte(s): 0x%02X", 
-                    (unsigned long)xTaskGetTickCount(), 
-                    bytes_received, rx_buffer[0]);
-      
-      // Add additional bytes if received
-      if (bytes_received > 1) {
-        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[1]);
-      }
-      if (bytes_received > 2) {
-        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[2]);
-      }
-      if (bytes_received > 3) {
-        len += snprintf(buffer + len, sizeof(buffer) - len, " 0x%02X", rx_buffer[3]);
-      }
-      
-      len += snprintf(buffer + len, sizeof(buffer) - len, "\r\n");
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-    }
-    
+      uint8_t byte = uart4_rx_ring[uart4_rx_tail];
+      uart4_rx_tail = (uart4_rx_tail + 1) % UART4_RX_BUF_SIZE;
 
-      
-        // len = snprintf(buffer, sizeof(buffer), 
-        //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
-        //               (unsigned long)xTaskGetTickCount(),buffer1);
-        // HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-        // uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
-        // if (mtistatus==1){
-        //   len = snprintf(buffer, sizeof(buffer), 
-        //                 "[%lu] config\r\n", 
-        //                 (unsigned long)xTaskGetTickCount());
-        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);}
-        // else {
-        // len = snprintf(buffer, sizeof(buffer), 
-        //                 "[%lu] %d\r\n", 
-        //                 (unsigned long)xTaskGetTickCount(),mtistatus);
-        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // }
-    
-        // Sensor reading message
-        // len = snprintf(buffer, sizeof(buffer), 
-        //                "[%lu] sensor reading start\r\n", 
-        //                (unsigned long)xTaskGetTickCount());
-        // HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        
-        // vTaskDelay(pdMS_TO_TICKS(500));//simulate sensor read delay
-        
-        // Prepare message pointer
-        // char *msg_ptr = messages[msg_index];
-        
-        // Send pointer to queue (100ms timeout)
-        //UBaseType_t spaces_available = uxQueueSpacesAvailable(xQueue1);
-        //len = snprintf(buffer, sizeof(buffer), 
-        //              "[%lu] Queue spaces: %d\r\n", 
-        //              (unsigned long)xTaskGetTickCount(), (int)spaces_available);
-        //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // BaseType_t result = xQueueSend(xQueue1, &msg_ptr, pdMS_TO_TICKS(100));
-        
-        // if (result == pdPASS) {
-        //     // Send confirmation via UART
-        //     len = snprintf(buffer, sizeof(buffer), 
-        //                    "[%lu] Queued: %s\r\n", 
-        //                    (unsigned long)xTaskGetTickCount(), msg_ptr);
-        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // } else {
-        //     // Queue full - log error
-        //     len = snprintf(buffer, sizeof(buffer), 
-        //                    "[%lu] Queue FULL!\r\n", 
-        //                    (unsigned long)xTaskGetTickCount());
-        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
-        // }
-        
-        // // Cycle through messages
-        // msg_index = (msg_index + 1) % 3;        
-        // vTaskDelay(pdMS_TO_TICKS(800));
+      frame[frame_idx++] = byte;
+      if (frame_idx == sizeof(frame))
+      {
+        len = snprintf(buffer, sizeof(buffer),
+                       "[%lu] Received: 0x%02X 0x%02X 0x%02X 0x%02X\r\n",
+                       (unsigned long)xTaskGetTickCount(),
+                       frame[0], frame[1], frame[2], frame[3]);
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        frame_idx = 0;
+      }
     }
+  }
   /* USER CODE END 5 */
 }
 
@@ -588,23 +504,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 /**
   * @brief  This function is executed in case of error occurrence.
   * @retval None
-  */
+  */USE_FULL_ASSERT
 void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
-}
-
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
+{ the source line number
+  /* USER CODE BEGIN Error_Handler_Debug */as occurred.
+  /* User can add his own implementation to report the HAL error return state */param  file: pointer to the source file name
+  __disable_irq();t_param error line source number
+        //     // Queue full - log error * @retval None
+        //     len = snprintf(buffer, sizeof(buffer),   */
+        //                    "[%lu] Queue FULL!\r\n", _t line)
+        //                    (unsigned long)xTaskGetTickCount());
+        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // }mplementation to report the file name and line number,
+        f("Wrong parameters value: file %s on line %d\r\n", file, line) */
+        // // Cycle through messages/* USER CODE END 6 */
+        // msg_index = (msg_index + 1) % 3;        
+        // vTaskDelay(pdMS_TO_TICKS(800));
+    }  /* USER CODE END 5 */}/* USER CODE BEGIN Header_StartTask02 *//*** @brief Function implementing the task02 thread.* @param argument: Not used* @retval None*//* USER CODE END Header_StartTask02 */void StartTask02(void const * argument){  /* USER CODE BEGIN StartTask02 */  //char buffer1[64];  char *received_msg;  int len;  char buffer1[64];  // Send startup message  len = snprintf(buffer1, sizeof(buffer1),                     "[%lu] StartTask02 started\r\n",                      (unsigned long)xTaskGetTickCount());  HAL_UART_Transmit(&huart2, (uint8_t*)buffer1, len, HAL_MAX_DELAY);    for(;;)  {    char buffer2[128];    // Wait indefinitely for message from queue    BaseType_t result = xQueueReceive(xQueue1, &received_msg, portMAX_DELAY);        if (result == pdPASS) {      // Format message with timestamp and send via UART      len = snprintf(buffer2, sizeof(buffer2),                    "[%lu] Received: %s\r\n",                    (unsigned long)xTaskGetTickCount(), received_msg);            HAL_UART_Transmit(&huart2, (uint8_t*)buffer2, len, HAL_MAX_DELAY);    }  }  /* USER CODE END StartTask02 */}/* USER CODE BEGIN Header_StartTask03 *//*** @brief Function implementing the task03 thread.* @param argument: Not used* @retval None*//* USER CODE END Header_StartTask03 */void StartTask03(void const * argument){  /* USER CODE BEGIN StartTask03 */  /* Infinite loop */  for(;;)  {    osDelay(1);  }  /* USER CODE END StartTask03 */}/**  * @brief  Period elapsed callback in non blocking mode  * @note   This function is called  when TIM1 interrupt took place, inside  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment  * a global variable "uwTick" used as application time base.  * @param  htim : TIM handle  * @retval None  */void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){  /* USER CODE BEGIN Callback 0 */  /* USER CODE END Callback 0 */  if (htim->Instance == TIM1)  {    HAL_IncTick();  }  /* USER CODE BEGIN Callback 1 */  /* USER CODE END Callback 1 */}/**  * @brief  This function is executed in case of error occurrence.  * @retval None  */void Error_Handler(void){  /* USER CODE BEGIN Error_Handler_Debug */  /* User can add his own implementation to report the HAL error return state */  __disable_irq();  while (1)  {  }  /* USER CODE END Error_Handler_Debug */}#ifdef  USE_FULL_ASSERT/**  * @brief  Reports the name of the source file and the source line number  *         where the assert_param error has occurred.  * @param  file: pointer to the source file name
   * @param  line: assert_param error line source number
   * @retval None
   */
