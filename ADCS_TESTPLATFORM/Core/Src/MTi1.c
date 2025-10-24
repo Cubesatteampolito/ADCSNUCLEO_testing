@@ -303,5 +303,3 @@ uint8_t readIMUPacket(UART_HandleTypeDef* IMUhandle, float gyroscope[3], float m
 
 	return 0;
 }
-
-uint8_t myReadMessage(how)
