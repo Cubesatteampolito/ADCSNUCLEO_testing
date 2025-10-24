@@ -234,11 +234,11 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -265,7 +265,7 @@ static void MX_UART4_Init(void)
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
   huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
@@ -375,38 +375,90 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_SensorReadingTask */
 void SensorReadingTask(void const * argument)
 {
-  char buffer[128];
-  int len;
-  uint8_t rx[3];
-  HAL_StatusTypeDef status;
-
-  for(;;)
-  {
-    vTaskDelay(pdMS_TO_TICKS(800));
-    memset(rx, 0, sizeof(rx));
-
-    // Read a single byte into rx[0]
-    status = HAL_UART_Receive(&huart4, rx, 1, 100);
-
-    if (status == HAL_OK) {
-      len = snprintf(buffer, sizeof(buffer),
-                     "[%lu] Received byte: 0x%02X | ASCII: %c\r\n",
-                     (unsigned long)xTaskGetTickCount(),
-                     rx[0],
-                     (rx[0] >= 32 && rx[0] < 127) ? rx[0] : '.');
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-    } else {
-      len = snprintf(buffer, sizeof(buffer),
-                     "[%lu] UART Receive Error: %d\r\n",
-                     (unsigned long)xTaskGetTickCount(), status);
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+    // static char message1[] = "Sensor Data 1";
+    // static char message2[] = "Temperature Reading";
+    // static char message3[] = "Gyroscope Data";
+    
+    // char *messages[] = {message1, message2, message3};
+    // int msg_index = 0;
+    char buffer[64];  
+    int len;          
+    // float gyro[3]={1,2,3};
+    // float mag[3]={4,5,6};
+    // float acc[3] = {7,8,9};
+    uint8_t meow;
+    uint8_t buffer1[64];  
+    // int msg_index=0
+    
+    for(;;)
+    {
+        // Task start message//meow
+        vTaskDelay(pdMS_TO_TICKS(800));
+        meow=HAL_UART_Receive_IT(&huart4,buffer1,1);
+        len = snprintf(buffer, sizeof(buffer), 
+                      "[%lu] THIS IS THE BYTE:%d %x\r\n", 
+                      (unsigned long)xTaskGetTickCount(),meow,buffer1 );
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        vTaskDelay(pdMS_TO_TICKS(800));
+      
+        // len = snprintf(buffer, sizeof(buffer), 
+        //               "[%lu] THIS IS THE BYTE2:%d\r\n", 
+        //               (unsigned long)xTaskGetTickCount(),buffer1);
+        // HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        // uint8_t mtistatus=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla;
+        // if (mtistatus==1){
+        //   len = snprintf(buffer, sizeof(buffer), 
+        //                 "[%lu] config\r\n", 
+        //                 (unsigned long)xTaskGetTickCount());
+        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);}
+        // else {
+        // len = snprintf(buffer, sizeof(buffer), 
+        //                 "[%lu] %d\r\n", 
+        //                 (unsigned long)xTaskGetTickCount(),mtistatus);
+        //   HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // }
+        vTaskDelay(pdMS_TO_TICKS(800));
+        // Sensor reading message
+        // len = snprintf(buffer, sizeof(buffer), 
+        //                "[%lu] sensor reading start\r\n", 
+        //                (unsigned long)xTaskGetTickCount());
+        // HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        
+        // vTaskDelay(pdMS_TO_TICKS(500));//simulate sensor read delay
+        
+        // Prepare message pointer
+        // char *msg_ptr = messages[msg_index];
+        
+        // Send pointer to queue (100ms timeout)
+        //UBaseType_t spaces_available = uxQueueSpacesAvailable(xQueue1);
+        //len = snprintf(buffer, sizeof(buffer), 
+        //              "[%lu] Queue spaces: %d\r\n", 
+        //              (unsigned long)xTaskGetTickCount(), (int)spaces_available);
+        //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // BaseType_t result = xQueueSend(xQueue1, &msg_ptr, pdMS_TO_TICKS(100));
+        
+        // if (result == pdPASS) {
+        //     // Send confirmation via UART
+        //     len = snprintf(buffer, sizeof(buffer), 
+        //                    "[%lu] Queued: %s\r\n", 
+        //                    (unsigned long)xTaskGetTickCount(), msg_ptr);
+        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // } else {
+        //     // Queue full - log error
+        //     len = snprintf(buffer, sizeof(buffer), 
+        //                    "[%lu] Queue FULL!\r\n", 
+        //                    (unsigned long)xTaskGetTickCount());
+        //     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
+        // }
+        
+        // // Cycle through messages
+        // msg_index = (msg_index + 1) % 3;        
+        // vTaskDelay(pdMS_TO_TICKS(800));
     }
-  }
-
-    vTaskDelay(pdMS_TO_TICKS(800));
-  }
-
-
+  /* USER CODE END 5 */
+}
 
 /* USER CODE BEGIN Header_StartTask02 */
 /**
@@ -417,11 +469,11 @@ void SensorReadingTask(void const * argument)
 /* USER CODE END Header_StartTask02 */
 void StartTask02(void const * argument)
 {
-
-  
+  /* USER CODE BEGIN StartTask02 */
+  /* Infinite loop */
   for(;;)
   {
-  
+    osDelay(1);
   }
   /* USER CODE END StartTask02 */
 }
