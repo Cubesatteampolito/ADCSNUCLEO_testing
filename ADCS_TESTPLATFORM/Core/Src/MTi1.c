@@ -68,7 +68,7 @@ static uint8_t computeChecksum(imu_packet_struct * pckt){
 static void sendMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pckt){
 	if(pckt==NULL) return;
 
-	uint8_t tmp=IMU_PREAMBLE;how
+	uint8_t tmp=IMU_PREAMBLE;
 	sendDriver_UART(IMUhandle, &tmp, 1);
 	tmp=IMU_BID;
 	sendDriver_UART(IMUhandle, &tmp, 1);
