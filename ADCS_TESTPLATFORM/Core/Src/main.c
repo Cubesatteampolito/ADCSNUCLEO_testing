@@ -375,33 +375,53 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_SensorReadingTask */
 void SensorReadingTask(void const * argument)
 {
-  char buffer[128];
-  int len;
-  uint8_t rx[3];
-  HAL_StatusTypeDef status;
-
-  for(;;)
-  {
-    vTaskDelay(pdMS_TO_TICKS(800));
-    memset(rx, 0, sizeof(rx));
-
-    // Read a single byte into rx[0]
-    status = HAL_UART_Receive(&huart4, rx, 1, 1000);
-      len = snprintf(buffer, sizeof(buffer),
-                     "[%lu] Received byte: 0x%02X | ASCII: %c\r\n",
-                     (unsigned long)xTaskGetTickCount(),
-                     rx[0],
-                     (rx[0] >= 32 && rx[0] < 127) ? rx[0] : '.');
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-      len = snprintf(buffer, sizeof(buffer),
-                     "[%lu] UART Receive Error: %d\r\n",
-                     (unsigned long)xTaskGetTickCount(), status);
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+    // static char message1[] = "Sensor Data 1";
+    // static char message2[] = "Temperature Reading";
+    // static char message3[] = "Gyroscope Data";
+    
+    // char *messages[] = {message1, message2, message3};
+    // int msg_index = 0;
+  char buffer[128];  
+    int len;          
+    // float gyro[3]={1,2,3};
+    // float mag[3]={4,5,6};
+    // float acc[3] = {7,8,9};
+    uint8_t meow;
+    uint8_t rx_buffer[4];   
+    // int msg_index=0
+    HAL_StatusTypeDef status;
+    
+    for(;;)
+    {
+    vTaskDelay(pdMS_TO_TICKS(100));
+    
+    // Clear buffer
+    memset(rx_buffer, 0, sizeof(rx_buffer));
+    
+    // Read byte by byte with delay
+    for(int i = 0; i < 4; i++) {
+      status = HAL_UART_Receive(&huart4, &rx_buffer[i], 1, 1000);
+      
+      if (status != HAL_OK) {
+        len = snprintf(buffer, sizeof(buffer), 
+                      "[%lu] Failed at byte %d, status=%d, ErrorCode=0x%08lX\r\n", 
+                      (unsigned long)xTaskGetTickCount(), i, status, huart4.ErrorCode);
+        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+        
+        // Clear error flags and try to reset UART state
+        if (huart4.ErrorCode != HAL_UART_ERROR_NONE) {
+          __HAL_UART_CLEAR_FLAG(&huart4, UART_CLEAR_OREF | UART_CLEAR_NEF | UART_CLEAR_PEF | UART_CLEAR_FEF);
+          huart4.ErrorCode = HAL_UART_ERROR_NONE;
+          huart4.gState = HAL_UART_STATE_READY;
+          huart4.RxState = HAL_UART_STATE_READY;
+        }
+        break;
+      }
+    }
   }
-
-    vTaskDelay(pdMS_TO_TICKS(800));
-  }
-
+}
 
 /* USER CODE BEGIN Header_StartTask02 */
 /**
