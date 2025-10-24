@@ -386,21 +386,17 @@ void SensorReadingTask(void const * argument)
     memset(rx, 0, sizeof(rx));
 
     // Read a single byte into rx[0]
-    status = HAL_UART_Receive(&huart4, rx, 1, 100);
-
-    if (status == HAL_OK) {
+    status = HAL_UART_Receive(&huart4, rx, 1, 1000);
       len = snprintf(buffer, sizeof(buffer),
                      "[%lu] Received byte: 0x%02X | ASCII: %c\r\n",
                      (unsigned long)xTaskGetTickCount(),
                      rx[0],
                      (rx[0] >= 32 && rx[0] < 127) ? rx[0] : '.');
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-    } else {
       len = snprintf(buffer, sizeof(buffer),
                      "[%lu] UART Receive Error: %d\r\n",
                      (unsigned long)xTaskGetTickCount(), status);
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
-    }
   }
 
     vTaskDelay(pdMS_TO_TICKS(800));
