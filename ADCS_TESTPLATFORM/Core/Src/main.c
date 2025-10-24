@@ -375,32 +375,38 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_SensorReadingTask */
 void SensorReadingTask(void const * argument)
 {
-  /* USER CODE BEGIN 5 */
-  uint8_t rx[64];
-  char line[256];
-
-  flushRXDriver_UART(&huart4);
-  const char* startMsg = "UART4 sniffer running...\r\n";
-  HAL_UART_Transmit(&huart2, (uint8_t*)startMsg, strlen(startMsg), 100);
+  char buffer[128];
+  int len;
+  uint8_t rx[3];
+  HAL_StatusTypeDef status;
 
   for(;;)
   {
-    uint32_t n = receiveDriver_UART(&huart4, rx, sizeof(rx));
-    if (n == 0) {
-      osDelay(2);
-      continue;
+    vTaskDelay(pdMS_TO_TICKS(800));
+
+    // Read three bytes sequentially: preamble, BID, MID
+    status = HAL_UART_Receive(&huart4, &rx[0], 1, 1000);
+    status |= HAL_UART_Receive(&huart4, &rx[1], 1, 1000);
+    status |= HAL_UART_Receive(&huart4, &rx[2], 1, 1000);
+
+    if (status == HAL_OK) {
+      len = snprintf(buffer, sizeof(buffer),
+                     "[%lu] Received bytes: 0x%02X 0x%02X 0x%02X | ASCII: %c %c %c\r\n",
+                     (unsigned long)xTaskGetTickCount(),
+                     rx[0], rx[1], rx[2],
+                     (rx[0] >= 32 && rx[0] < 127) ? rx[0] : '.',
+                     (rx[1] >= 32 && rx[1] < 127) ? rx[1] : '.',
+                     (rx[2] >= 32 && rx[2] < 127) ? rx[2] : '.');
+      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
+    } else {
+      len = snprintf(buffer, sizeof(buffer),
+                     "[%lu] UART Receive Error: %d\r\n",
+                     (unsigned long)xTaskGetTickCount(), status);
+      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 1000);
     }
 
-    int pos = 0;
-    pos += snprintf(&line[pos], sizeof(line) - pos, "[%lu] %lu byte(s):",
-                    (unsigned long)xTaskGetTickCount(), (unsigned long)n);
-    for (uint32_t i = 0; i < n && pos < (int)(sizeof(line) - 4); i++) {
-      pos += snprintf(&line[pos], sizeof(line) - pos, " %02X", rx[i]);
-    }
-    pos += snprintf(&line[pos], sizeof(line) - pos, "\r\n");
-    HAL_UART_Transmit(&huart2, (uint8_t*)line, pos, 1000);
+    vTaskDelay(pdMS_TO_TICKS(800));
   }
-  /* USER CODE END 5 */
 }
 
 /* USER CODE BEGIN Header_StartTask02 */
