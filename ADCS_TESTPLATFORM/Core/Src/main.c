@@ -383,9 +383,10 @@ void SensorReadingTask(void const * argument)
   for(;;)
   {
     vTaskDelay(pdMS_TO_TICKS(800));
+    memset(rx, 0, sizeof(rx));
 
     // Read a single byte into rx[0]
-    status = HAL_UART_Receive(&huart4, &rx[0], 1, 100);
+    status = HAL_UART_Receive(&huart4, rx, 1, 100);
 
     if (status == HAL_OK) {
       len = snprintf(buffer, sizeof(buffer),
