@@ -117,11 +117,17 @@ int main(void)
   MX_USART2_UART_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
+  huart4.gState = HAL_UART_STATE_READY;
+  huart4.RxState = HAL_UART_STATE_READY;
   // Init and register UART4 with the custom driver
   initDriver_UART();
   if (addDriver_UART(&huart4, UART4_IRQn, keep_new) != 0) {
     const char* err = "addDriver_UART failed\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)err, strlen(err), 100);
+  }
+
+  
+
   }
   /* USER CODE END 2 */
 
