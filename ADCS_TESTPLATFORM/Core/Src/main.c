@@ -407,7 +407,7 @@ void SensorReadingTask(void const * argument)
 		mag[1]/=10000; //1G = 10^-4 Tesla
 		mag[2]/=10000; //1G = 10^-4 Tesla
 
-		}*/
+		}
 		if(ret)
 		{
 
