@@ -281,7 +281,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* definition and creation of FirstCheckTask */
-    osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityNormal, 0, stack_size, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
+    osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, stack_size, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
   	FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
   /* definition and creation of ControlAlgorithmTask */
 	osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0,stack_size, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
@@ -290,7 +290,7 @@ void MX_FREERTOS_Init(void) {
 	osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
 	IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
   /* definition and creation of OBC_CommTaskHandle */
-	osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+	osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
 	OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
 
@@ -511,13 +511,13 @@ void OBC_Comm_Task(void const * argument)
 		//in this case we just send the local copy of the structure
 		//ALWAYS remember to set message code (use the generated defines
 
-		printf("OBC: Trying to send attitude \n");
+		//printf("OBC: Trying to send attitude \n");
 		//finally we send the message
 
 			printf("OBC TASK: after 7 counts: %lu \n",HAL_GetTick());
 			TxHousekeeping.code=HOUSEKEEPINGADCS_CODE;
 			TxHousekeeping.ticktime=HAL_GetTick();
-			printf("OBC: Trying to send housekeeping \n");
+			//printf("OBC: Trying to send housekeeping \n");
 			//finally we send the message
 
 			if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){}
@@ -544,7 +544,7 @@ void OBC_Comm_Task(void const * argument)
 	//ALWAYS remember to set message code (use the generated defines
 	opmodeMsg.code=OPMODEADCS_CODE;
 	//finally we send the message (WITH ACK REQUESTED)
-	printf("OBC: Trying to send opmodeADCS \n");
+	//printf("OBC: Trying to send opmodeADCS \n");
 	if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){}
 
 
