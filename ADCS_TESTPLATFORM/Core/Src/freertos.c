@@ -705,6 +705,8 @@ void IMU_Task(void const * argument)
 					local_imu_struct->mag_msr[i] = mag[i];
 					local_imu_struct->acc_msr[i] = acc[i];
 					printf("AAAAAAAAAAAAAAAAAAAAAAA  Accelerometer axis %d, value %f AAAAAAAAAAAAAA", i, acc[i]);
+					printf("AAAAAAAAAAAAAAAAAAAAAAA  Accelerometer axis %d, value %f AAAAAAAAAAAAAA", i, gyro[i]);
+					printf("AAAAAAAAAAAAAAAAAAAAAAA  Accelerometer axis %d, value %f AAAAAAAAAAAAAA", i, mag[i]);
 				}
 				//Invio queue a Control Task
 			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
