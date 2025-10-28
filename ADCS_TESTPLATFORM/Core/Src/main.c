@@ -31,6 +31,8 @@
 #include "MTi1.h"
 #include <stm32l452xx.h>
 #include <malloc.h>
+#include "queue.h"
+#include "queue_structs.h"
 
 
 /* USER CODE END Includes */
