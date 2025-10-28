@@ -382,30 +382,50 @@ static void MX_GPIO_Init(void)
 void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  uint8_t rx[64];
-  char line[256];
+  float gyro[3]={1,2,3};
+	float mag[3]={4,5,6};
+	float acc[3] = {7,8,9};
 
-  flushRXDriver_UART(&huart4);
-  const char* startMsg = "UART4 sniffer running...\r\n";
-  HAL_UART_Transmit(&huart2, (uint8_t*)startMsg, strlen(startMsg), 100);
+	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
-  for(;;)
-  {
-    uint32_t n = receiveDriver_UART(&huart4, rx, sizeof(rx));
-    if (n == 0) {
-      osDelay(2);
-      continue;
-    }
+	/* Infinite loop */
+	for(;;)
+	{
 
-    int pos = 0;
-    pos += snprintf(&line[pos], sizeof(line) - pos, "[%lu] %lu byte(s):",
-                    (unsigned long)xTaskGetTickCount(), (unsigned long)n);
-    for (uint32_t i = 0; i < n && pos < (int)(sizeof(line) - 4); i++) {
-      pos += snprintf(&line[pos], sizeof(line) - pos, " %02X", rx[i]);
-    }
-    pos += snprintf(&line[pos], sizeof(line) - pos, "\r\n");
-    HAL_UART_Transmit(&huart2, (uint8_t*)line, pos, 1000);
-  }
+
+		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
+		mag[0]/=10000; //1G = 10^-4 Tesla
+		mag[1]/=10000; //1G = 10^-4 Tesla
+		mag[2]/=10000; //1G = 10^-4 Tesla
+
+		}*/
+		if(ret)
+		{
+
+
+			if (local_imu_struct == NULL) {
+				printf("IMU TASK: allocazione struttura fallita !\n");
+			}
+			else
+			{
+				//Riempio struct con valori letti da IMU,per poi inviareli a Task Controllo
+				for (int i = 0; i < 3; i++)
+				{
+					local_imu_struct->gyro_msr[i] = gyro[i];
+					local_imu_struct->mag_msr[i] = mag[i];
+					local_imu_struct->acc_msr[i] = acc[i];
+					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+				}
+				
+			}
+		}
+		else{
+			printf("IMU: Error configuring IMU \n");
+			osDelay(2000);
+		}
+	
   /* USER CODE END 5 */
 }
 
