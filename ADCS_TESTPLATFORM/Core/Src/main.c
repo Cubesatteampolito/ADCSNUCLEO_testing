@@ -102,7 +102,18 @@ int main(void)
   MX_ADC1_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-
+  
+  // Force UART4 to READY state before registering
+  huart4.gState = HAL_UART_STATE_READY;
+  huart4.RxState = HAL_UART_STATE_READY;
+  
+  initDriver_UART();
+  uint8_t status = addDriver_UART(&huart4, UART4_IRQn, keep_new);
+  if (status != 0) {
+    char err[64];
+    int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
+    HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
+  }
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
