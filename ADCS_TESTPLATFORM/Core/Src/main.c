@@ -34,6 +34,7 @@
 #include "queue.h"
 #include "queue_structs.h"
 #include "sensors.h"
+#include "spi.h"
 
 
 /* USER CODE END Includes */
