@@ -33,7 +33,6 @@
 #include <malloc.h>
 #include "queue.h"
 #include "queue_structs.h"
-#include "sensors.h"
 #include "constants.h"
 
 
