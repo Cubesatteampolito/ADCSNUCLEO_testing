@@ -26,11 +26,8 @@
 #include <string.h> //for memcpy()
 #include <stdbool.h>
 #include <math.h>
-#include "sensors.h"
 #include "UARTdriver.h"
-#include "adc.h"
 #include "MTi1.h"
-#include "queue.h"
 #include <stm32l452xx.h>
 #include <malloc.h>
 #include "constants.h"
