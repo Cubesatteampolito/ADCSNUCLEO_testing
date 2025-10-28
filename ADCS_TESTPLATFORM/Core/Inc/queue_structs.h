@@ -8,7 +8,6 @@
 #ifndef INC_QUEUE_STRUCTS_H_
 #define INC_QUEUE_STRUCTS_H_
 
-#include "sensors.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "cmsis_os.h"
@@ -68,13 +67,13 @@ void receive_IMUqueue_OBC(void *event,void *attitude);
   * @param	current_temp_struct Second pointer to void variable
   * @retval none
   */
-void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct);
-/**
-  * @brief  
-  * @param	event First pointer to void variable
-  * @param	attitude_adcs Second pointer to void variable
-  * @retval none
-  */
-void receive_Attitudequeue_control(void *event,void *attitude_adcs);
+// void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct);
+// /**
+//   * @brief  
+//   * @param	event First pointer to void variable
+//   * @param	attitude_adcs Second pointer to void variable
+//   * @retval none
+//   */
+// void receive_Attitudequeue_control(void *event,void *attitude_adcs);
 
 #endif /* INC_QUEUE_STRUCTS_H_ */
