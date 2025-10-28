@@ -22,10 +22,19 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "string.h"
-#include "stdio.h"
-#include "MTi1.h"
+#include <stdio.h> //for printf()
+#include <string.h> //for memcpy()
+#include <stdbool.h>
+#include <math.h>
+#include "usart.h"
+#include "sensors.h"
 #include "UARTdriver.h"
+#include "adc.h"
+#include "MTi1.h"
+#include "queue.h"
+#include <stm32l452xx.h>
+#include <malloc.h>
+#include "constants.h"
 
 
 /* USER CODE END Includes */
