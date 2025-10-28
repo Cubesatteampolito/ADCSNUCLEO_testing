@@ -30,7 +30,6 @@
 #include "MTi1.h"
 #include <stm32l452xx.h>
 #include <malloc.h>
-#include "constants.h"
 
 
 /* USER CODE END Includes */
