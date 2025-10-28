@@ -26,7 +26,6 @@
 #include <string.h> //for memcpy()
 #include <stdbool.h>
 #include <math.h>
-#include "usart.h"
 #include "sensors.h"
 #include "UARTdriver.h"
 #include "adc.h"
