@@ -25,6 +25,7 @@
 #include <stdio.h> //for printf()
 #include <string.h> //for memcpy()
 #include <stdbool.h>
+#include "queue.h"
 #include <math.h>
 #include "UARTdriver.h"
 #include "MTi1.h"
