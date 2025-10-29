@@ -79,8 +79,8 @@ osMessageQId myQueue05Handle;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
-static void MX_UART4_Init(void);
+//static void MX_USART2_UART_Init(void);
+//static void MX_UART4_Init(void);
 void SensorReadingTask(void const * argument);
 void StartTask02(void const * argument);
 void StartTask03(void const * argument);
