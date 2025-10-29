@@ -56,8 +56,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef huart4;
-UART_HandleTypeDef huart2;
+//UART_HandleTypeDef huart4;
+//UART_HandleTypeDef huart2;
 
 osThreadId SensorReadingHandle;
 osThreadId task02Handle;
