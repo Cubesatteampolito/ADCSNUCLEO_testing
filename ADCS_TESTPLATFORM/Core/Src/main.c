@@ -281,70 +281,70 @@ void SystemClock_Config(void)
   * @param None
   * @retval None
   */
-static void MX_UART4_Init(void)
-{
+// static void MX_UART4_Init(void)
+// {
 
-  /* USER CODE BEGIN UART4_Init 0 */
+//   /* USER CODE BEGIN UART4_Init 0 */
 
-  /* USER CODE END UART4_Init 0 */
+//   /* USER CODE END UART4_Init 0 */
 
-  /* USER CODE BEGIN UART4_Init 1 */
+//   /* USER CODE BEGIN UART4_Init 1 */
 
-  /* USER CODE END UART4_Init 1 */
-  huart4.Instance = UART4;
-  huart4.Init.BaudRate = 115200;
-  huart4.Init.WordLength = UART_WORDLENGTH_8B;
-  huart4.Init.StopBits = UART_STOPBITS_1;
-  huart4.Init.Parity = UART_PARITY_NONE;
-  huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN UART4_Init 2 */
+//   /* USER CODE END UART4_Init 1 */
+//   huart4.Instance = UART4;
+//   huart4.Init.BaudRate = 115200;
+//   huart4.Init.WordLength = UART_WORDLENGTH_8B;
+//   huart4.Init.StopBits = UART_STOPBITS_1;
+//   huart4.Init.Parity = UART_PARITY_NONE;
+//   huart4.Init.Mode = UART_MODE_TX_RX;
+//   huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+//   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+//   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+//   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+//   if (HAL_UART_Init(&huart4) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
+//   /* USER CODE BEGIN UART4_Init 2 */
 
-  /* USER CODE END UART4_Init 2 */
+//   /* USER CODE END UART4_Init 2 */
 
-}
+// }
 
 /**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART2_UART_Init(void)
-{
+// static void MX_USART2_UART_Init(void)
+// {
 
-  /* USER CODE BEGIN USART2_Init 0 */
+//   /* USER CODE BEGIN USART2_Init 0 */
 
-  /* USER CODE END USART2_Init 0 */
+//   /* USER CODE END USART2_Init 0 */
 
-  /* USER CODE BEGIN USART2_Init 1 */
+//   /* USER CODE BEGIN USART2_Init 1 */
 
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
+//   /* USER CODE END USART2_Init 1 */
+//   huart2.Instance = USART2;
+//   huart2.Init.BaudRate = 115200;
+//   huart2.Init.WordLength = UART_WORDLENGTH_8B;
+//   huart2.Init.StopBits = UART_STOPBITS_1;
+//   huart2.Init.Parity = UART_PARITY_NONE;
+//   huart2.Init.Mode = UART_MODE_TX_RX;
+//   huart2.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+//   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+//   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+//   huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+//   if (HAL_UART_Init(&huart2) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
+//   /* USER CODE BEGIN USART2_Init 2 */
 
-  /* USER CODE END USART2_Init 2 */
+//   /* USER CODE END USART2_Init 2 */
 
-}
+// }
 
 /**
   * @brief GPIO Initialization Function
