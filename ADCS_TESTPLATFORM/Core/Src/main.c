@@ -486,7 +486,7 @@ void StartTask02(void const * argument)
   
   for(;;)
   {
-  
+  osDelay(1);
   }
   /* USER CODE END StartTask02 */
 }
