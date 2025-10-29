@@ -121,7 +121,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  char err[64];
+  int len = snprintf(err, sizeof(err), "addDriver_UART faileddefault: \r\n");
+  HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -414,7 +416,7 @@ static void MX_GPIO_Init(void)
 void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  printf("kms \n");
+
   char err[64];
   int len = snprintf(err, sizeof(err), "addDriver_UART failed: \r\n");
   HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
@@ -422,7 +424,6 @@ void SensorReadingTask(void const * argument)
   float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
 	float acc[3] = {7,8,9};
-  char buffer[100];
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
@@ -487,6 +488,9 @@ void StartTask02(void const * argument)
   for(;;)
   {
   osDelay(1);
+  char err[64];
+  int len = snprintf(err, sizeof(err), "addDriver_UART failed2: \r\n");
+  HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   }
   /* USER CODE END StartTask02 */
 }
@@ -504,7 +508,10 @@ void StartTask03(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    
+    char err[64];
+    int len = snprintf(err, sizeof(err), "addDriver_UART failed3: \r\n");
+    HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   }
   /* USER CODE END StartTask03 */
 }
