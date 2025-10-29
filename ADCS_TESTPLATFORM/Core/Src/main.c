@@ -414,10 +414,10 @@ static void MX_GPIO_Init(void)
 void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  printf("IMU TASK: Starting IMU Configuration... \n");
+  printf("kms \n");
   char err[64];
-  //int len = snprintf(err, sizeof(err), "addDriver_UART failed: \r\n");
-  //HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
+  int len = snprintf(err, sizeof(err), "addDriver_UART failed: \r\n");
+  HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   uint8_t ret = initIMUConfig(&huart4);
   float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
@@ -459,8 +459,8 @@ void SensorReadingTask(void const * argument)
           //int len = snprintf(buffer, sizeof(err), "Gyroscope axis %d, value %f \r\n", i, gyro[i]);
           //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
 					//printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
-          int len = snprintf(buffer, sizeof(err), "Magnetometer axis %d, value %f \r\n", i, mag[i]);
-          HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
+          //int len = snprintf(buffer, sizeof(err), "Magnetometer axis %d, value %f \r\n", i, mag[i]);
+          //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
 				}
 				
 			}
