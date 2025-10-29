@@ -123,7 +123,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
   char err[64];
   int len = snprintf(err, sizeof(err), "addDriver_UART faileddefault: \r\n");
-  HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
+  sendDriver_UART(&huart2, (uint8_t*)err, len);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
