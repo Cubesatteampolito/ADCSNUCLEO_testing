@@ -231,19 +231,19 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
-	ControlMutex = xSemaphoreCreateMutexStatic(&xControlMutexBuffer);
-	configASSERT(ControlMutex);
-	xSemaphoreGive(ControlMutex);
-	IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
-	configASSERT(IMURead_ControlMutex);
-	xSemaphoreGive(IMURead_ControlMutex);
+	// ControlMutex = xSemaphoreCreateMutexStatic(&xControlMutexBuffer);
+	// configASSERT(ControlMutex);
+	// xSemaphoreGive(ControlMutex);
+	// IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
+	// configASSERT(IMURead_ControlMutex);
+	// xSemaphoreGive(IMURead_ControlMutex);
 
   /* USER CODE END RTOS_MUTEX */
 
   /* Create the semaphores(s) */
   /* definition and creation of setAttitudeSem */
-	osSemaphoreStaticDef(setAttitudeSem, &setAttitudeSemControlBlock);
-	setAttitudeSemHandle = osSemaphoreCreate(osSemaphore(setAttitudeSem), 1);
+	// osSemaphoreStaticDef(setAttitudeSem, &setAttitudeSemControlBlock);
+	// setAttitudeSemHandle = osSemaphoreCreate(osSemaphore(setAttitudeSem), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -281,8 +281,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* definition and creation of FirstCheckTask */
-    osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, stack_size, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
-  	FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
+    // osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, stack_size, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
+  	// FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
   /* definition and creation of ControlAlgorithmTask */
 	// osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0,stack_size, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
 	// ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
