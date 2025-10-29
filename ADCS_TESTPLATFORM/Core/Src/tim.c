@@ -24,7 +24,7 @@
 
 /* USER CODE END 0 */
 
-//TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 

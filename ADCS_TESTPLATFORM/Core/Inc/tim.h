@@ -32,7 +32,7 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-//extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim1;
 
 extern TIM_HandleTypeDef htim2;
 
