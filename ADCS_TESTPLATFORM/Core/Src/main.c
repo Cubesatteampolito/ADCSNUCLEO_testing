@@ -80,6 +80,7 @@ osMessageQId myQueue05Handle;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+void MX_FREERTOS_Init(void);
 //static void MX_USART2_UART_Init(void);
 //static void MX_UART4_Init(void);
 void SensorReadingTask(void const * argument);
@@ -154,6 +155,10 @@ int main(void)
   }
 
   
+  /* Call init function for freertos objects (in freertos.c) */
+  MX_FREERTOS_Init();
+
+
 
   
   /* USER CODE END 2 */
@@ -249,7 +254,7 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 16;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
