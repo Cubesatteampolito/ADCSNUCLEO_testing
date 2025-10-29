@@ -408,6 +408,7 @@ static void MX_GPIO_Init(void)
 void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+  printf("IMU TASK: Starting IMU Configuration... \n");
   uint8_t ret = initIMUConfig(&huart4);
   float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
