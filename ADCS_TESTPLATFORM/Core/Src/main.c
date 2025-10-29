@@ -409,10 +409,14 @@ void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   printf("IMU TASK: Starting IMU Configuration... \n");
+  char err[64];
+  int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
+  HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   uint8_t ret = initIMUConfig(&huart4);
   float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
 	float acc[3] = {7,8,9};
+  
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
