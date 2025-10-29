@@ -156,7 +156,7 @@ int main(void)
 
   
   /* Call init function for freertos objects (in freertos.c) */
-  MX_FREERTOS_Init();
+  //MX_FREERTOS_Init();
 
 
 
