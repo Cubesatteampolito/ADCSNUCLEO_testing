@@ -410,7 +410,7 @@ void SensorReadingTask(void const * argument)
   /* USER CODE BEGIN 5 */
   printf("IMU TASK: Starting IMU Configuration... \n");
   char err[64];
-  int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
+  int len = snprintf(err, sizeof(err), "addDriver_UART failed: \r\n");
   HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   uint8_t ret = initIMUConfig(&huart4);
   float gyro[3]={1,2,3};
