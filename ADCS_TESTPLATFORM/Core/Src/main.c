@@ -92,15 +92,15 @@ void StartTask03(void const * argument);
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif
 
-PUTCHAR_PROTOTYPE{
+/*PUTCHAR_PROTOTYPE{
    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
    return ch;
+}*/
+PUTCHAR_PROTOTYPE{
+	uint8_t c=(uint8_t)ch;
+	sendDriver_UART(&huart2,&c,1);
+	return c;
 }
-// PUTCHAR_PROTOTYPE{
-// 	uint8_t c=(uint8_t)ch;
-// 	sendDriver_UART(&huart2,&c,1);
-// 	return c;
-// }
 
 /* USER CODE BEGIN PFP */
 
@@ -448,7 +448,7 @@ void SensorReadingTask(void const * argument)
 					local_imu_struct->mag_msr[i] = mag[i];
 					local_imu_struct->acc_msr[i] = acc[i];
 					//int len = snprintf(buffer, sizeof(err), "addDriver_UART failed: %f\r\n", mag[i]);
-          printf("Gyroscope axis %d, value %f \r\n", i, acc[i]);
+          //printf("Gyroscope axis %d, value %f \r\n", i, acc[i]);
           //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
 					//printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
           //int len = snprintf(buffer, sizeof(err), "Gyroscope axis %d, value %f \r\n", i, gyro[i]);
