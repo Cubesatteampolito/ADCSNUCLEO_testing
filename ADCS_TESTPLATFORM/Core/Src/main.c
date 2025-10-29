@@ -409,9 +409,9 @@ void SensorReadingTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   printf("IMU TASK: Starting IMU Configuration... \n");
-  char err[64];
-  int len = snprintf(err, sizeof(err), "addDriver_UART failed: \r\n");
-  HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
+  //char err[64];
+  //int len = snprintf(err, sizeof(err), "addDriver_UART failed: \r\n");
+  //HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   uint8_t ret = initIMUConfig(&huart4);
   float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
@@ -446,12 +446,12 @@ void SensorReadingTask(void const * argument)
 					local_imu_struct->gyro_msr[i] = gyro[i];
 					local_imu_struct->mag_msr[i] = mag[i];
 					local_imu_struct->acc_msr[i] = acc[i];
-					int len = snprintf(buffer, sizeof(err), "addDriver_UART failed: %f\r\n", mag[i]);
+					//int len = snprintf(buffer, sizeof(err), "addDriver_UART failed: %f\r\n", mag[i]);
           //printf("Gyroscope axis %d, value %f \r\n", i, acc[i]);
-          HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
+          //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
 					//printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-          int len = snprintf(buffer, sizeof(err), "Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-          HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
+          //int len = snprintf(buffer, sizeof(err), "Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+          //HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
 					//printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
           int len = snprintf(buffer, sizeof(err), "Magnetometer axis %d, value %f \r\n", i, mag[i]);
           HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
