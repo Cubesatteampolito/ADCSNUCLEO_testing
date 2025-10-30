@@ -24,7 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
-#include "UARTdriver.h"
+#include "UARTdriver.h"//setting on uart.c is added to hal_msp.c file
 
 /* USER CODE END Includes */
 
@@ -66,15 +66,15 @@ void StartDefaultTask(void const * argument);
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif
 
-PUTCHAR_PROTOTYPE{
-  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
-  return ch;
-}
 // PUTCHAR_PROTOTYPE{
-// 	uint8_t c=(uint8_t)ch;
-// 	sendDriver_UART(&huart2,&c,1);
-// 	return c;
+//   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+//   return ch;
 // }
+PUTCHAR_PROTOTYPE{
+	uint8_t c=(uint8_t)ch;
+	sendDriver_UART(&huart2,&c,1);
+	return c;
+}
 
 
 /* USER CODE BEGIN PFP */
