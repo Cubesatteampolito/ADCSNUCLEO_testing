@@ -55,7 +55,6 @@ uint8_t addDriver_UART(UART_HandleTypeDef* huartHandle, IRQn_Type irq, fifo_poli
             _driverHandle_UART[handleIndex]._txQueueHandle = xQueueCreateStatic(SERIAL_TX_BUFF_LEN,1,(void*)&_driverHandle_UART[handleIndex]._txQueueStorageBuffer,&_driverHandle_UART[handleIndex]._txQueueBuffer);
             _driverHandle_UART[handleIndex]._usageFlag = 1;
             _driverHandle_UART[handleIndex]._policyRX = policyRX;
-            _driverHandle_UART[handleIndex]._irq = irq;//gpt told me to add this lol
 
             HAL_UART_Receive_IT(huartHandle,&_driverHandle_UART[handleIndex]._rxByte,1);
 
