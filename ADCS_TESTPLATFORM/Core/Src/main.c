@@ -120,11 +120,7 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
-	initDriver_UART();
-	//UART2 = for printf
-	addDriver_UART(&huart2,USART2_IRQn,keep_old);
-	//UART4 = for IMU
-	addDriver_UART(&huart4,UART4_IRQn,keep_new);
+
 
 
 
@@ -353,6 +349,12 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+  // making sure that UART driver is initialized and UARTs are added after freertos started
+  initDriver_UART();
+	//UART2 = for printf
+	addDriver_UART(&huart2,USART2_IRQn,keep_old);
+	//UART4 = for IMU
+	addDriver_UART(&huart4,UART4_IRQn,keep_new);
   /* Infinite loop */
   for(;;)
   {
