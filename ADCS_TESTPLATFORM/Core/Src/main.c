@@ -348,7 +348,7 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN 5 */
 
   printf("Hello from STM32L4\r\n");
-  osDelay(10);
+  HAL_Delay(10);
 
   /* USER CODE END 5 */
 }
