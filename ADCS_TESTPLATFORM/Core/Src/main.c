@@ -359,9 +359,9 @@ void StartDefaultTask(void const * argument)
   initDriver_UART();
 	//UART2 = for printf
   uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
-  if (status != 0) {
+  if (1) {
     char err[64];
-    int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
+    int len = snprintf(err, sizeof(err), "addDriver_UART status: %d\r\n", status);
     HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   }
 	//UART4 = for IMU
