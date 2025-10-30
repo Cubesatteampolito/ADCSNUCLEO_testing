@@ -346,10 +346,12 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-
+  /* Infinite loop */
+  for(;;)
+  {
   printf("Hello from STM32L4\r\n");
   HAL_Delay(10);
-
+  }
   /* USER CODE END 5 */
 }
 
