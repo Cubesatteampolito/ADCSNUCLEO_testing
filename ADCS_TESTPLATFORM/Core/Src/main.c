@@ -152,7 +152,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512);  // <-- Increased stack size
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -359,11 +359,14 @@ void StartDefaultTask(void const * argument)
   initDriver_UART();
 	//UART2 = for printf
   uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
-  if (1) {
-    char err[64];
-    int len = snprintf(err, sizeof(err), "addDriver_UART status: %d\r\n", status);
-    HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
+ if (status == 0) {
+    char msg[] = "UART Driver initialized OK\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  } else {
+    char msg[] = "UART Driver FAILED\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   }
+
 
   osDelay(100); //when in doubt add a delay
 	//UART4 = for IMU
