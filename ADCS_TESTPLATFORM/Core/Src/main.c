@@ -124,13 +124,13 @@ int main(void)
   huart2.gState = HAL_UART_STATE_READY;
   huart2.RxState = HAL_UART_STATE_READY;
   
-  initDriver_UART();
-  uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
-  if (status != 0) {
-    char err[64];
-    int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
-    HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
-  }
+  // initDriver_UART();
+  // uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
+  // if (status != 0) {
+  //   char err[64];
+  //   int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
+  // }
 
   /* USER CODE END 2 */
 
@@ -358,9 +358,14 @@ void StartDefaultTask(void const * argument)
   // making sure that UART driver is initialized and UARTs are added after freertos started
   initDriver_UART();
 	//UART2 = for printf
-	addDriver_UART(&huart2,USART2_IRQn,keep_new);
+  uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
+  if (status != 0) {
+    char err[64];
+    int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
+    HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
+  }
 	//UART4 = for IMU
-	addDriver_UART(&huart4,UART4_IRQn,keep_new);
+	// addDriver_UART(&huart4,UART4_IRQn,keep_new);
   /* Infinite loop */
   for(;;)
   {
