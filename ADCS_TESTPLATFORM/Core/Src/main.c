@@ -358,7 +358,7 @@ void StartDefaultTask(void const * argument)
   // making sure that UART driver is initialized and UARTs are added after freertos started
   initDriver_UART();
 	//UART2 = for printf
-  uint8_t status = addDriver_UART(&huart2, UART2_IRQn, keep_new);
+  uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
   if (1) {
     char err[64];
     int len = snprintf(err, sizeof(err), "addDriver_UART status: %d\r\n", status);
