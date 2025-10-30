@@ -119,7 +119,14 @@ int main(void)
   MX_USART2_UART_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-  // Activate notification
+
+	initDriver_UART();
+	//UART2 = for printf
+	addDriver_UART(&huart2,USART2_IRQn,keep_old);
+	//UART4 = for IMU
+	addDriver_UART(&huart4,UART4_IRQn,keep_new);
+
+
 
 
 
