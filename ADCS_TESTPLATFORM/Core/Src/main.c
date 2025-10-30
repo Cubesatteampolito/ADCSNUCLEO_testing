@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
+#include "UARTdriver.h"
 
 /* USER CODE END Includes */
 
@@ -347,7 +348,7 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN 5 */
 
   printf("Hello from STM32L4\r\n");
-  os_timeout(10);
+  os_delay(10);
 
   /* USER CODE END 5 */
 }
