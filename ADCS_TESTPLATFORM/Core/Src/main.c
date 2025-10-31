@@ -423,7 +423,7 @@ void StartDefaultTask(void const * argument)
 				printf("%f \t",mag[field]);
 			}
 			printf("\n");*/
-
+	    printf("status: %d\n", local_imu_struct);
 			if (local_imu_struct == NULL) {
 				printf("IMU TASK: allocazione struttura fallita !\n");
 			}
