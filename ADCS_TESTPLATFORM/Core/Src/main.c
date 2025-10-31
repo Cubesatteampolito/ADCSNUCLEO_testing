@@ -382,7 +382,7 @@ void StartDefaultTask(void const * argument)
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   }
 
-  osDelay(1000); //when in doubt add a delay
+  osDelay(1000000); //when in doubt add a delay
 
   #if enable_printf
 	printf("Initializing IMU \n");
@@ -422,7 +422,7 @@ void StartDefaultTask(void const * argument)
 			xSemaphoreGive(IMURead_ControlMutex);
 			printf("IMU Task : Released IMURead_Control control");
 		}*/
-    printf("IMU status %d \r\n",ret);
+    // printf("IMU status %d \r\n",ret);
 		if(ret)
 		{
 			/*for(uint32_t field=0; field<3;field++){
@@ -469,7 +469,7 @@ void StartDefaultTask(void const * argument)
 			//printf("IMU: Error configuring IMU \n");
 			osDelay(2000);
 		}
-    printf("Hello from STM32L4\r\n");
+    // printf("Hello from STM32L4\r\n");
     osDelay(1000); 
   
     /* USER CODE END 5 */
