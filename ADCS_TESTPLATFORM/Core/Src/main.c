@@ -357,8 +357,8 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  huart4.gState = HAL_UART_STATE_READY;
-  huart4.RxState = HAL_UART_STATE_READY;
+  // huart4.gState = HAL_UART_STATE_READY;
+  // huart4.RxState = HAL_UART_STATE_READY;
   // making sure that UART driver is initialized and UARTs are added after freertos started
   initDriver_UART();
 	//UART2 = for printf
@@ -376,10 +376,10 @@ void StartDefaultTask(void const * argument)
   uint8_t status2 = addDriver_UART(&huart4, UART4_IRQn, keep_new);
   if (status2 == 0) {
     char msg[] = "UART4 Driver initialized OK\r\n";
-    HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   } else {
     char msg[] = "UART4 Driver FAILED\r\n";
-    HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   }
 
   osDelay(100); //when in doubt add a delay
