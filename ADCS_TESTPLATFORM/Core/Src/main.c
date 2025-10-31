@@ -361,7 +361,7 @@ void StartDefaultTask(void const * argument)
   initDriver_UART();
 	//UART2 = for printf
   uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
- if (status == 0) {
+  if (status == 0) {
     char msg[] = "UART Driver initialized OK\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   } else {
@@ -373,19 +373,17 @@ void StartDefaultTask(void const * argument)
   osDelay(100); //when in doubt add a delay
 	//UART4 = for IMU
 	// addDriver_UART(&huart4,UART4_IRQn,keep_new);
-  /* Infinite loop */
-  for(;;)
-  {
+
 
   #if enable_printf
 	printf("Initializing IMU \n");
-#endif
-	//uint8_t ret = 1;
-	uint8_t ret = initIMUConfig(&huart4);
-#if enable_printf
-	if(ret) printf("IMU correctly configured \n");
-	else printf("Error configuring IMU \n");
-#endif
+  #endif
+    //uint8_t ret = 1;
+    uint8_t ret = initIMUConfig(&huart4);
+  #if enable_printf
+    if(ret) printf("IMU correctly configured \n");
+    else printf("Error configuring IMU \n");
+  #endif
 
 	float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
@@ -462,11 +460,13 @@ void StartDefaultTask(void const * argument)
 			//printf("IMU: Error configuring IMU \n");
 			osDelay(2000);
 		}
-  printf("Hello from STM32L4\r\n");
-  osDelay(100); 
+    printf("Hello from STM32L4\r\n");
+    osDelay(100); 
   
-  /* USER CODE END 5 */
+    /* USER CODE END 5 */
+  }
 }
+
 
 /**
   * @brief  Period elapsed callback in non blocking mode
