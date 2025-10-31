@@ -8,27 +8,27 @@ uint8_t single_mode_pckt[2] = {0x10,0x86};
 uint8_t READ_DATAREG = 0x38; //The byte to send on DIN to start obtain the result of Conversation on Dout
 uint8_t READ_STATUSREG = 0x08; //The byte to send on DIN to the CR to obtain the content of Status Reg
 
-// void init_tempsens_handler(Temp_values *Temp_values){
-//     Temp_values->temp[0] = 0;
-//     Temp_values->temp[1] = 0;
-//     Temp_values->temp[2] = 0;
-//     Temp_values->temp[3] = 0;
-//     Temp_values->temp[4] = 0;
-//     Temp_values->temp[5] = 0;
-//     Temp_values->temp[6] = 0;
-//     Temp_values->temp[7] = 0;
-//     Temp_values->values.R[0] = 10040; //ohm
-//     Temp_values->values.R[1] = 10020; //ohm
-//     Temp_values->values.R[2] = 10000; //ohm
-//     Temp_values->values.R[3] = 10020; //ohm
-//     Temp_values->values.R[4] = 10000; //ohm
-//     Temp_values->values.R[5] = 10010; //ohm
-//     Temp_values->values.R[6] = 10000; //ohm
-//     Temp_values->values.R[7] = 10000; //ohm
-//     Temp_values->values.R_25 = 10000; //ohm
-//     Temp_values->values.B = 3977; //k
-//     Temp_values->values.Vdd = 3.3; //v
-// }
+void init_tempsens_handler(Temp_values *Temp_values){
+    Temp_values->temp[0] = 0;
+    Temp_values->temp[1] = 0;
+    Temp_values->temp[2] = 0;
+    Temp_values->temp[3] = 0;
+    Temp_values->temp[4] = 0;
+    Temp_values->temp[5] = 0;
+    Temp_values->temp[6] = 0;
+    Temp_values->temp[7] = 0;
+    Temp_values->values.R[0] = 10040; //ohm
+    Temp_values->values.R[1] = 10020; //ohm
+    Temp_values->values.R[2] = 10000; //ohm
+    Temp_values->values.R[3] = 10020; //ohm
+    Temp_values->values.R[4] = 10000; //ohm
+    Temp_values->values.R[5] = 10010; //ohm
+    Temp_values->values.R[6] = 10000; //ohm
+    Temp_values->values.R[7] = 10000; //ohm
+    Temp_values->values.R_25 = 10000; //ohm
+    Temp_values->values.B = 3977; //k
+    Temp_values->values.Vdd = 3.3; //v
+}
 
 void select_input(uint8_t sel)
 {

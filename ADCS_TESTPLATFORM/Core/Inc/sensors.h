@@ -44,29 +44,29 @@ typedef struct{
   */
 void select_input(uint8_t sel);
 
-// /**
-//   * @brief  Function to make analog-to-digital conversion with external ADC
-//   * @param	spi_struct Structure needed to handle SPI communication with external ADC
-//   * @param  mode variable to select the working mode of ADC:
-//   * 1) mode = 0 : Continuous conversione mode
-//   * 2) mode = 1 : Single conversion mode
-//   * 3) mode = 2 : Continuous Read mode(Da implementare)
-//   * IF mode different from one of these values print an error
-//   * @param status_flag a flag to check the status of conversion
-//   * @retval none
-//   */
-// float ADC_Conversion(SPI_HandleTypeDef *spi_struct,uint8_t mode);
-// //uint16_t ADC_Conversion(SPI_HandleTypeDef *spi_struct,uint8_t mode);
+/**
+  * @brief  Function to make analog-to-digital conversion with external ADC
+  * @param	spi_struct Structure needed to handle SPI communication with external ADC
+  * @param  mode variable to select the working mode of ADC:
+  * 1) mode = 0 : Continuous conversione mode
+  * 2) mode = 1 : Single conversion mode
+  * 3) mode = 2 : Continuous Read mode(Da implementare)
+  * IF mode different from one of these values print an error
+  * @param status_flag a flag to check the status of conversion
+  * @retval none
+  */
+float ADC_Conversion(SPI_HandleTypeDef *spi_struct,uint8_t mode);
+//uint16_t ADC_Conversion(SPI_HandleTypeDef *spi_struct,uint8_t mode);
 
 
-// /**
-//   * @brief  Function to select which channel of analogic mux send to external ADC
-//   * @param	sel Variable to select channel(0 to 7)
-//   * @retval none
-//   */
-// void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i);
+/**
+  * @brief  Function to select which channel of analogic mux send to external ADC
+  * @param	sel Variable to select channel(0 to 7)
+  * @retval none
+  */
+void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i);
 
 
-// void get_temperatures(SPI_HandleTypeDef *spi_struct,Temp_values *temp_struct, uint8_t counter);
+void get_temperatures(SPI_HandleTypeDef *spi_struct,Temp_values *temp_struct, uint8_t counter);
 
 #endif
