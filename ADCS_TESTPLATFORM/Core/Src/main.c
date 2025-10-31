@@ -464,7 +464,7 @@ void StartDefaultTask(void const * argument)
 		}
   printf("Hello from STM32L4\r\n");
   osDelay(100); 
-  }
+  
   /* USER CODE END 5 */
 }
 
