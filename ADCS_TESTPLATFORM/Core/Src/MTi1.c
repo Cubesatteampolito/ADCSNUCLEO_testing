@@ -141,7 +141,7 @@ static uint8_t receiveMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pck
 			if(searchFrameAdvance(&rxcBuff, &foundPckt, &rule, SHIFTOUT_FULL | SHIFTOUT_CURR | SHIFTOUT_FAST)){	//if we found a header, get MID and LEN fields
 				mid=foundPckt.buff[2];
 				len=foundPckt.buff[3];
-				phase=_packet;
+				phase=_packet;zz
 			}
 		}else if(phase==_packet){
 			headTail[2]=mid;
@@ -290,7 +290,8 @@ uint8_t readIMUPacket(UART_HandleTypeDef* IMUhandle, float gyroscope[3], float m
 
 	if(receiveMsg(IMUhandle,&meas, &format, 1, timeout)){
 		//found packet
-
+		char msg[] = "Reading data\r\n";
+    	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);	
 		//writing acc data
 		writeIMUDataArray(&meas.data[IMU_DATA_ACC_INDEX], (uint32_t*)accelerometer, 3);
 		//writing gyro data
