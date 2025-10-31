@@ -141,7 +141,7 @@ static uint8_t receiveMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pck
 			if(searchFrameAdvance(&rxcBuff, &foundPckt, &rule, SHIFTOUT_FULL | SHIFTOUT_CURR | SHIFTOUT_FAST)){	//if we found a header, get MID and LEN fields
 				mid=foundPckt.buff[2];
 				len=foundPckt.buff[3];
-				phase=_packet;zz
+				phase=_packet;
 			}
 		}else if(phase==_packet){
 			headTail[2]=mid;
