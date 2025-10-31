@@ -147,6 +147,9 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
+  // IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
+	// configASSERT(IMURead_ControlMutex);
+	// xSemaphoreGive(IMURead_ControlMutex);
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -159,6 +162,12 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  /* definition and creation of IMUQueue1 */
+	osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
+	IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  /* definition and creation of IMUQueue2 */
+	osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+	IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
