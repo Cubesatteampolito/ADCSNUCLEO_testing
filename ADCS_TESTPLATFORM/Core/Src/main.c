@@ -372,7 +372,6 @@ void StartDefaultTask(void const * argument)
   }
 
 	// UART4 = for IMU
-	addDriver_UART(&huart4,UART4_IRQn,keep_new);
   uint8_t status2 = addDriver_UART(&huart4, UART4_IRQn, keep_new);
   if (status2 == 0) {
     char msg[] = "UART4 Driver initialized OK\r\n";
