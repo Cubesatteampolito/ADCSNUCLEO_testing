@@ -371,6 +371,92 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+
+  #if enable_printf
+	printf("Initializing IMU \n");
+#endif
+	//uint8_t ret = 1;
+	uint8_t ret = initIMUConfig(&huart4);
+#if enable_printf
+	if(ret) printf("IMU correctly configured \n");
+	else printf("Error configuring IMU \n");
+#endif
+
+	float gyro[3]={1,2,3};
+	float mag[3]={4,5,6};
+	float acc[3] = {7,8,9};
+
+	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
+
+	/* Infinite loop */
+	for(;;)
+	{
+
+		//Non c'è bisogno di settare o resettare il CTS e l'RTS della UART4 per IMU perchè le funzioni
+		//UART_Transmit e UART_Receive gestiscono la cosa automaticamente se dall'altro lato il dispositivo ha abilitato pure
+		//queste due linee per l'UART
+		//Se voglio far comunicare IMU e Nucleo con solo le 2 linee UART tx ed Rx basta che disabilito l'hardware flow control
+		//da CubeMx.
+
+
+		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
+		mag[0]/=10000; //1G = 10^-4 Tesla
+		mag[1]/=10000; //1G = 10^-4 Tesla
+		mag[2]/=10000; //1G = 10^-4 Tesla
+		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
+		{
+			printf("IMU Task : Taken IMURead_Control control");
+			ret=readIMUPacket(&huart4, gyro, mag, 50);
+			xSemaphoreGive(IMURead_ControlMutex);
+			printf("IMU Task : Released IMURead_Control control");
+		}*/
+		if(ret)
+		{
+			/*for(uint32_t field=0; field<3;field++){
+					printf("%f \t",gyro[field]);
+			}
+			printf("\nMagnetometer: ");
+			for(uint32_t field=0; field<3;field++){
+				printf("%f \t",mag[field]);
+			}
+			printf("\n");*/
+
+			if (local_imu_struct == NULL) {
+				printf("IMU TASK: allocazione struttura fallita !\n");
+			}
+			else
+			{
+				//Riempio struct con valori letti da IMU,per poi inviareli a Task Controllo
+				for (int i = 0; i < 3; i++)
+				{
+					local_imu_struct->gyro_msr[i] = gyro[i];
+					local_imu_struct->mag_msr[i] = mag[i];
+					local_imu_struct->acc_msr[i] = acc[i];
+					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+				}
+				//Invio queue a Control Task
+			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			    	//printf("Invio a Control Task fallito \n");
+			       	free(local_imu_struct); // Ensure the receiving task has time to process
+				} else {
+			        //printf("Dati Inviati a Control Task \n");
+
+			 	}
+			 	//Invio queue a OBC Task
+			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			    	//printf("Invio a OBC Task fallito \n");
+			       	free(local_imu_struct); // Ensure the receiving task has time to process
+			 	} else {
+			    	//printf("Dati a Control Inviati \n");
+				}
+			}
+		}
+		else{
+			//printf("IMU: Error configuring IMU \n");
+			osDelay(2000);
+		}
   printf("Hello from STM32L4\r\n");
   osDelay(100); 
   }
