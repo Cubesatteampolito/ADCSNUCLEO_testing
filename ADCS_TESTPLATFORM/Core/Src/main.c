@@ -357,23 +357,32 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+  huart4.gState = HAL_UART_STATE_READY;
+  huart4.RxState = HAL_UART_STATE_READY;
   // making sure that UART driver is initialized and UARTs are added after freertos started
   initDriver_UART();
 	//UART2 = for printf
   uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
   if (status == 0) {
-    char msg[] = "UART Driver initialized OK\r\n";
+    char msg[] = "USART2 Driver initialized OK\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   } else {
-    char msg[] = "UART Driver FAILED\r\n";
+    char msg[] = "USART2 Driver FAILED\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   }
 
+	// UART4 = for IMU
+	addDriver_UART(&huart4,UART4_IRQn,keep_new);
+  uint8_t status = addDriver_UART(&huart4, UART4_IRQn, keep_new);
+  if (status == 0) {
+    char msg[] = "UART4 Driver initialized OK\r\n";
+    HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
+  } else {
+    char msg[] = "UART4 Driver FAILED\r\n";
+    HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
+  }
 
   osDelay(100); //when in doubt add a delay
-	//UART4 = for IMU
-	// addDriver_UART(&huart4,UART4_IRQn,keep_new);
-
 
   #if enable_printf
 	printf("Initializing IMU \n");
@@ -413,7 +422,7 @@ void StartDefaultTask(void const * argument)
 			xSemaphoreGive(IMURead_ControlMutex);
 			printf("IMU Task : Released IMURead_Control control");
 		}*/
-    printf("IMU status %d \n",ret);
+    printf("IMU status %d \r\n",ret);
 		if(ret)
 		{
 			/*for(uint32_t field=0; field<3;field++){
