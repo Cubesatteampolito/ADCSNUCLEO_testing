@@ -413,6 +413,7 @@ void StartDefaultTask(void const * argument)
 			xSemaphoreGive(IMURead_ControlMutex);
 			printf("IMU Task : Released IMURead_Control control");
 		}*/
+    printf("IMU status %d \n",ret);
 		if(ret)
 		{
 			/*for(uint32_t field=0; field<3;field++){
@@ -423,7 +424,6 @@ void StartDefaultTask(void const * argument)
 				printf("%f \t",mag[field]);
 			}
 			printf("\n");*/
-	    printf("status: %d\n", local_imu_struct);
 			if (local_imu_struct == NULL) {
 				printf("IMU TASK: allocazione struttura fallita !\n");
 			}
