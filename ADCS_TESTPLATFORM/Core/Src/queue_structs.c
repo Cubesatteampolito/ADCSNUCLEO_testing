@@ -9,9 +9,9 @@
 
 
 
-// void processCombinedData(void *event,void *strct1, CombinedDataProcessor processor) {
-//     processor(event,strct1);
-// }
+void processCombinedData(void *event,void *strct1, CombinedDataProcessor processor) {
+    processor(event,strct1);
+}
 
 void receive_IMUqueue_control(void *event,void *PID_struct) {
 
@@ -43,42 +43,42 @@ void receive_IMUqueue_control(void *event,void *PID_struct) {
 	}
 }
 
-// void receive_IMUqueue_OBC(void *event,void *attitude) {
+void receive_IMUqueue_OBC(void *event,void *attitude) {
 
-// 	imu_queue_struct *int_queue_struct;
-// 	attitudeADCS *int_attitude_struct = (attitudeADCS *)attitude;
+	imu_queue_struct *int_queue_struct;
+	attitudeADCS *int_attitude_struct = (attitudeADCS *)attitude;
 
-// 	if (((osEvent *)event)->status == osEventMessage)
-// 	{
-// 		int_queue_struct = (imu_queue_struct *)((osEvent *) event)->value.p;
-// #if enable_printf
-// 		printf("OBC TASK: Received IMU measured values via Queue \n");
-// #endif
-// 		int_attitude_struct->omega_x = int_queue_struct->gyro_msr[0];
-// 		int_attitude_struct->omega_y = int_queue_struct->gyro_msr[1];
-// 		int_attitude_struct->omega_z = int_queue_struct->gyro_msr[2];
-// 		int_attitude_struct->acc_x = int_queue_struct->acc_msr[0];
-// 		int_attitude_struct->acc_y = int_queue_struct->acc_msr[1];
-// 		int_attitude_struct->acc_z = int_queue_struct->acc_msr[2];
+	if (((osEvent *)event)->status == osEventMessage)
+	{
+		int_queue_struct = (imu_queue_struct *)((osEvent *) event)->value.p;
+#if enable_printf
+		printf("OBC TASK: Received IMU measured values via Queue \n");
+#endif
+		int_attitude_struct->omega_x = int_queue_struct->gyro_msr[0];
+		int_attitude_struct->omega_y = int_queue_struct->gyro_msr[1];
+		int_attitude_struct->omega_z = int_queue_struct->gyro_msr[2];
+		int_attitude_struct->acc_x = int_queue_struct->acc_msr[0];
+		int_attitude_struct->acc_y = int_queue_struct->acc_msr[1];
+		int_attitude_struct->acc_z = int_queue_struct->acc_msr[2];
 
-// 		int_attitude_struct->b_x = int_queue_struct->mag_msr[0];
-// 		int_attitude_struct->b_y = int_queue_struct->mag_msr[1];
-// 		int_attitude_struct->b_z = int_queue_struct->mag_msr[2];
-// #if enable_printf
-// 		printf("OBC: Giro[0] : %f \n",int_attitude_struct->omega_x);
-// 		printf("OBC: Giro[1] : %f \n",int_attitude_struct->omega_y);
-// 		printf("OBC: Giro[2] : %f \n",int_attitude_struct->omega_z);
-// 		printf("OBC: Magn Field[0] : %f \n",int_attitude_struct->b_x);
-// 		printf("OBC: Magn Field[1] : %f \n",int_attitude_struct->b_y);
-// 		printf("OBC: Magn Field[2] : %f \n",int_attitude_struct->b_z);
-// #endif
-// 		free(int_queue_struct);
-// 		}
-// 		else
-// 		{
-// 			printf("OBC TASK:Ricezione IMU fallita con status: %d \n\n", ((osEvent *)event)->status);
-// 		}
-// }
+		int_attitude_struct->b_x = int_queue_struct->mag_msr[0];
+		int_attitude_struct->b_y = int_queue_struct->mag_msr[1];
+		int_attitude_struct->b_z = int_queue_struct->mag_msr[2];
+#if enable_printf
+		printf("OBC: Giro[0] : %f \n",int_attitude_struct->omega_x);
+		printf("OBC: Giro[1] : %f \n",int_attitude_struct->omega_y);
+		printf("OBC: Giro[2] : %f \n",int_attitude_struct->omega_z);
+		printf("OBC: Magn Field[0] : %f \n",int_attitude_struct->b_x);
+		printf("OBC: Magn Field[1] : %f \n",int_attitude_struct->b_y);
+		printf("OBC: Magn Field[2] : %f \n",int_attitude_struct->b_z);
+#endif
+		free(int_queue_struct);
+		}
+		else
+		{
+			printf("OBC TASK:Ricezione IMU fallita con status: %d \n\n", ((osEvent *)event)->status);
+		}
+}
 // void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct)
 // {
 // 	Current_Temp_Struct *int_queue_struct;

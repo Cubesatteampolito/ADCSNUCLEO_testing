@@ -28,23 +28,23 @@ typedef struct{
 // 	float temperature[NUM_TEMP_SENS];
 // } Current_Temp_Struct;
 
-//Functions
-// /**
-//   * @brief  Callback function to process data
-//   * @param	event First pointer to void variable
-//   * @param	data1 Second pointer to void variable
-//   * @retval none
-//   */
-// typedef void (*CombinedDataProcessor)(void *event,void *data1);
+Functions
+/**
+  * @brief  Callback function to process data
+  * @param	event First pointer to void variable
+  * @param	data1 Second pointer to void variable
+  * @retval none
+  */
+typedef void (*CombinedDataProcessor)(void *event,void *data1);
 
-// /**
-//   * @brief  Function to handle pointers to void and a pointer to void struct function
-//   * @param	event First pointer to void variable
-//   * @param	strct1 Second pointer to void variable
-//   * @param 	processor Typedef struct function parameter
-//   * @retval none
-//   */
-// void processCombinedData(void *event,void *strct1, CombinedDataProcessor processor);
+/**
+  * @brief  Function to handle pointers to void and a pointer to void struct function
+  * @param	event First pointer to void variable
+  * @param	strct1 Second pointer to void variable
+  * @param 	processor Typedef struct function parameter
+  * @retval none
+  */
+void processCombinedData(void *event,void *strct1, CombinedDataProcessor processor);
 
 /**
   * @brief  Function to handle received IMU queue elements(sent by IMU Task) arriving to Control Task
@@ -53,13 +53,13 @@ typedef struct{
   * @retval none
   */
 void receive_IMUqueue_control(void *event,void *PID_struct);
-// /**
-//   * @brief  Function to handle received IMU queue elements(sent by IMU Task) arriving to OBC Task
-//   * @param	event First pointer to void variable
-//   * @param	attitude Second pointer to void variable
-//   * @retval none
-//   */
-// void receive_IMUqueue_OBC(void *event,void *attitude);
+/**
+  * @brief  Function to handle received IMU queue elements(sent by IMU Task) arriving to OBC Task
+  * @param	event First pointer to void variable
+  * @param	attitude Second pointer to void variable
+  * @retval none
+  */
+void receive_IMUqueue_OBC(void *event,void *attitude);
 // /**
 //   * @brief  Function to handle received Temperatures and currents queue(sent by Check Task) elements arriving to OBC Task
 //   * @param	event First pointer to void variable
