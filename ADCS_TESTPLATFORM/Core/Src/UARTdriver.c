@@ -51,6 +51,7 @@ uint8_t addDriver_UART(UART_HandleTypeDef* huartHandle, IRQn_Type irq, fifo_poli
 
             //intialize the strcture for this handle
             _driverHandle_UART[handleIndex]._huartHandle = huartHandle;
+            _driverHandle_UART[handleIndex]._irq = irq; // store IRQ if it doesnt works then remove this on next commit
             _driverHandle_UART[handleIndex]._rxQueueHandle = xQueueCreateStatic(SERIAL_RX_BUFF_LEN,1,(void*)&_driverHandle_UART[handleIndex]._rxQueueStorageBuffer,&_driverHandle_UART[handleIndex]._rxQueueBuffer);
             _driverHandle_UART[handleIndex]._txQueueHandle = xQueueCreateStatic(SERIAL_TX_BUFF_LEN,1,(void*)&_driverHandle_UART[handleIndex]._txQueueStorageBuffer,&_driverHandle_UART[handleIndex]._txQueueBuffer);
             _driverHandle_UART[handleIndex]._usageFlag = 1;

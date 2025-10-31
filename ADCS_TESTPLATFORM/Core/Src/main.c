@@ -120,9 +120,6 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
-  // Force UART4 to READY state before registering
-  huart2.gState = HAL_UART_STATE_READY;
-  huart2.RxState = HAL_UART_STATE_READY;
   
   // initDriver_UART();
   // uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
@@ -152,7 +149,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512);  // <-- Increased stack size
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512);//increase stack size because idk clankers told me to
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
