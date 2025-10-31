@@ -25,7 +25,12 @@
 #include "string.h"
 #include "stdio.h"
 #include "UARTdriver.h"//setting on uart.c is added to hal_msp.c file
-
+#include <math.h>
+#include <stdbool.h>
+#include "MTi1.h"
+#include "messages.h"
+#include "queue_structs.h"
+#include "constants.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
