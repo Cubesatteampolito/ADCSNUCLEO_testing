@@ -53,6 +53,15 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
+uint32_t defaultTaskBuffer[ stack_size]; //4096
+osStaticThreadDef_t defaultTaskHandlecontrolBlock;
+
+osMessageQId IMUQueue1Handle;
+uint8_t IMUQueue1Buffer[ 256 * sizeof( imu_queue_struct ) ];
+osStaticMessageQDef_t IMUQueue1ControlBlock;
+osMessageQId IMUQueue2Handle;
+uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
+osStaticMessageQDef_t IMUQueue2ControlBlock;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -154,8 +163,8 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512);//increase stack size because idk clankers told me to
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0,stack_size, defaultTaskBuffer, &defaultTaskHandlecontrolBlock);
+	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -447,21 +456,21 @@ void StartDefaultTask(void const * argument)
 					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
 					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
 				}
-				// //Invio queue a Control Task
-			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a Control Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-				// } else {
-			  //       //printf("Dati Inviati a Control Task \n");
+				//Invio queue a Control Task
+			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			    	//printf("Invio a Control Task fallito \n");
+			       	free(local_imu_struct); // Ensure the receiving task has time to process
+				} else {
+			        //printf("Dati Inviati a Control Task \n");
 
-			 	// }
-			 	// //Invio queue a OBC Task
-			 	// if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a OBC Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-			 	// } else {
-			  //   	//printf("Dati a Control Inviati \n");
-				// }
+			 	}
+			 	//Invio queue a OBC Task
+			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			    	//printf("Invio a OBC Task fallito \n");
+			       	free(local_imu_struct); // Ensure the receiving task has time to process
+			 	} else {
+			    	//printf("Dati a Control Inviati \n");
+				}
 			}
 		}
 		else{
