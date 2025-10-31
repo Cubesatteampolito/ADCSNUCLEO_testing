@@ -7,7 +7,7 @@
 
 #ifndef INC_QUEUE_STRUCTS_H_
 #define INC_QUEUE_STRUCTS_H_
-
+#include "sensors.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "cmsis_os.h"
