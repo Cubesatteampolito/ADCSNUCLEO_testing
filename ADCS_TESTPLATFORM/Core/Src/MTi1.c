@@ -290,8 +290,6 @@ uint8_t readIMUPacket(UART_HandleTypeDef* IMUhandle, float gyroscope[3], float m
 
 	if(receiveMsg(IMUhandle,&meas, &format, 1, timeout)){
 		//found packet
-		char msg[] = "Reading data\r\n";
-    	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);	
 		//writing acc data
 		writeIMUDataArray(&meas.data[IMU_DATA_ACC_INDEX], (uint32_t*)accelerometer, 3);
 		//writing gyro data
