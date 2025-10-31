@@ -704,29 +704,27 @@ void IMU_Task(void const * argument)
 					local_imu_struct->gyro_msr[i] = gyro[i];
 					local_imu_struct->mag_msr[i] = mag[i];
 					local_imu_struct->acc_msr[i] = acc[i];
-					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+					printf("AAAAAAAAAAAAAAAAAAAAAAA  Accelerometer axis %d, value %f AAAAAAAAAAAAAA", i, acc[i]);
 				}
 				//Invio queue a Control Task
 			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			    	//printf("Invio a Control Task fallito \n");
+			    	printf("Invio a Control Task fallito \n");
 			       	free(local_imu_struct); // Ensure the receiving task has time to process
 				} else {
-			        //printf("Dati Inviati a Control Task \n");
+			        printf("Dati Inviati a Control Task \n");
 
 			 	}
 			 	//Invio queue a OBC Task
 			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			    	//printf("Invio a OBC Task fallito \n");
+			    	printf("Invio a OBC Task fallito \n");
 			       	free(local_imu_struct); // Ensure the receiving task has time to process
 			 	} else {
-			    	//printf("Dati a Control Inviati \n");
+			    	printf("Dati a Control Inviati \n");
 				}
 			}
 		}
 		else{
-			//printf("IMU: Error configuring IMU \n");
+			printf("IMU: Error configuring IMU \n");
 			osDelay(2000);
 		}
 	}
