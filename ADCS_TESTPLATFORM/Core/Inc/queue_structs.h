@@ -29,7 +29,7 @@ typedef struct{
 // 	float temperature[NUM_TEMP_SENS];
 // } Current_Temp_Struct;
 
-Functions
+// Functions
 /**
   * @brief  Callback function to process data
   * @param	event First pointer to void variable
