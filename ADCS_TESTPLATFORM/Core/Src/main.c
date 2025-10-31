@@ -441,21 +441,21 @@ void StartDefaultTask(void const * argument)
 					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
 					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
 				}
-				//Invio queue a Control Task
-			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			    	//printf("Invio a Control Task fallito \n");
-			       	free(local_imu_struct); // Ensure the receiving task has time to process
-				} else {
-			        //printf("Dati Inviati a Control Task \n");
+				// //Invio queue a Control Task
+			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			  //   	//printf("Invio a Control Task fallito \n");
+			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
+				// } else {
+			  //       //printf("Dati Inviati a Control Task \n");
 
-			 	}
-			 	//Invio queue a OBC Task
-			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			    	//printf("Invio a OBC Task fallito \n");
-			       	free(local_imu_struct); // Ensure the receiving task has time to process
-			 	} else {
-			    	//printf("Dati a Control Inviati \n");
-				}
+			 	// }
+			 	// //Invio queue a OBC Task
+			 	// if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			  //   	//printf("Invio a OBC Task fallito \n");
+			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
+			 	// } else {
+			  //   	//printf("Dati a Control Inviati \n");
+				// }
 			}
 		}
 		else{
