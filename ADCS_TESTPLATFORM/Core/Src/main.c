@@ -373,8 +373,8 @@ void StartDefaultTask(void const * argument)
 
 	// UART4 = for IMU
 	addDriver_UART(&huart4,UART4_IRQn,keep_new);
-  uint8_t status = addDriver_UART(&huart4, UART4_IRQn, keep_new);
-  if (status == 0) {
+  uint8_t status2 = addDriver_UART(&huart4, UART4_IRQn, keep_new);
+  if (status2 == 0) {
     char msg[] = "UART4 Driver initialized OK\r\n";
     HAL_UART_Transmit(&huart4, (uint8_t*)msg, strlen(msg), 100);
   } else {
