@@ -162,12 +162,12 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  /* definition and creation of IMUQueue1 */
-	osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
-	IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
-  /* definition and creation of IMUQueue2 */
-	osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-	IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  // /* definition and creation of IMUQueue1 */
+	// osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
+	// IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  // /* definition and creation of IMUQueue2 */
+	// osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+	// IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -216,7 +216,7 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 64;
+  RCC_OscInitStruct.HSICalibrationValue =  RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
@@ -465,21 +465,21 @@ void StartDefaultTask(void const * argument)
 					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
 					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
 				}
-				//Invio queue a Control Task
-			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			    	//printf("Invio a Control Task fallito \n");
-			       	free(local_imu_struct); // Ensure the receiving task has time to process
-				} else {
-			        //printf("Dati Inviati a Control Task \n");
+				// //Invio queue a Control Task
+			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			  //   	//printf("Invio a Control Task fallito \n");
+			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
+				// } else {
+			  //       //printf("Dati Inviati a Control Task \n");
 
-			 	}
-			 	//Invio queue a OBC Task
-			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			    	//printf("Invio a OBC Task fallito \n");
-			       	free(local_imu_struct); // Ensure the receiving task has time to process
-			 	} else {
-			    	//printf("Dati a Control Inviati \n");
-				}
+			 	// }
+			 	// //Invio queue a OBC Task
+			 	// if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			  //   	//printf("Invio a OBC Task fallito \n");
+			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
+			 	// } else {
+			  //   	//printf("Dati a Control Inviati \n");
+				// }
 			}
 		}
 		else{
