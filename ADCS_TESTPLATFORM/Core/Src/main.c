@@ -399,7 +399,7 @@ void StartDefaultTask(void const * argument)
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   }
 
-  osDelay(10000); //when in doubt add a delay
+  osDelay(1000); //when in doubt add a delay
 
   #if enable_printf
 	printf("Initializing IMU \n");
@@ -487,7 +487,6 @@ void StartDefaultTask(void const * argument)
 			osDelay(2000);
 		}
     // printf("Hello from STM32L4\r\n");
-    osDelay(1000); 
   
     /* USER CODE END 5 */
   }
