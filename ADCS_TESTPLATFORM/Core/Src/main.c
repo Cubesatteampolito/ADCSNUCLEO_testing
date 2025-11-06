@@ -394,7 +394,7 @@ static void MX_GPIO_Init(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+void IMU_Task(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   // huart4.gState = HAL_UART_STATE_READY;
@@ -511,6 +511,7 @@ void StartDefaultTask(void const * argument)
     // printf("Hello from STM32L4\r\n");
     osDelay(100);
   /* USER CODE END 5 */
+  }
 }
 
 /* USER CODE BEGIN Header_StartTask02 */
@@ -520,7 +521,7 @@ void StartDefaultTask(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_StartTask02 */
-void StartTask02(void const * argument)
+void OBC_Comm_Task(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
