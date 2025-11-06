@@ -50,18 +50,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart4;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId defaultTaskHandle;
-uint32_t defaultTaskBuffer[ stack_size]; //4096
-osStaticThreadDef_t defaultTaskHandlecontrolBlock;
-
-osMessageQId IMUQueue1Handle;
-uint8_t IMUQueue1Buffer[ 256 * sizeof( imu_queue_struct ) ];
-osStaticMessageQDef_t IMUQueue1ControlBlock;
-osMessageQId IMUQueue2Handle;
-uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
-osStaticMessageQDef_t IMUQueue2ControlBlock;
+osThreadId IMUTaskHandle;
+osThreadId OBC_CommTaskHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -71,25 +64,9 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
+static void MX_USART1_UART_Init(void);
 void StartDefaultTask(void const * argument);
-
-//defining putch to enable printf
-#ifdef __GNUC__
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#endif
-
-// PUTCHAR_PROTOTYPE{
-//   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
-//   return ch;
-// }
-PUTCHAR_PROTOTYPE{
-	uint8_t c=(uint8_t)ch;
-	sendDriver_UART(&huart2,&c,1);
-	return c;
-}
-
+void StartTask02(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -132,6 +109,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_UART4_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   
@@ -171,9 +149,13 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0,stack_size, defaultTaskBuffer, &defaultTaskHandlecontrolBlock);
-	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* definition and creation of IMUTask */
+  osThreadDef(IMUTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+
+  /* definition and creation of OBC_CommTask */
+  osThreadDef(OBC_CommTask, StartTask02, osPriorityIdle, 0, 128);
+  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -216,7 +198,7 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue =  RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.HSICalibrationValue = 64;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
@@ -276,6 +258,41 @@ static void MX_UART4_Init(void)
   /* USER CODE BEGIN UART4_Init 2 */
 
   /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
 
 }
 
@@ -488,10 +505,26 @@ void StartDefaultTask(void const * argument)
 		}
     // printf("Hello from STM32L4\r\n");
     osDelay(100);
-    /* USER CODE END 5 */
-  }
+  /* USER CODE END 5 */
 }
 
+/* USER CODE BEGIN Header_StartTask02 */
+/**
+* @brief Function implementing the OBC_CommTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask02 */
+void StartTask02(void const * argument)
+{
+  /* USER CODE BEGIN StartTask02 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask02 */
+}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
