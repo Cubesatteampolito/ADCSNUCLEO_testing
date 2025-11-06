@@ -31,6 +31,7 @@
 #include "messages.h"
 #include "queue_structs.h"
 #include "constants.h"
+#include "simpleDataLink.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,6 +63,10 @@ osStaticThreadDef_t IMUTaskControlBlock;
 osThreadId OBC_CommTaskHandle;
 uint32_t OBC_CommTaskBuffer[ stack_size1 ]; //16384
 osStaticThreadDef_t OBC_CommTaskControlBlock;
+
+osMessageQId IMUQueue2Handle;
+uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
+osStaticMessageQDef_t IMUQueue2ControlBlock;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -165,9 +170,9 @@ int main(void)
   // /* definition and creation of IMUQueue1 */
 	// osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
 	// IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
-  // /* definition and creation of IMUQueue2 */
-	// osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-	// IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  /* definition and creation of IMUQueue2 */
+	osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+	IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -511,13 +516,13 @@ void IMU_Task(void const * argument)
 			  //       //printf("Dati Inviati a Control Task \n");
 
 			 	// }
-			 	// //Invio queue a OBC Task
-			 	// if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a OBC Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-			 	// } else {
-			  //   	//printf("Dati a Control Inviati \n");
-				// }
+			 	//Invio queue a OBC Task
+			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			    	//printf("Invio a OBC Task fallito \n");
+			       	free(local_imu_struct); // Ensure the receiving task has time to process
+			 	} else {
+			    	//printf("Dati a Control Inviati \n");
+				}
 			}
 		}
 		else{
@@ -541,9 +546,89 @@ void OBC_Comm_Task(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
+
+  initDriver_UART();
+  //UART1 = for OBC communication
+  addDriver_UART(&huart1,USART1_IRQn,keep_old);
+  /* USER CODE BEGIN OBC_Comm_Task */
+	static serial_line_handle line1;
+	//Inizialize Serial Line for UART1
+	sdlInitLine(&line1,&txFunc1,&rxFunc1,50,2);
+
+	uint8_t opmode=0;
+	uint32_t rxLen;
+
+	setAttitudeADCS *RxAttitude = (setAttitudeADCS*) malloc(sizeof(setAttitudeADCS));
+	// housekeepingADCS TxHousekeeping;
+	attitudeADCS TxAttitude;
+	setOpmodeADCS RxOpMode;
+	//opmodeADCS TxOpMode;
+	osEvent retvalue1,retvalue;
+	uint8_t cnt1 = 0,cnt2 = 0;
+	char rxBuff[SDL_MAX_PAY_LEN];
+
+  /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+
+	 /*-------------------SEND TO OBC-------------------------*/
+	//sampling
+	  /* in theory here we should sample values and fill telemetry structures
+	  telemetryStruct.temp1=...;
+	  telemetryStruct.speed=...;
+	  .....*/
+	
+	 //Receive HouseKeeping sensor values via Queue
+	// retvalue = osMessageGet(ADCSHouseKeepingQueueHandle,300);
+
+	// //printf("OBC Task: Tick_Time: %lu \n",HAL_GetTick());
+
+	// if (retvalue.status == osEventMessage)
+	// {
+	// 	processCombinedData((void*)&retvalue,(void *)&TxHousekeeping,receive_Current_Tempqueue_OBC);
+	// 	//attitude sampling
+	// 	//in this case we just send the local copy of the structure
+	// 	//ALWAYS remember to set message code (use the generated defines
+
+	// 	//printf("OBC: Trying to send attitude \n");
+	// 	//finally we send the message
+
+	// 		printf("OBC TASK: after 7 counts: %lu \n",HAL_GetTick());
+	// 		TxHousekeeping.code=HOUSEKEEPINGADCS_CODE;
+	// 		TxHousekeeping.ticktime=HAL_GetTick();
+	// 		//printf("OBC: Trying to send housekeeping \n");
+	// 		//finally we send the message
+
+	// 		if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){}
+
+	// }
+
+	//Receive Telemetry IMU via Queue
+	retvalue1 = osMessageGet(IMUQueue2Handle, 300);
+
+	if (retvalue1.status == osEventMessage)
+	{
+		processCombinedData((void*)&retvalue1,(void *)&TxAttitude,receive_IMUqueue_OBC);
+		//in this case we just fill the structure with random values
+		//ALWAYS remember to set message code (use the generated defines
+			TxAttitude.code=ATTITUDEADCS_CODE;
+			TxAttitude.ticktime=HAL_GetTick();
+    printf("OBC TASK:i am alive %lu \n",HAL_GetTick());
+		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){}
+
+
+	}
+
+	opmodeADCS opmodeMsg;
+	opmodeMsg.opmode=opmode;
+	//ALWAYS remember to set message code (use the generated defines
+	opmodeMsg.code=OPMODEADCS_CODE;
+	//finally we send the message (WITH ACK REQUESTED)
+	//printf("OBC: Trying to send opmodeADCS \n");
+	if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){}
+
+
+  	osDelay(2000);
   }
   /* USER CODE END StartTask02 */
 }
