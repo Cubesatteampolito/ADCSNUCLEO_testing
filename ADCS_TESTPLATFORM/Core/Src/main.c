@@ -630,6 +630,7 @@ void OBC_Comm_Task(void const * argument)
     printf("OBC TASK:i am alive %lu \r\n",HAL_GetTick());
 		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
       printf("OBC TASK:i am connected %lu \r\n",HAL_GetTick());
+      osDelay(2000);
     }
 
 
