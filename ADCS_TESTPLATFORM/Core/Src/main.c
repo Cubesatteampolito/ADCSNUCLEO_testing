@@ -627,8 +627,10 @@ void OBC_Comm_Task(void const * argument)
 		//ALWAYS remember to set message code (use the generated defines
 			TxAttitude.code=ATTITUDEADCS_CODE;
 			TxAttitude.ticktime=HAL_GetTick();
-    printf("OBC TASK:i am alive %lu \n",HAL_GetTick());
-		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){}
+    printf("OBC TASK:i am alive %lu \r\n",HAL_GetTick());
+		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
+      printf("OBC TASK:i am connected %lu \r\n",HAL_GetTick());
+    }
 
 
 	}
