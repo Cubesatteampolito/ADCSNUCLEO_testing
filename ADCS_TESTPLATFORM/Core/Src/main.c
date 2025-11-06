@@ -24,7 +24,13 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
-
+#include "UARTdriver.h"//setting on uart.c is added to hal_msp.c file
+#include <math.h>
+#include <stdbool.h>
+#include "MTi1.h"
+#include "messages.h"
+#include "queue_structs.h"
+#include "constants.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,6 +53,15 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
+uint32_t defaultTaskBuffer[ stack_size]; //4096
+osStaticThreadDef_t defaultTaskHandlecontrolBlock;
+
+osMessageQId IMUQueue1Handle;
+uint8_t IMUQueue1Buffer[ 256 * sizeof( imu_queue_struct ) ];
+osStaticMessageQDef_t IMUQueue1ControlBlock;
+osMessageQId IMUQueue2Handle;
+uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
+osStaticMessageQDef_t IMUQueue2ControlBlock;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -57,6 +72,24 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
 void StartDefaultTask(void const * argument);
+
+//defining putch to enable printf
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+
+// PUTCHAR_PROTOTYPE{
+//   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+//   return ch;
+// }
+PUTCHAR_PROTOTYPE{
+	uint8_t c=(uint8_t)ch;
+	sendDriver_UART(&huart2,&c,1);
+	return c;
+}
+
 
 /* USER CODE BEGIN PFP */
 
@@ -100,14 +133,23 @@ int main(void)
   MX_USART2_UART_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-  // Activate notification
 
-
+  
+  // initDriver_UART();
+  // uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
+  // if (status != 0) {
+  //   char err[64];
+  //   int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
+  // }
 
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
+  // IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
+	// configASSERT(IMURead_ControlMutex);
+	// xSemaphoreGive(IMURead_ControlMutex);
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -120,12 +162,18 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  // /* definition and creation of IMUQueue1 */
+	// osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
+	// IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  // /* definition and creation of IMUQueue2 */
+	// osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+	// IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0,stack_size, defaultTaskBuffer, &defaultTaskHandlecontrolBlock);
+	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -168,7 +216,7 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 64;
+  RCC_OscInitStruct.HSICalibrationValue =  RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
@@ -327,63 +375,123 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-/**
- * READ THIS SHI BEFORE YOU BECOME CRAZY
- * This section is controlling the mti-3 sensors
- * In order to understand the code please check the Xsense LLCP(Low Level Communication Protocol) as the Mti-3 communicate through this protocol.(thats where the hex content came from)
- * Also check the Mti-3 data sheet itself for more information
- * For the sake of everyone laziness, imma put it here so that no one have to go through the dirty work again
- * MESSAGE STRUCTURE
- * Preamble||BusID||MessageID||Length||Data||Checksum
- * for example: the goToConfig messageID is 0x30 therefore the message that you need to send is  0xFA, 0xFF, 0x30, 0x00, 0xD1
- * why is the preamble 0xFA and the busID is 0xFF you might ask. erm its in the document XD (its a constant) basically the busID is just saying that you re sending message from master device which is yourself 0xFF
- * length in this case is 0x00 because you dont send any data, you just send the messageID
- * and the check sum is check sum= 256(because we are using 8bit bytes duh)-(sum of BusID, MID, LEN, DATA)(sum of everything except preamble)mod256
- * NOTE TO MYSELF(HOANG) I WILL PUT A F*CKING HEADER FILE FOR ALL THIS HEX VALUE, THIS CODE IS UGLY
- * btw if you ask why its in default task, because i want to check if it works first then i can do tasking later
- * test
- */
-	// This part of the code is to check the status of the sensor
-	//uint8_t wakeup[] = { 0xFA, 0xFF, 0x3E, 0x00, 0xC1 };
-	uint8_t goToConfig[] = { 0xFA, 0xFF, 0x30, 0x00, 0xD1 };
-	uint8_t ReqDID[] = { 0xFA, 0xFF, 0x00, 0x00, 0xFF };
-	uint8_t rxBuffer[32];
-	// 0) Send Wake up
-	//HAL_UART_Transmit(&huart4, wakeup, sizeof(wakeup), HAL_MAX_DELAY);
-	//HAL_Delay(10); // Small delay to let sensor switch modes
-	// 1) Send GoToConfig,  Switch the active state of the device from Measurement State to Config State. This message can also be used in Config State to confirm that Config State is currently the active state.
-	HAL_UART_Transmit(&huart4, goToConfig, sizeof(goToConfig), HAL_MAX_DELAY);
-	HAL_Delay(10); // Small delay to let sensor switch modes
+  // huart4.gState = HAL_UART_STATE_READY;
+  // huart4.RxState = HAL_UART_STATE_READY;
+  // making sure that UART driver is initialized and UARTs are added after freertos started
+  initDriver_UART();
+	//UART2 = for printf
+  uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
+  // if (status == 0) {
+  //   char msg[] = "USART2 Driver initialized OK\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  // } else {
+  //   char msg[] = "USART2 Driver FAILED\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  // }
 
-	// 2) Send ReqDID, Request to send the device identifier (or serial number). MT acknowledges by sending the DeviceID message.
-	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
+	// // UART4 = for IMU
+  uint8_t status2 = addDriver_UART(&huart4, UART4_IRQn, keep_new);
+  // if (status2 == 0) {
+  //   char msg[] = "UART4 Driver initialized OK\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  // } else {
+  //   char msg[] = "UART4 Driver FAILED\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  // }
 
-	// 3) Receive  DeviceID.  Acknowledge of ReqDID message. Data field contains device ID / serial number.
-	HAL_UART_Receive(&huart4, rxBuffer, 8, 100);  // Adjust length as needed
+  // osDelay(1000); //when in doubt add a delay
 
-	// 4) Check response
-	// Buffer to hold the message
-	char msg[64];
+  #if enable_printf
+	printf("Initializing IMU \n");
+  #endif
+    //uint8_t ret = 1;
+    uint8_t ret = initIMUConfig(&huart4);
+  #if enable_printf
+    if(ret) printf("IMU correctly configured \n");
+    else printf("Error configuring IMU \n");
+  #endif
 
-	// check for Device ID, if the ID is not 000000 the device is responding
-	if (1) // MID == DeviceID response
+	float gyro[3]={1,2,3};
+	float mag[3]={4,5,6};
+	float acc[3] = {7,8,9};
+
+	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
+
+	/* Infinite loop */
+	for(;;)
 	{
-	  snprintf(msg, sizeof(msg),
-	           "DeviceID: %02X%02X%02X%02X\r\n",
-	           rxBuffer[5], rxBuffer[6], rxBuffer[7], rxBuffer[8]);
 
-	  HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-	}
-	// For testing and debug purposes i will put a pair of ReqOutputConfiguration and SetOutputConfiguration here
-	// The ReqConfiguration is to understand the current output configuration
-	uint8_t ReqOutputConfiguration[] = { 0xFA, 0xFF, 0x0C, 0x00, 0xF5};
-	// Send ReqOutputConfiguration.Requests the output configuration settings of the device.
-	HAL_UART_Transmit(&huart4, ReqDID, sizeof(ReqDID), HAL_MAX_DELAY);
+		//Non c'è bisogno di settare o resettare il CTS e l'RTS della UART4 per IMU perchè le funzioni
+		//UART_Transmit e UART_Receive gestiscono la cosa automaticamente se dall'altro lato il dispositivo ha abilitato pure
+		//queste due linee per l'UART
+		//Se voglio far comunicare IMU e Nucleo con solo le 2 linee UART tx ed Rx basta che disabilito l'hardware flow control
+		//da CubeMx.
 
 
+		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
+		mag[0]/=10000; //1G = 10^-4 Tesla
+		mag[1]/=10000; //1G = 10^-4 Tesla
+		mag[2]/=10000; //1G = 10^-4 Tesla
+		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
+		{
+			printf("IMU Task : Taken IMURead_Control control");
+			ret=readIMUPacket(&huart4, gyro, mag, 50);
+			xSemaphoreGive(IMURead_ControlMutex);
+			printf("IMU Task : Released IMURead_Control control");
+		}*/
+    // printf("IMU status %d \r\n",ret);
+		if(ret)
+		{
+			/*for(uint32_t field=0; field<3;field++){
+					printf("%f \t",gyro[field]);
+			}
+			printf("\nMagnetometer: ");
+			for(uint32_t field=0; field<3;field++){
+				printf("%f \t",mag[field]);
+			}
+			printf("\n");*/
+			if (local_imu_struct == NULL) {
+				printf("IMU TASK: allocazione struttura fallita !\n");
+			}
+			else
+			{
+				//Riempio struct con valori letti da IMU,per poi inviareli a Task Controllo
+				for (int i = 0; i < 3; i++)
+				{
+					local_imu_struct->gyro_msr[i] = gyro[i];
+					local_imu_struct->mag_msr[i] = mag[i];
+					local_imu_struct->acc_msr[i] = acc[i];
+					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+				}
+				// //Invio queue a Control Task
+			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			  //   	//printf("Invio a Control Task fallito \n");
+			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
+				// } else {
+			  //       //printf("Dati Inviati a Control Task \n");
 
-  /* USER CODE END 5 */
+			 	// }
+			 	// //Invio queue a OBC Task
+			 	// if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			  //   	//printf("Invio a OBC Task fallito \n");
+			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
+			 	// } else {
+			  //   	//printf("Dati a Control Inviati \n");
+				// }
+			}
+		}
+		else{
+			//printf("IMU: Error configuring IMU \n");
+			osDelay(2000);
+		}
+    // printf("Hello from STM32L4\r\n");
+    osDelay(100);
+    /* USER CODE END 5 */
+  }
 }
+
 
 /**
   * @brief  Period elapsed callback in non blocking mode
