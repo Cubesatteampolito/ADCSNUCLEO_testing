@@ -608,7 +608,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
 
     }while(retryNum<=line->retries);
 
-    return 0x05;
+    return 0x05;}
 
 uint32_t sdlReceive(serial_line_handle* line, uint8_t* buff, uint32_t len){
     if(line==NULL || line->rxFunc==NULL) return 0;
