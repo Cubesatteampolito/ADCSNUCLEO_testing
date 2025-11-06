@@ -574,9 +574,9 @@ void sdlInitLine(serial_line_handle* line, uint8_t (*txFunc)(uint8_t byte), uint
 }
 
 uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t ackWanted){
-    if(line==NULL || line->txFunc==NULL || buff==NULL || len==0) return 0;
+    if(line==NULL || line->txFunc==NULL || buff==NULL || len==0) return 0x01;
 
-    if(len>SDL_MAX_PAY_LEN) return 0;
+    if(len>SDL_MAX_PAY_LEN) return 0x02;
 
     //generating hash
     uint16_t hash=computeHash(buff,len);
@@ -598,7 +598,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
         //saving starting tick for timeout
         uint32_t startTick=sdlTimeTick();
         do{
-            if(receiveAck(line,hash)) return 1;
+            if(receiveAck(line,hash)) return 0x3;
 
 #ifdef SDL_ANTILOCK_DEPTH
         //if anti lock active, fill the queue while waiting
@@ -608,8 +608,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
 
     }while(retryNum<=line->retries);
 
-    return 0;
-}
+    return 0x04
 
 uint32_t sdlReceive(serial_line_handle* line, uint8_t* buff, uint32_t len){
     if(line==NULL || line->rxFunc==NULL) return 0;

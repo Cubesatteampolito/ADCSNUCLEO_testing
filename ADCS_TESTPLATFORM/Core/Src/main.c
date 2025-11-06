@@ -627,12 +627,12 @@ void OBC_Comm_Task(void const * argument)
 		//ALWAYS remember to set message code (use the generated defines
 			TxAttitude.code=ATTITUDEADCS_CODE;
 			TxAttitude.ticktime=HAL_GetTick();
-    printf("OBC TASK:i am alive %lu \n",HAL_GetTick());
+    printf("OBC TASK:i am alive %lu \r\n",HAL_GetTick());
     uint8_t sendStatus = sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0);
-    printf("OBC TASK: sdlSend status: %d at %lu \n", sendStatus, HAL_GetTick());
-		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
-      printf("OBC TASK:i am connected %lu \n",HAL_GetTick());
-    }
+    printf("OBC TASK: sdlSend status: 0x%02X at %lu \r\n", sendStatus, HAL_GetTick());
+		// if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
+    //   printf("OBC TASK:i am connected %lu \n",HAL_GetTick());
+    // }
 
 
 	}
@@ -643,10 +643,10 @@ void OBC_Comm_Task(void const * argument)
 	opmodeMsg.code=OPMODEADCS_CODE;
 	//finally we send the message (WITH ACK REQUESTED)
 	//printf("OBC: Trying to send opmodeADCS \n");
-	if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){}
+	// if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){}
 
 
-  	osDelay(2000);
+  // 	osDelay(2000);
   }
   /* USER CODE END StartTask02 */
 }
