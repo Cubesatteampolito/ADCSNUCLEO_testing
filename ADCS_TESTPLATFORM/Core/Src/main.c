@@ -53,10 +53,15 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId IMUTaskHandle;
-osThreadId OBC_CommTaskHandle;
-/* USER CODE BEGIN PV */
 
+/* USER CODE BEGIN PV */
+osThreadId IMUTaskHandle;
+uint32_t IMUTaskBuffer[ stack_size]; //4096
+osStaticThreadDef_t IMUTaskControlBlock;
+
+osThreadId OBC_CommTaskHandle;
+uint32_t OBC_CommTaskBuffer[ stack_size1 ]; //16384
+osStaticThreadDef_t OBC_CommTaskControlBlock;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -150,12 +155,12 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  osThreadDef(IMUTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(IMUTask, IMU_Task, osPriorityNormal, 0, stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
   IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
-  osThreadDef(OBC_CommTask, StartTask02, osPriorityIdle, 0, 128);
-  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+	osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+	OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

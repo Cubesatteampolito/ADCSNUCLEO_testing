@@ -181,7 +181,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* USER CODE BEGIN USART1_MspInit 1 */
-
+    HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
     /* USER CODE END USART1_MspInit 1 */
   }
   else if(huart->Instance==USART2)
@@ -215,7 +216,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* USER CODE BEGIN USART2_MspInit 1 */
-    HAL_NVIC_SetPriority(USART2_IRQn, 6, 0);//priority used to be 5 but i guess lets try 6 since what bad can it be
+    HAL_NVIC_SetPriority(USART2_IRQn, 5, 0);//priority used to be 5 but i guess lets try 6 since what bad can it be
     HAL_NVIC_EnableIRQ(USART2_IRQn);
     /* USER CODE END USART2_MspInit 1 */
   }
