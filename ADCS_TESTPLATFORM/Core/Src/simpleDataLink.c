@@ -589,7 +589,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
         //send data
         if(!sendFrame(line,FRMCODE_DATA,ackWanted,hash,buff,len)) continue;
 
-        if(!ackWanted) return 1;
+        if(!ackWanted) return 0x03;
 
 #ifdef SDL_DEBUG
         __sdlTestSendCallback(line);
@@ -598,7 +598,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
         //saving starting tick for timeout
         uint32_t startTick=sdlTimeTick();
         do{
-            if(receiveAck(line,hash)) return 0x3;
+            if(receiveAck(line,hash)) return 0x04;
 
 #ifdef SDL_ANTILOCK_DEPTH
         //if anti lock active, fill the queue while waiting
@@ -608,7 +608,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
 
     }while(retryNum<=line->retries);
 
-    return 0x04
+    return 0x05;
 
 uint32_t sdlReceive(serial_line_handle* line, uint8_t* buff, uint32_t len){
     if(line==NULL || line->rxFunc==NULL) return 0;
