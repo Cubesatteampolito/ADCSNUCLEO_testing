@@ -155,9 +155,8 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  osThreadDef(IMUTask, IMU_Task, osPriorityNormal, 0, stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
-  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
-
+ 	osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
+	IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
   /* definition and creation of OBC_CommTask */
 	osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
 	OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
