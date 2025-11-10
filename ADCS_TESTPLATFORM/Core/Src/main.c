@@ -31,6 +31,10 @@
 #include "messages.h"
 #include "queue_structs.h"
 #include "constants.h"
+
+/* For mutex */
+#include "FreeRTOS.h"
+#include "semphr.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,12 +44,24 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+/* ---- simpleDataLink (SDL) minimal TX on USART2 ----
+ * Frame: 0x7E | [code(1), ackWanted(1), hash_be(2)] | payload | crc_be(2) | 0x7E
+ * Byte-stuff: 0x7E -> 0x7D 0x5E ; 0x7D -> 0x7D 0x5D
+ * CRC16-CCITT, poly 0x1021, init 0xFFFF, computed on header+payload.
+ * We'll send DATA (0x01) and ackWanted=0 for telemetry.
+ */
+#define SDL_FLAG       0x7E
+#define SDL_ESC        0x7D
+#define SDL_ESC_7E     0x5E
+#define SDL_ESC_7D     0x5D
+#define SDL_CODE_DATA  0x01u
+#define SDL_MAX_PAYLOAD 240
+#define UART_TX_TIMEOUT_MS 300
 /* USER CODE END PD */
 
-/* Private macro -------------------------------------------------------------*/
+/* Private macro ------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define BE16(x) (uint16_t)((((x)&0xFF)<<8) | (((x)>>8)&0xFF))
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -63,7 +79,8 @@ osMessageQId IMUQueue2Handle;
 uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
 osStaticMessageQDef_t IMUQueue2ControlBlock;
 /* USER CODE BEGIN PV */
-
+/* Shared UART2 mutex so printf and frame TX never interleave */
+static SemaphoreHandle_t UART2_Mutex = NULL;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,6 +89,15 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
 void StartDefaultTask(void const * argument);
+
+/* USER CODE BEGIN PFP */
+/* SDL helpers */
+static uint16_t crc16_ccitt(const uint8_t *data, uint32_t len);
+static void stuff_and_append(uint8_t byte, uint8_t *out, uint16_t *olen);
+static void sdl_send_payload_USART2(const uint8_t *payload, uint16_t len);
+/* AOCS telemetry frame */
+static void send_attitudeADCS_over_sdl(const float gyro[3], const float mag_T[3], uint32_t tick_ms);
+/* USER CODE END PFP */
 
 //defining putch to enable printf
 #ifdef __GNUC__
@@ -86,19 +112,15 @@ void StartDefaultTask(void const * argument);
 // }
 PUTCHAR_PROTOTYPE{
 	uint8_t c=(uint8_t)ch;
+  /* serialize with SDL frame TX */
+  if (UART2_Mutex) xSemaphoreTake(UART2_Mutex, pdMS_TO_TICKS(UART_TX_TIMEOUT_MS));
 	sendDriver_UART(&huart2,&c,1);
+  if (UART2_Mutex) xSemaphoreGive(UART2_Mutex);
 	return c;
 }
 
 
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-
 /* USER CODE END 0 */
 
 /**
@@ -150,6 +172,9 @@ int main(void)
   // IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
 	// configASSERT(IMURead_ControlMutex);
 	// xSemaphoreGive(IMURead_ControlMutex);
+
+  /* Create UART2 mutex (dynamic OK for CMSIS v1 with FreeRTOS backend) */
+  UART2_Mutex = xSemaphoreCreateMutex();
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -362,7 +387,84 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/* --------- SDL helpers (CRC + stuffing + frame TX) ---------- */
+static uint16_t crc16_ccitt(const uint8_t *data, uint32_t len)
+{
+  uint16_t crc = 0xFFFF;
+  for (uint32_t i=0; i<len; ++i){
+    crc ^= (uint16_t)data[i] << 8;
+    for (uint8_t b=0; b<8; ++b){
+      if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
+      else              crc = (crc << 1);
+    }
+  }
+  return crc;
+}
 
+static void stuff_and_append(uint8_t byte, uint8_t *out, uint16_t *olen){
+  if (byte == SDL_FLAG){
+    out[(*olen)++] = SDL_ESC; out[(*olen)++] = SDL_ESC_7E;
+  } else if (byte == SDL_ESC){
+    out[(*olen)++] = SDL_ESC; out[(*olen)++] = SDL_ESC_7D;
+  } else {
+    out[(*olen)++] = byte;
+  }
+}
+
+/* Build and send: 0x7E | header | payload | crc | 0x7E */
+static void sdl_send_payload_USART2(const uint8_t *payload, uint16_t len)
+{
+  /* Header: DATA, ackWanted=0, rolling hash (big-endian) */
+  uint8_t header[4];
+  static uint16_t hash = 0;
+  header[0] = SDL_CODE_DATA;
+  header[1] = 0x00;
+  uint16_t h = BE16(++hash);
+  header[2] = (uint8_t)(h >> 8);
+  header[3] = (uint8_t)(h & 0xFF);
+
+  /* CRC over header+payload (big-endian on the wire) */
+  uint8_t tmp[4 + SDL_MAX_PAYLOAD];
+  memcpy(tmp, header, 4);
+  memcpy(tmp+4, payload, len);
+  uint16_t crc = crc16_ccitt(tmp, (uint32_t)len + 4);
+  uint16_t crc_be = BE16(crc);
+
+  /* Frame with stuffing */
+  uint8_t frame[2 + 4 + SDL_MAX_PAYLOAD + 2 + 64];
+  uint16_t flen = 0;
+  frame[flen++] = SDL_FLAG;
+  for (int i=0;i<4;i++) stuff_and_append(header[i], frame, &flen);
+  for (uint16_t i=0;i<len;i++) stuff_and_append(payload[i], frame, &flen);
+  stuff_and_append((uint8_t)(crc_be>>8), frame, &flen);
+  stuff_and_append((uint8_t)(crc_be&0xFF), frame, &flen);
+  frame[flen++] = SDL_FLAG;
+
+  /* Serialize prints and frame through the same port */
+  if (UART2_Mutex) xSemaphoreTake(UART2_Mutex, pdMS_TO_TICKS(UART_TX_TIMEOUT_MS));
+  sendDriver_UART(&huart2, frame, flen);
+  if (UART2_Mutex) xSemaphoreGive(UART2_Mutex);
+}
+
+static void send_attitudeADCS_over_sdl(const float gyro[3], const float mag_T[3], uint32_t tick_ms)
+{
+  attitudeADCS pkt;
+  memset(&pkt, 0, sizeof(pkt));
+  pkt.code = ATTITUDEADCS_CODE; /* 21 */
+
+  pkt.omega_x = gyro[0];
+  pkt.omega_y = gyro[1];
+  pkt.omega_z = gyro[2];
+
+  pkt.b_x = mag_T[0];
+  pkt.b_y = mag_T[1];
+  pkt.b_z = mag_T[2];
+
+  /* If your messages.h includes theta_* and suntheta_* they remain 0 here */
+  pkt.ticktime = tick_ms;
+
+  sdl_send_payload_USART2((uint8_t*)&pkt, (uint16_t)sizeof(pkt));
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -379,27 +481,10 @@ void StartDefaultTask(void const * argument)
   // huart4.RxState = HAL_UART_STATE_READY;
   // making sure that UART driver is initialized and UARTs are added after freertos started
   initDriver_UART();
-	//UART2 = for printf
+	//UART2 = for printf and OBC link
   uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
-  // if (status == 0) {
-  //   char msg[] = "USART2 Driver initialized OK\r\n";
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  // } else {
-  //   char msg[] = "USART2 Driver FAILED\r\n";
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  // }
-
-	// // UART4 = for IMU
+	// UART4 = for IMU
   uint8_t status2 = addDriver_UART(&huart4, UART4_IRQn, keep_new);
-  // if (status2 == 0) {
-  //   char msg[] = "UART4 Driver initialized OK\r\n";
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  // } else {
-  //   char msg[] = "UART4 Driver FAILED\r\n";
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  // }
-
-  // osDelay(1000); //when in doubt add a delay
 
   #if enable_printf
 	printf("Initializing IMU \n");
@@ -417,45 +502,26 @@ void StartDefaultTask(void const * argument)
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
+  /* Send a few 0x7E flags to help SDL RX sync before prints start */
+  if (UART2_Mutex) xSemaphoreTake(UART2_Mutex, pdMS_TO_TICKS(UART_TX_TIMEOUT_MS));
+  for (int i=0;i<8;i++){ uint8_t f=SDL_FLAG; sendDriver_UART(&huart2,&f,1); }
+  if (UART2_Mutex) xSemaphoreGive(UART2_Mutex);
+
 	/* Infinite loop */
 	for(;;)
 	{
-
-		//Non c'è bisogno di settare o resettare il CTS e l'RTS della UART4 per IMU perchè le funzioni
-		//UART_Transmit e UART_Receive gestiscono la cosa automaticamente se dall'altro lato il dispositivo ha abilitato pure
-		//queste due linee per l'UART
-		//Se voglio far comunicare IMU e Nucleo con solo le 2 linee UART tx ed Rx basta che disabilito l'hardware flow control
-		//da CubeMx.
-
-
 		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
 		mag[0]/=10000; //1G = 10^-4 Tesla
 		mag[1]/=10000; //1G = 10^-4 Tesla
 		mag[2]/=10000; //1G = 10^-4 Tesla
-		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
-		{
-			printf("IMU Task : Taken IMURead_Control control");
-			ret=readIMUPacket(&huart4, gyro, mag, 50);
-			xSemaphoreGive(IMURead_ControlMutex);
-			printf("IMU Task : Released IMURead_Control control");
-		}*/
-    // printf("IMU status %d \r\n",ret);
+
 		if(ret)
 		{
-			/*for(uint32_t field=0; field<3;field++){
-					printf("%f \t",gyro[field]);
-			}
-			printf("\nMagnetometer: ");
-			for(uint32_t field=0; field<3;field++){
-				printf("%f \t",mag[field]);
-			}
-			printf("\n");*/
 			if (local_imu_struct == NULL) {
 				printf("IMU TASK: allocazione struttura fallita !\n");
 			}
 			else
 			{
-				//Riempio struct con valori letti da IMU,per poi inviareli a Task Controllo
 				for (int i = 0; i < 3; i++)
 				{
 					local_imu_struct->gyro_msr[i] = gyro[i];
@@ -465,30 +531,15 @@ void StartDefaultTask(void const * argument)
 					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
 					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
 				}
-				// //Invio queue a Control Task
-			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a Control Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-				// } else {
-			  //       //printf("Dati Inviati a Control Task \n");
-
-			 	// }
-			 	// //Invio queue a OBC Task
-			 	// if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a OBC Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-			 	// } else {
-			  //   	//printf("Dati a Control Inviati \n");
-				// }
+        /* Send SDL-framed attitude packet to OBC */
+        send_attitudeADCS_over_sdl(gyro, mag, HAL_GetTick());
 			}
 		}
 		else{
-			//printf("IMU: Error configuring IMU \n");
 			osDelay(2000);
 		}
-    // printf("Hello from STM32L4\r\n");
     osDelay(100);
-    /* USER CODE END 5 */
+  /* USER CODE END 5 */
   }
 }
 
