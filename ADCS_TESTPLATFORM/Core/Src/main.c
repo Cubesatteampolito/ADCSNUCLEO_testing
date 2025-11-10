@@ -15,7 +15,27 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
+  /* NOTE (AOCS FIX):
+   * This file was patched to actually forward IMU data to the OBC and to
+   * create the FreeRTOS queues you intended to use.
+   *
+   * Summary of changes you should keep:
+   *  1) Queues: IMUQueue1/IMUQueue2 are now created with osMessageQDef/osMessageCreate.
+   *     (Your previous static creation was commented out and never executed.)
+   *  2) Memory: a fresh imu_queue_struct is allocated for each IMU sample using pvPortMalloc().
+   *     The RECEIVER task must vPortFree() the pointer after processing.
+   *  3) Telemetry: a simple ASCII frame "IMU,<tick>,ax,ay,az,gx,gy,gz,mx,my,mz\\r\\n"
+   *     is sent out over USART2 using sendDriver_UART() so the OBC sees data immediately.
+   *  4) UART: printf() is still routed to USART2 via sendDriver_UART().
+   *
+   * CubeMX guidance (safe to keep):
+   *  - No peripheral settings were changed here. If you re-generate code from CubeMX,
+   *    re-apply only the blocks within USER CODE sections below or merge this diff.
+   *  - UART4 still uses HW flow control (RTS/CTS). If you disable HW flow on the IMU,
+   *    set huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE and regenerate MSP init pins.
+   *  - FreeRTOS/CMSIS-RTOS v1 APIs are used (osMessageQDef/osMessageCreate/osMessagePut).
+   */
+ /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
@@ -31,6 +51,10 @@
 #include "messages.h"
 #include "queue_structs.h"
 #include "constants.h"
+
+/* For pvPortMalloc()/vPortFree() */
+#include "FreeRTOS.h"
+#include "task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,7 +64,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+/* Stream IMU ASCII frames to OBC on USART2 */
+#define STREAM_IMU_TO_OBC   1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,14 +81,10 @@ osThreadId defaultTaskHandle;
 uint32_t defaultTaskBuffer[ stack_size]; //4096
 osStaticThreadDef_t defaultTaskHandlecontrolBlock;
 
-osMessageQId IMUQueue1Handle;
-uint8_t IMUQueue1Buffer[ 256 * sizeof( imu_queue_struct ) ];
-osStaticMessageQDef_t IMUQueue1ControlBlock;
-osMessageQId IMUQueue2Handle;
-uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
-osStaticMessageQDef_t IMUQueue2ControlBlock;
 /* USER CODE BEGIN PV */
-
+/* Queues: we'll use CMSIS-RTOS v1 message queues carrying pointers (uint32_t). */
+osMessageQId IMUQueue1Handle;
+osMessageQId IMUQueue2Handle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,6 +94,13 @@ static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
 void StartDefaultTask(void const * argument);
 
+/* USER CODE BEGIN PFP */
+static void send_imu_ascii_frame_to_obc(uint32_t tick_ms,
+                                        const float acc[3],
+                                        const float gyro[3],
+                                        const float mag_T[3]);
+/* USER CODE END PFP */
+
 //defining putch to enable printf
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
@@ -80,24 +108,16 @@ void StartDefaultTask(void const * argument);
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif
 
-// PUTCHAR_PROTOTYPE{
-//   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
-//   return ch;
-// }
 PUTCHAR_PROTOTYPE{
-	uint8_t c=(uint8_t)ch;
-	sendDriver_UART(&huart2,&c,1);
-	return c;
+  uint8_t c=(uint8_t)ch;
+  /* Route printf to USART2 via the async driver */
+  sendDriver_UART(&huart2,&c,1);
+  return c;
 }
 
 
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 
 /* USER CODE END 0 */
 
@@ -133,23 +153,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-
-  
-  // initDriver_UART();
-  // uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
-  // if (status != 0) {
-  //   char err[64];
-  //   int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
-  // }
-
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
-  // IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
-	// configASSERT(IMURead_ControlMutex);
-	// xSemaphoreGive(IMURead_ControlMutex);
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -161,19 +168,25 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  // /* definition and creation of IMUQueue1 */
-	// osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
-	// IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
-  // /* definition and creation of IMUQueue2 */
-	// osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-	// IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  /* IMPORTANT:
+   * Your original static queue creation was commented out, so IMUQueue{1,2} were NULL.
+   * That made osMessagePut() fail and nothing reached your OBC/control tasks.
+   * We create both queues here dynamically (pointers carried in uint32_t). */
+  {
+    osMessageQDef(IMUQueue1, 32, uint32_t);  /* 32 pointer slots */
+    IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+
+    osMessageQDef(IMUQueue2, 32, uint32_t);  /* 32 pointer slots */
+    IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  }
+  /* If you prefer static allocation, re-enable your osMessageQStaticDef() lines
+     but MAKE SURE the buffers are sized for the selected 'type' (uint32_t) and queue length. */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
   osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0,stack_size, defaultTaskBuffer, &defaultTaskHandlecontrolBlock);
-	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -265,7 +278,7 @@ static void MX_UART4_Init(void)
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
   huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS; /* If you remove HW flow on IMU, set to NONE and regenerate MSP pins */
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
@@ -362,7 +375,28 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+static void send_imu_ascii_frame_to_obc(uint32_t tick_ms,
+                                        const float acc[3],
+                                        const float gyro[3],
+                                        const float mag_T[3])
+{
+#if STREAM_IMU_TO_OBC
+  /* Simple, CSV-like frame for OBC parsing.
+     Keep it human-readable unless/ until you move to your messages.h binary format. */
+  char line[192];
+  int n = snprintf(line, sizeof(line),
+                   "IMU,%lu,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\r\n",
+                   (unsigned long)tick_ms,
+                   acc[0], acc[1], acc[2],
+                   gyro[0], gyro[1], gyro[2],
+                   mag_T[0], mag_T[1], mag_T[2]);
+  if (n > 0) {
+    sendDriver_UART(&huart2, (uint8_t*)line, (uint16_t)n);
+  }
+#else
+  (void)tick_ms; (void)acc; (void)gyro; (void)mag_T;
+#endif
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -375,121 +409,94 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  // huart4.gState = HAL_UART_STATE_READY;
-  // huart4.RxState = HAL_UART_STATE_READY;
-  // making sure that UART driver is initialized and UARTs are added after freertos started
+  /* Initialize UART driver after scheduler starts */
   initDriver_UART();
-	//UART2 = for printf
-  uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
-  // if (status == 0) {
-  //   char msg[] = "USART2 Driver initialized OK\r\n";
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  // } else {
-  //   char msg[] = "USART2 Driver FAILED\r\n";
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  // }
+  /* UART2 = printf / OBC link */
+  (void)addDriver_UART(&huart2, USART2_IRQn, keep_new);
+  /* UART4 = IMU link */
+  (void)addDriver_UART(&huart4, UART4_IRQn, keep_new);
 
-	// // UART4 = for IMU
-  uint8_t status2 = addDriver_UART(&huart4, UART4_IRQn, keep_new);
-  // if (status2 == 0) {
-  //   char msg[] = "UART4 Driver initialized OK\r\n";
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  // } else {
-  //   char msg[] = "UART4 Driver FAILED\r\n";
-  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  // }
+#if enable_printf
+  printf("Initializing IMU \r\n");
+#endif
+  uint8_t ret = initIMUConfig(&huart4);
+#if enable_printf
+  if(ret) printf("IMU correctly configured \r\n");
+  else    printf("Error configuring IMU \r\n");
+#endif
 
-  // osDelay(1000); //when in doubt add a delay
+  float gyro[3]={0,0,0};
+  float mag[3]={0,0,0};   /* Gauss from sensor; converted to Tesla below */
+  float acc[3] = {0,0,0};
 
-  #if enable_printf
-	printf("Initializing IMU \n");
-  #endif
-    //uint8_t ret = 1;
-    uint8_t ret = initIMUConfig(&huart4);
-  #if enable_printf
-    if(ret) printf("IMU correctly configured \n");
-    else printf("Error configuring IMU \n");
-  #endif
+  /* Infinite loop */
+  for(;;)
+  {
+    /* Read a full packet from the IMU (blocking up to 500 ms) */
+    ret = readIMUPacket(&huart4, gyro, mag, acc, 500);
+    /* Convert magnetometer to Tesla */
+    mag[0] /= 10000.0f;
+    mag[1] /= 10000.0f;
+    mag[2] /= 10000.0f;
 
-	float gyro[3]={1,2,3};
-	float mag[3]={4,5,6};
-	float acc[3] = {7,8,9};
+    if(ret)
+    {
+      /* Allocate one struct per sample; RECEIVER must vPortFree() it */
+      imu_queue_struct *p = (imu_queue_struct*) pvPortMalloc(sizeof(imu_queue_struct));
+      if (p == NULL) {
+        printf("IMU TASK: pvPortMalloc failed\r\n");
+      } else {
+        for (int i = 0; i < 3; i++) {
+          p->gyro_msr[i] = gyro[i];
+          p->mag_msr[i]  = mag[i];
+          p->acc_msr[i]  = acc[i];
+        }
 
-	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
+        /* Send pointer to Control Task if you enable it
+           (uncomment once the consumer is ready to osMessageGet and vPortFree) */
+        // if (IMUQueue1Handle) {
+        //   if (osMessagePut(IMUQueue1Handle, (uint32_t)p, 0) != osOK) {
+        //     printf("Send to Control Task failed\r\n");
+        //   }
+        // }
 
-	/* Infinite loop */
-	for(;;)
-	{
+        /* Send pointer to OBC Task */
+        if (IMUQueue2Handle) {
+          if (osMessagePut(IMUQueue2Handle, (uint32_t)p, 0) != osOK) {
+            printf("Send to OBC Task failed\r\n");
+            vPortFree(p); /* no consumer -> free here */
+          } else {
+            /* Optional debug */
+            // printf("IMU sample enqueued to OBC task\r\n");
+          }
+        } else {
+          /* Queue not created: free and warn */
+          vPortFree(p);
+          printf("IMUQueue2Handle is NULL\r\n");
+        }
+      }
 
-		//Non c'è bisogno di settare o resettare il CTS e l'RTS della UART4 per IMU perchè le funzioni
-		//UART_Transmit e UART_Receive gestiscono la cosa automaticamente se dall'altro lato il dispositivo ha abilitato pure
-		//queste due linee per l'UART
-		//Se voglio far comunicare IMU e Nucleo con solo le 2 linee UART tx ed Rx basta che disabilito l'hardware flow control
-		//da CubeMx.
+      /* Also stream an ASCII frame over USART2 so the OBC gets data immediately */
+      send_imu_ascii_frame_to_obc(HAL_GetTick(), acc, gyro, mag);
 
+#if enable_printf
+      /* Throttled debug print; comment out if too chatty */
+      for (uint32_t i = 0; i < 3; i++) {
+        printf("ACC[%lu]=%f  GYR[%lu]=%f  MAG[%lu]=%f\r\n",
+               (unsigned long)i, acc[i],
+               (unsigned long)i, gyro[i],
+               (unsigned long)i, mag[i]);
+      }
+#endif
 
-		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
-		mag[0]/=10000; //1G = 10^-4 Tesla
-		mag[1]/=10000; //1G = 10^-4 Tesla
-		mag[2]/=10000; //1G = 10^-4 Tesla
-		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
-		{
-			printf("IMU Task : Taken IMURead_Control control");
-			ret=readIMUPacket(&huart4, gyro, mag, 50);
-			xSemaphoreGive(IMURead_ControlMutex);
-			printf("IMU Task : Released IMURead_Control control");
-		}*/
-    // printf("IMU status %d \r\n",ret);
-		if(ret)
-		{
-			/*for(uint32_t field=0; field<3;field++){
-					printf("%f \t",gyro[field]);
-			}
-			printf("\nMagnetometer: ");
-			for(uint32_t field=0; field<3;field++){
-				printf("%f \t",mag[field]);
-			}
-			printf("\n");*/
-			if (local_imu_struct == NULL) {
-				printf("IMU TASK: allocazione struttura fallita !\n");
-			}
-			else
-			{
-				//Riempio struct con valori letti da IMU,per poi inviareli a Task Controllo
-				for (int i = 0; i < 3; i++)
-				{
-					local_imu_struct->gyro_msr[i] = gyro[i];
-					local_imu_struct->mag_msr[i] = mag[i];
-					local_imu_struct->acc_msr[i] = acc[i];
-					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
-				}
-				// //Invio queue a Control Task
-			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a Control Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-				// } else {
-			  //       //printf("Dati Inviati a Control Task \n");
+    } else {
+      /* IMU read timeout or parse error; back off a bit */
+      osDelay(200);
+    }
 
-			 	// }
-			 	// //Invio queue a OBC Task
-			 	// if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a OBC Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-			 	// } else {
-			  //   	//printf("Dati a Control Inviati \n");
-				// }
-			}
-		}
-		else{
-			//printf("IMU: Error configuring IMU \n");
-			osDelay(2000);
-		}
-    // printf("Hello from STM32L4\r\n");
     osDelay(100);
-    /* USER CODE END 5 */
   }
+  /* USER CODE END 5 */
 }
 
 
