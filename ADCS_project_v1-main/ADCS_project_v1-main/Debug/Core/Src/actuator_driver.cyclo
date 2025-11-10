@@ -1,3 +1,0 @@
-../Core/Src/actuator_driver.c:5:6:get_actuator_current	7
-../Core/Src/actuator_driver.c:39:6:update_pwm_Duty_Cycle	7
-../Core/Src/actuator_driver.c:59:6:change_Actuator_Direction	10
