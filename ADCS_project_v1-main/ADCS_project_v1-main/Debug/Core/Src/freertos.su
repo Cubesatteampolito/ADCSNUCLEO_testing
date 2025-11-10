@@ -1,0 +1,14 @@
+../Core/Src/freertos.c:135:9:txFunc1	16	static
+../Core/Src/freertos.c:139:9:rxFunc1	16	static
+../Core/Src/freertos.c:144:9:txFunc4	16	static
+../Core/Src/freertos.c:148:9:rxFunc4	16	static
+../Core/Src/freertos.c:154:10:sdlTimeTick	8	static
+../Core/Src/freertos.c:170:1:__io_putchar	24	static
+../Core/Src/freertos.c:193:6:vApplicationGetIdleTaskMemory	24	static
+../Core/Src/freertos.c:206:6:vApplicationGetTimerTaskMemory	24	static
+../Core/Src/freertos.c:220:6:MX_FREERTOS_Init	256	static,ignoring_inline_asm
+../Core/Src/freertos.c:310:6:StartDefaultTask	16	static
+../Core/Src/freertos.c:324:6:Check_current_temp	72	static
+../Core/Src/freertos.c:475:6:OBC_Comm_Task	4352	static
+../Core/Src/freertos.c:764:6:Control_Algorithm_Task	104	static
+../Core/Src/freertos.c:1085:6:IMU_Task	56	static
