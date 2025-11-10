@@ -2,15 +2,7 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : Main program body (AOCS → OBC, simpleDataLink-compatible)
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025.
-  * All rights reserved.
-  *
-  * This software is provided AS-IS.
-  *
+  * @brief          : AOCS → OBC using simpleDataLink (no interleaved prints)
   ******************************************************************************
   */
  /* USER CODE END Header */
@@ -21,9 +13,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
-#include "stdio.h"
-#include <math.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "UARTdriver.h"
 #include "MTi1.h"
@@ -34,28 +25,18 @@
 #include "task.h"
 /* USER CODE END Includes */
 
-/* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-/* ---------- simpleDataLink (MCU minimal TX/RX) ------------------
- * Frame format per https://github.com/AleCamp98/simpleDataLink :
- *   0x7E | HEADER | PAYLOAD | CRC16 | 0x7E
- * HEADER = code(1B) | ackWanted(1B) | hash(2B, big-endian)
- * Byte stuffing: 0x7E -> 0x7D 0x5E ; 0x7D -> 0x7D 0x5D
- * CRC16-CCITT (poly 0x1021, init 0xFFFF), computed over HEADER+PAYLOAD.
- * We send DATA frames (code 0x01) with ackWanted=0 for telemetry.
- * If you later want reliable commands from OBC, implement ACK (code 0x02).
- */
+/* ---- simpleDataLink minimal TX ---- */
 #define SDL_FLAG       0x7E
 #define SDL_ESC        0x7D
 #define SDL_ESC_7E     0x5E
 #define SDL_ESC_7D     0x5D
 #define SDL_CODE_DATA  0x01u
-#define SDL_CODE_ACK   0x02u
 #define UART_TX_TIMEOUT_MS 300
-/* Max payload length OBC allows (returned by serial.getMaxLen()) is SDL_MAX_PAY_LEN.
- * From the repo default it's 240; our payload (attitudeADCS) is ~1 + 13*4 = 53 bytes. */
 #define SDL_MAX_PAYLOAD 240
-/* --------------------------------------------------------------- */
+
+/* Route printf somewhere else (0: drop; 1: USART2; 2: SWO ITM if enabled) */
+#define OBC_UART_PRINTF 0
 /* USER CODE END PD */
 
 /* Private variables ---------------------------------------------------------*/
@@ -78,15 +59,13 @@ static void MX_UART4_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
-/* --- simpleDataLink helpers (minimal) --- */
 static uint16_t crc16_ccitt(const uint8_t *data, uint32_t len);
 static uint16_t be16(uint16_t v);
 static void sdl_send_payload_USART2(const uint8_t *payload, uint16_t len);
-/* --- ADCS telemetry packer --- */
 static void send_attitudeADCS_over_sdl(const float gyro[3], const float mag_T[3], uint32_t tick_ms);
 /* USER CODE END PFP */
 
-/* redirect printf to USART2 via IRQ-driven driver */
+/* redirect printf (avoid USART2 to prevent corrupting frames) */
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
@@ -94,9 +73,17 @@ static void send_attitudeADCS_over_sdl(const float gyro[3], const float mag_T[3]
 #endif
 
 PUTCHAR_PROTOTYPE{
+#if OBC_UART_PRINTF == 1
   uint8_t c=(uint8_t)ch;
   sendDriver_UART(&huart2,&c,1);
   return c;
+#elif OBC_UART_PRINTF == 2
+  ITM_SendChar(ch);
+  return ch;
+#else
+  (void)ch;
+  return 0;
+#endif
 }
 
 /* USER CODE BEGIN 0 */
@@ -118,7 +105,6 @@ int main(void)
   osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0,stack_size, defaultTaskBuffer, &defaultTaskHandlecontrolBlock);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
   osKernelStart();
-
   while (1) {}
 }
 
@@ -130,7 +116,7 @@ static void MX_UART4_Init(void)
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
   huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS; /* set NONE if IMU doesn't use HW flow control */
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS; /* set NONE if not used */
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
@@ -156,12 +142,14 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   initDriver_UART();
-  (void)addDriver_UART(&huart2, USART2_IRQn, keep_new); /* printf on USART2 */
-  (void)addDriver_UART(&huart4, UART4_IRQn, keep_new);  /* IMU driver */
+  (void)addDriver_UART(&huart2, USART2_IRQn, keep_new); /* OBC link */
+  (void)addDriver_UART(&huart4, UART4_IRQn, keep_new);  /* IMU */
 
-  printf("AOCS: IMU init...\r\n");
+  /* Optional: initial idle flags to help SDL resync */
+  for (int i=0;i<16;i++){ uint8_t f=0x7E; sendDriver_UART(&huart2,&f,1); }
+  vTaskDelay(pdMS_TO_TICKS(50));
+
   uint8_t ret = initIMUConfig(&huart4);
-  printf("AOCS: IMU %s\r\n", ret ? "OK" : "FAIL");
 
   float gyro[3]={0,0,0};
   float magG[3]={0,0,0};
@@ -177,32 +165,26 @@ void StartDefaultTask(void const * argument)
       magT[1] = magG[1] / 10000.0f;
       magT[2] = magG[2] / 10000.0f;
 
-      /* enqueue to internal queue if needed (300 ms timeout) */
+      /* Optional internal queue (300 ms timeout) */
       imu_queue_struct *p = (imu_queue_struct*) pvPortMalloc(sizeof(imu_queue_struct));
       if (p) {
         for (int i=0;i<3;i++){ p->gyro_msr[i]=gyro[i]; p->mag_msr[i]=magT[i]; p->acc_msr[i]=acc[i]; }
         if (IMUQueue2Handle) {
-          if (osMessagePut(IMUQueue2Handle, (uint32_t)p, 300) != osOK) {
-            vPortFree(p);
-          }
-        } else {
-          vPortFree(p);
-        }
+          if (osMessagePut(IMUQueue2Handle, (uint32_t)p, 300) != osOK) { vPortFree(p); }
+        } else { vPortFree(p); }
       }
 
-      /* send telemetry to OBC using simpleDataLink-compatible frame */
+      /* Send SDL frame */
       send_attitudeADCS_over_sdl(gyro, magT, HAL_GetTick());
     } else {
-      osDelay(200);
+      vTaskDelay(pdMS_TO_TICKS(200));
     }
-
-    osDelay(100); /* ~10 Hz */
+    vTaskDelay(pdMS_TO_TICKS(100));
   }
   /* USER CODE END StartDefaultTask */
 }
 
 /* USER CODE BEGIN 4 */
-/* --------------------- simpleDataLink minimal TX --------------------- */
 static uint16_t be16(uint16_t v){ return (uint16_t)((v>>8) | (v<<8)); }
 
 static uint16_t crc16_ccitt(const uint8_t *data, uint32_t len)
@@ -228,7 +210,7 @@ static void stuff_and_append(uint8_t byte, uint8_t *out, uint16_t *olen){
   }
 }
 
-/* Build and send: 0x7E | hdr | payload | crc | 0x7E (with byte-stuffing) */
+/* Build and send frame via sendDriver_UART (no HAL on same UART) */
 static void sdl_send_payload_USART2(const uint8_t *payload, uint16_t len)
 {
   /* Header: code, ackWanted, hash (be16) */
@@ -248,7 +230,7 @@ static void sdl_send_payload_USART2(const uint8_t *payload, uint16_t len)
   uint16_t crc_be = be16(crc);
 
   /* Build stuffed frame */
-  uint8_t frame[2 /*flags*/ + 4 + SDL_MAX_PAYLOAD + 2 /*crc*/ + 64 /*worst-case stuffing*/];
+  uint8_t frame[2 /*flags*/ + 4 + SDL_MAX_PAYLOAD + 2 /*crc*/ + 64 /*stuff*/];
   uint16_t flen = 0;
   frame[flen++] = SDL_FLAG;
   for (int i=0;i<4;i++) stuff_and_append(header[i], frame, &flen);
@@ -257,10 +239,10 @@ static void sdl_send_payload_USART2(const uint8_t *payload, uint16_t len)
   stuff_and_append((uint8_t)(crc_be&0xFF), frame, &flen);
   frame[flen++] = SDL_FLAG;
 
-  (void)HAL_UART_Transmit(&huart2, frame, flen, UART_TX_TIMEOUT_MS);
+  /* Send atomically through the same IRQ-driven driver used by printf to avoid HAL/IRQ contention */
+  sendDriver_UART(&huart2, frame, flen);
 }
 
-/* --------------------- Telemetry packer --------------------- */
 static void send_attitudeADCS_over_sdl(const float gyro[3], const float mag_T[3], uint32_t tick_ms)
 {
   attitudeADCS pkt;
@@ -275,7 +257,7 @@ static void send_attitudeADCS_over_sdl(const float gyro[3], const float mag_T[3]
   pkt.b_y = mag_T[1];
   pkt.b_z = mag_T[2];
 
-  /* theta_* and suntheta_* left = 0 */
+  /* theta_* and suntheta_* left = 0 if not defined in header */
   pkt.ticktime = tick_ms;
 
   sdl_send_payload_USART2((uint8_t*)&pkt, (uint16_t)sizeof(pkt));
