@@ -577,14 +577,6 @@ void OBC_Comm_Task(void const * argument)
   /* USER CODE BEGIN OBC_Comm_Task */
 	static serial_line_handle line1;
 	//Inizialize Serial Line for UART1
-	uint8_t status3 = sdlInitLine(&line1,&txFunc1,&rxFunc1,50,2);
-  if (status3==0) {
-    char msg[] = "SDL Line1 initialized OK\r\n";
-    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  } else {
-    char msg[] = "SDL Line1 initialization FAILED\r\n";
-    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-  }
 
   uint8_t fuck=0x67;
   uint8_t status4 = txFunc1(fuck);
