@@ -586,6 +586,16 @@ void OBC_Comm_Task(void const * argument)
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   }
 
+  uint8_t fuck=0x67;
+  uint8_t status4 = txFunc1(fuck);
+
+  if (status4==0) {
+    char msg[] = "tx OK\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  } else {
+    char msg[] = "tx FAILED\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  }
 	uint8_t opmode=0;
 	uint32_t rxLen;
 
