@@ -568,11 +568,9 @@ void OBC_Comm_Task(void const * argument)
   if (status2 == 0) {
     char msg[] = "UART1 Driver initialized OK\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-    osDelay(10000000); //when in doubt add a delay
   } else {
     char msg[] = "UART1 Driver FAILED\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
-    osDelay(10000000); //when in doubt add a delay
   }
 
   /* USER CODE BEGIN OBC_Comm_Task */
