@@ -557,7 +557,7 @@ void IMU_Task(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_StartTask02 */
-void IMU_Task(void const * argument)
+void OBC_Comm_Task(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
