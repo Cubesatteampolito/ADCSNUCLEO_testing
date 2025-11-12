@@ -557,7 +557,7 @@ uint32_t readFromQueue(serial_line_handle* line, circular_buffer_handle* rxFrame
 
 // SIMPLE DATA LINK FUNCTIONS -------------------------------------------------
 void sdlInitLine(serial_line_handle* line, uint8_t (*txFunc)(uint8_t byte), uint8_t (*rxFunc)(uint8_t* byte), uint32_t timeout, uint32_t retries){
-    if(line==NULL) return;
+    if(line==NULL) return 0x33;
 
     line->txFunc=txFunc;
     line->rxFunc=rxFunc;
