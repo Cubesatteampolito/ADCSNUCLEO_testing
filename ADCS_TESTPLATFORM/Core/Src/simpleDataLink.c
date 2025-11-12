@@ -363,7 +363,7 @@ uint8_t sendFrame(serial_line_handle* line, uint8_t frameCode, uint8_t ackWanted
     uint8_t byte;
     while(cBuffPull(&line->tmpBuff,&byte,1,0)){
         //if the transmission fails, return 0
-        if(!line->txFunc(byte)) return 0x32;
+        if(!line->txFunc(byte)) return 0;
     }
  
     return 1;
@@ -574,9 +574,9 @@ void sdlInitLine(serial_line_handle* line, uint8_t (*txFunc)(uint8_t byte), uint
 }
 
 uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t ackWanted){
-    if(line==NULL || line->txFunc==NULL || buff==NULL || len==0) return 0x01;
+    if(line==NULL || line->txFunc==NULL || buff==NULL || len==0) return 0;
 
-    if(len>SDL_MAX_PAY_LEN) return 0x02;
+    if(len>SDL_MAX_PAY_LEN) return 0;
 
     //generating hash
     uint16_t hash=computeHash(buff,len);
@@ -587,9 +587,9 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
         retryNum++;
         
         //send data
-        if(sendFrame(line,FRMCODE_DATA,ackWanted,hash,buff,len)==0x32) return 0x36;
+        if(!sendFrame(line,FRMCODE_DATA,ackWanted,hash,buff,len)) continue;
 
-        if(!ackWanted) return 0x03;
+        if(!ackWanted) return 1;
 
 #ifdef SDL_DEBUG
         __sdlTestSendCallback(line);
@@ -598,7 +598,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
         //saving starting tick for timeout
         uint32_t startTick=sdlTimeTick();
         do{
-            if(receiveAck(line,hash)) return 0x04;
+            if(receiveAck(line,hash)) return 1;
 
 #ifdef SDL_ANTILOCK_DEPTH
         //if anti lock active, fill the queue while waiting
@@ -608,7 +608,8 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
 
     }while(retryNum<=line->retries);
 
-    return 0x05;}
+    return 0;
+}
 
 uint32_t sdlReceive(serial_line_handle* line, uint8_t* buff, uint32_t len){
     if(line==NULL || line->rxFunc==NULL) return 0;
