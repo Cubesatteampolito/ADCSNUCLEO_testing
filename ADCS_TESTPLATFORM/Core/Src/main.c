@@ -595,6 +595,7 @@ void OBC_Comm_Task(void const * argument)
     HAL_UART_Transmit(&huart2, (uint8_t*)fail, strlen(fail), 100);
   }
   vTaskDelay(pdMS_TO_TICKS(1000));
+  sdlInitLine(&line1,&txFunc1,&rxFunc1,50,2);
 	uint8_t opmode=0;
 	uint32_t rxLen;
 
