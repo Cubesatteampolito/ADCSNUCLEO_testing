@@ -587,7 +587,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
         retryNum++;
         
         //send data
-        if(!sendFrame(line,FRMCODE_DATA,ackWanted,hash,buff,len)) continue;
+        if(!sendFrame(line,FRMCODE_DATA,ackWanted,hash,buff,len)) return 0;
 
         if(!ackWanted) return 1;
 
