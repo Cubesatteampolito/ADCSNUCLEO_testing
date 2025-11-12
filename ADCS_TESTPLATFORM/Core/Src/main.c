@@ -599,11 +599,11 @@ void OBC_Comm_Task(void const * argument)
 	uint8_t opmode=0;
 	uint32_t rxLen;
 
-	setAttitudeADCS *RxAttitude = (setAttitudeADCS*) malloc(sizeof(setAttitudeADCS));
+	// setAttitudeADCS *RxAttitude = (setAttitudeADCS*) malloc(sizeof(setAttitudeADCS));
 	// housekeepingADCS TxHousekeeping;
 	attitudeADCS TxAttitude;
 	setOpmodeADCS RxOpMode;
-	//opmodeADCS TxOpMode;
+	opmodeADCS TxOpMode;
 	osEvent retvalue1,retvalue;
 	uint8_t cnt1 = 0,cnt2 = 0;
 	char rxBuff[SDL_MAX_PAY_LEN];
