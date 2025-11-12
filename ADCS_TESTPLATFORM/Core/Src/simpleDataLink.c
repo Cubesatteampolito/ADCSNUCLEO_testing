@@ -363,7 +363,7 @@ uint8_t sendFrame(serial_line_handle* line, uint8_t frameCode, uint8_t ackWanted
     uint8_t byte;
     while(cBuffPull(&line->tmpBuff,&byte,1,0)){
         //if the transmission fails, return 0
-        if(!line->txFunc(byte)) return 0;
+        if(!line->txFunc(byte)) return 0x32;
     }
  
     return 1;
@@ -587,7 +587,7 @@ uint8_t sdlSend(serial_line_handle* line, uint8_t* buff, uint32_t len, uint8_t a
         retryNum++;
         
         //send data
-        if(!sendFrame(line,FRMCODE_DATA,ackWanted,hash,buff,len)) return 0x36;
+        if(sendFrame(line,FRMCODE_DATA,ackWanted,hash,buff,len)==0x32) return 0x36;
 
         if(!ackWanted) return 0x03;
 
