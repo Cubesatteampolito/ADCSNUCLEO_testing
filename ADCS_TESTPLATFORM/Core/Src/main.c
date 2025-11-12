@@ -566,13 +566,15 @@ void OBC_Comm_Task(void const * argument)
   //addDriver_UART(&huart1,USART1_IRQn,keep_old);
   uint8_t status2 = addDriver_UART(&huart1, USART1_IRQn, keep_old);
   if (status2 == 0) {
-    char msg[] = "UART4 Driver initialized OK\r\n";
+    char msg[] = "UART1 Driver initialized OK\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+    osDelay(10000); //when in doubt add a delay
   } else {
-    char msg[] = "UART4 Driver FAILED\r\n";
+    char msg[] = "UART1 Driver FAILED\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+    osDelay(10000); //when in doubt add a delay
   }
-  osDelay(10000); //when in doubt add a delay
+
   /* USER CODE BEGIN OBC_Comm_Task */
 	static serial_line_handle line1;
 	//Inizialize Serial Line for UART1
