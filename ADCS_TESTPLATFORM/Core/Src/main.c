@@ -583,7 +583,7 @@ void OBC_Comm_Task(void const * argument)
   uint8_t fuck=0x67;
   uint8_t status4 = txFunc1(fuck);
 
-  if (status4==0x67)  {
+  if (status4 != 0)  {  // ← check if non-zero (success)
     char msg[] = "tx OK\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   } else {
