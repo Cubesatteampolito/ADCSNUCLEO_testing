@@ -54,7 +54,8 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-
+osThreadId IMUTaskHandle;
+osThreadId OBC_CommTaskHandle;
 /* USER CODE BEGIN PV */
 osThreadId IMUTaskHandle;
 uint32_t IMUTaskBuffer[ stack_size]; //4096
@@ -75,22 +76,8 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
 static void MX_USART1_UART_Init(void);
-void IMU_Task(void const * argument);
-void OBC_Comm_Task(void const * argument);
-
-//defining serial line I/O functions
-//using UART driver
-uint8_t txFunc1(uint8_t byte){
-	return (sendDriver_UART(&huart1, &byte, 1)!=0);
-}
-uint8_t rxFunc1(uint8_t* byte){
-	return (receiveDriver_UART(&huart1, byte, 1)!=0);
-}
-
-//defining tick function for timeouts
-uint32_t sdlTimeTick(){
-	return HAL_GetTick();
-}
+void StartDefaultTask(void const * argument);
+void StartTask02(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -191,11 +178,12 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
- 	osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
-	IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  osThreadDef(IMUTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+
   /* definition and creation of OBC_CommTask */
-	osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-	OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  osThreadDef(OBC_CommTask, StartTask02, osPriorityIdle, 0, 128);
+  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -256,11 +244,11 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -429,7 +417,7 @@ static void MX_GPIO_Init(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void IMU_Task(void const * argument)
+void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   // huart4.gState = HAL_UART_STATE_READY;
@@ -546,7 +534,6 @@ void IMU_Task(void const * argument)
     // printf("Hello from STM32L4\r\n");
     osDelay(100);
   /* USER CODE END 5 */
-  }
 }
 
 /* USER CODE BEGIN Header_StartTask02 */
@@ -556,7 +543,7 @@ void IMU_Task(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_StartTask02 */
-void OBC_Comm_Task(void const * argument)
+void StartTask02(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
