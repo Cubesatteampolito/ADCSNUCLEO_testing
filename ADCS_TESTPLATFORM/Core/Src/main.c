@@ -97,6 +97,23 @@ PUTCHAR_PROTOTYPE{
 	sendDriver_UART(&huart2,&c,1);
 	return c;
 }
+void IMU_Task(void const * argument);
+void OBC_Comm_Task(void const * argument);
+
+//defining serial line I/O functions
+//using UART driver
+uint8_t txFunc1(uint8_t byte){
+	return (sendDriver_UART(&huart1, &byte, 1)!=0);
+}
+uint8_t rxFunc1(uint8_t* byte){
+	return (receiveDriver_UART(&huart1, byte, 1)!=0);
+}
+
+//defining tick function for timeouts
+uint32_t sdlTimeTick(){
+	return HAL_GetTick();
+}
+
 
 /* USER CODE END PFP */
 
@@ -178,11 +195,11 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  osThreadDef(IMUTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
   IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
-  osThreadDef(OBC_CommTask, StartTask02, osPriorityIdle, 0, 128);
+ 	osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
   OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -417,7 +434,7 @@ static void MX_GPIO_Init(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+void IMU_Task(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   // huart4.gState = HAL_UART_STATE_READY;
@@ -533,6 +550,7 @@ void StartDefaultTask(void const * argument)
 		}
     // printf("Hello from STM32L4\r\n");
     osDelay(100);
+  }
   /* USER CODE END 5 */
 }
 
@@ -543,7 +561,7 @@ void StartDefaultTask(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_StartTask02 */
-void StartTask02(void const * argument)
+void IMU_Task(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
