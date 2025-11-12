@@ -669,11 +669,11 @@ void OBC_Comm_Task(void const * argument)
 	//ALWAYS remember to set message code (use the generated defines
 	opmodeMsg.code=OPMODEADCS_CODE;
 	//finally we send the message (WITH ACK REQUESTED)
-	//printf("OBC: Trying to send opmodeADCS \n");
-	// if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){}
+	printf("OBC: Trying to send opmodeADCS \n");
+	if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){}
 
 
-  // 	osDelay(2000);
+  	osDelay(2000);
   }
   /* USER CODE END StartTask02 */
 }
