@@ -582,13 +582,17 @@ void OBC_Comm_Task(void const * argument)
 
   uint8_t fuck=0x67;
   uint8_t status4 = txFunc1(fuck);
-
-  if (status4 != 0)  {  // ← check if non-zero (success)
-    char msg[] = "tx OK\r\n";
-    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  
+  char msg[32];
+  int len = snprintf(msg, sizeof(msg), "txFunc1 returned: %u\r\n", status4);
+  HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, 100);
+  
+  if (status4 == 1)  {  // expect 1 byte sent
+    char ok[] = "tx OK (1 byte)\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t*)ok, strlen(ok), 100);
   } else {
-    char msg[] = "tx FAILED\r\n";
-    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+    char fail[] = "tx FAILED (0 bytes)\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t*)fail, strlen(fail), 100);
   }
   osDelay(1000000000000);
 	uint8_t opmode=0;
