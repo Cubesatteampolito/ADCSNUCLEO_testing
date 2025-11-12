@@ -54,8 +54,6 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId IMUTaskHandle;
-osThreadId OBC_CommTaskHandle;
 /* USER CODE BEGIN PV */
 osThreadId IMUTaskHandle;
 uint32_t IMUTaskBuffer[ stack_size]; //4096
@@ -76,8 +74,6 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
 static void MX_USART1_UART_Init(void);
-void StartDefaultTask(void const * argument);
-void StartTask02(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
