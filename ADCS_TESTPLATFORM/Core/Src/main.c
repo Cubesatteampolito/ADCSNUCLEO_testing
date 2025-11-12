@@ -590,6 +590,7 @@ void OBC_Comm_Task(void const * argument)
     char msg[] = "tx FAILED\r\n";
     HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   }
+  osDelay(1000000000000);
 	uint8_t opmode=0;
 	uint32_t rxLen;
 
