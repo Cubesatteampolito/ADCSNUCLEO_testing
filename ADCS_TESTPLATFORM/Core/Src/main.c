@@ -99,7 +99,7 @@ void OBC_Comm_Task(void const * argument);
 //defining serial line I/O functions
 //using UART driver
 uint8_t txFunc1(uint8_t byte){
-	return (sendDriver_UART(&huart1, &byte, 1)!=0);
+	return (sendDriver_UART(&huart2, &byte, 1)!=0);
 }
 uint8_t rxFunc1(uint8_t* byte){
 	return (receiveDriver_UART(&huart1, byte, 1)!=0);
