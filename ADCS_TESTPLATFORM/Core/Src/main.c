@@ -151,6 +151,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_UART4_Init();
   MX_USART1_UART_Init();
+  initDriver_UART();
   /* USER CODE BEGIN 2 */
 
   
@@ -436,7 +437,7 @@ void IMU_Task(void const * argument)
   // huart4.gState = HAL_UART_STATE_READY;
   // huart4.RxState = HAL_UART_STATE_READY;
   // making sure that UART driver is initialized and UARTs are added after freertos started
-  initDriver_UART();
+  //initDriver_UART();
 	//UART2 = for printf
   uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
   // if (status == 0) {
@@ -562,7 +563,7 @@ void OBC_Comm_Task(void const * argument)
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
 
-  initDriver_UART();
+  //initDriver_UART();
   //UART1 = for OBC communication
   uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
   //addDriver_UART(&huart1,USART1_IRQn,keep_old);
