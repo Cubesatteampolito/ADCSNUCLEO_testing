@@ -655,11 +655,11 @@ void OBC_Comm_Task(void const * argument)
 			TxAttitude.code=ATTITUDEADCS_CODE;
 			TxAttitude.ticktime=HAL_GetTick();
     printf("OBC TASK:i am alive %lu \r\n",HAL_GetTick());
-    uint8_t sendStatus = sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0);
-    printf("OBC TASK: sdlSend status: 0x%02X at %lu \r\n", sendStatus, HAL_GetTick());
-		// if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
-    //   printf("OBC TASK:i am connected %lu \n",HAL_GetTick());
-    // }
+    // uint8_t sendStatus = sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0);
+    // printf("OBC TASK: sdlSend status: 0x%02X at %lu \r\n", sendStatus, HAL_GetTick());
+		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
+      printf("OBC TASK:i am connected %lu \n",HAL_GetTick());
+    }
 
 
 	}
