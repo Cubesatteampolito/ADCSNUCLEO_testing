@@ -565,7 +565,7 @@ void OBC_Comm_Task(void const * argument)
 
   //initDriver_UART();
   //UART1 = for OBC communication
-  uint8_t status = addDriver_UART(&huart4, USART2_IRQn, keep_new);
+  uint8_t status = addDriver_UART(&huart4, UART4_IRQn, keep_new);
   //addDriver_UART(&huart1,USART1_IRQn,keep_old);
   uint8_t status2 = addDriver_UART(&huart1, USART1_IRQn, keep_old);
   if (status2 == 0) {
