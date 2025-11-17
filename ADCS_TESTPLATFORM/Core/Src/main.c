@@ -31,6 +31,7 @@
 #include "messages.h"
 #include "queue_structs.h"
 #include "constants.h"
+#include "simpleDataLink.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,20 +51,21 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart4;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId defaultTaskHandle;
-uint32_t defaultTaskBuffer[ stack_size]; //4096
-osStaticThreadDef_t defaultTaskHandlecontrolBlock;
+/* USER CODE BEGIN PV */
+osThreadId IMUTaskHandle;
+uint32_t IMUTaskBuffer[ stack_size]; //4096
+osStaticThreadDef_t IMUTaskControlBlock;
 
-osMessageQId IMUQueue1Handle;
-uint8_t IMUQueue1Buffer[ 256 * sizeof( imu_queue_struct ) ];
-osStaticMessageQDef_t IMUQueue1ControlBlock;
+osThreadId OBC_CommTaskHandle;
+uint32_t OBC_CommTaskBuffer[ stack_size1 ]; //16384
+osStaticThreadDef_t OBC_CommTaskControlBlock;
+
 osMessageQId IMUQueue2Handle;
 uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
 osStaticMessageQDef_t IMUQueue2ControlBlock;
-/* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,7 +73,9 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
-void StartDefaultTask(void const * argument);
+static void MX_USART1_UART_Init(void);
+
+/* USER CODE BEGIN PFP */
 
 //defining putch to enable printf
 #ifdef __GNUC__
@@ -89,9 +93,23 @@ PUTCHAR_PROTOTYPE{
 	sendDriver_UART(&huart2,&c,1);
 	return c;
 }
+void IMU_Task(void const * argument);
+void OBC_Comm_Task(void const * argument);
 
+//defining serial line I/O functions
+//using UART driver
+uint8_t txFunc1(uint8_t byte){
+	return (sendDriver_UART(&huart1, &byte, 1)!=0);
+}
+uint8_t rxFunc1(uint8_t* byte){
+	return (receiveDriver_UART(&huart1, byte, 1)!=0);
+}
 
-/* USER CODE BEGIN PFP */
+//defining tick function for timeouts
+uint32_t sdlTimeTick(){
+	return HAL_GetTick();
+}
+
 
 /* USER CODE END PFP */
 
@@ -132,6 +150,8 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_UART4_Init();
+  MX_USART1_UART_Init();
+  initDriver_UART();
   /* USER CODE BEGIN 2 */
 
   
@@ -165,15 +185,19 @@ int main(void)
   // /* definition and creation of IMUQueue1 */
 	// osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
 	// IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
-  // /* definition and creation of IMUQueue2 */
-	// osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-	// IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  /* definition and creation of IMUQueue2 */
+	osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+	IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0,stack_size, defaultTaskBuffer, &defaultTaskHandlecontrolBlock);
-	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* definition and creation of IMUTask */
+  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+
+  /* definition and creation of OBC_CommTask */
+ 	osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -216,7 +240,7 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue =  RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.HSICalibrationValue = 64;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
@@ -234,11 +258,11 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -276,6 +300,41 @@ static void MX_UART4_Init(void)
   /* USER CODE BEGIN UART4_Init 2 */
 
   /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
 
 }
 
@@ -372,13 +431,13 @@ static void MX_GPIO_Init(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+void IMU_Task(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   // huart4.gState = HAL_UART_STATE_READY;
   // huart4.RxState = HAL_UART_STATE_READY;
   // making sure that UART driver is initialized and UARTs are added after freertos started
-  initDriver_UART();
+  //initDriver_UART();
 	//UART2 = for printf
   uint8_t status = addDriver_UART(&huart2, USART2_IRQn, keep_new);
   // if (status == 0) {
@@ -473,13 +532,13 @@ void StartDefaultTask(void const * argument)
 			  //       //printf("Dati Inviati a Control Task \n");
 
 			 	// }
-			 	// //Invio queue a OBC Task
-			 	// if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a OBC Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-			 	// } else {
-			  //   	//printf("Dati a Control Inviati \n");
-				// }
+			 	//Invio queue a OBC Task
+			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			    	//printf("Invio a OBC Task fallito \n");
+			       	free(local_imu_struct); // Ensure the receiving task has time to process
+			 	} else {
+			    	//printf("Dati a Control Inviati \n");
+				}
 			}
 		}
 		else{
@@ -488,10 +547,140 @@ void StartDefaultTask(void const * argument)
 		}
     // printf("Hello from STM32L4\r\n");
     osDelay(100);
-    /* USER CODE END 5 */
   }
+  /* USER CODE END 5 */
 }
 
+/* USER CODE BEGIN Header_StartTask02 */
+/**
+* @brief Function implementing the OBC_CommTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask02 */
+void OBC_Comm_Task(void const * argument)
+{
+  /* USER CODE BEGIN StartTask02 */
+  /* Infinite loop */
+
+  //initDriver_UART();
+  //UART1 = for OBC communication
+  // /*uint8_t status = */addDriver_UART(&huart4, UART4_IRQn, keep_new);
+  //addDriver_UART(&huart1,USART1_IRQn,keep_old);
+  /*uint8_t status2 = */addDriver_UART(&huart1, USART1_IRQn, keep_old);
+  // if (status2 == 0) {
+  //   char msg[] = "UART1 Driver initialized OK\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  // } else {
+  //   char msg[] = "UART1 Driver FAILED\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  // }
+
+  /* USER CODE BEGIN OBC_Comm_Task */
+	static serial_line_handle line1;
+	
+
+  // uint8_t fuck=0x67;
+  // uint8_t status4 = txFunc1(fuck);
+  
+  // char msg[32];
+  // int len = snprintf(msg, sizeof(msg), "txFunc1 returned: %u\r\n", status4);
+  // HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, 100);
+  
+  // if (status4 == 1)  {  // expect 1 byte sent
+  //   char ok[] = "tx OK (1 byte)\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)ok, strlen(ok), 100);
+  // } else {
+  //   char fail[] = "tx FAILED (0 bytes)\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)fail, strlen(fail), 100);
+  // }
+  // vTaskDelay(pdMS_TO_TICKS(1000));
+
+  //Inizialize Serial Line for UART1
+  sdlInitLine(&line1,&txFunc1,&rxFunc1,50,2);
+	uint8_t opmode=0;
+	uint32_t rxLen;
+
+	// setAttitudeADCS *RxAttitude = (setAttitudeADCS*) malloc(sizeof(setAttitudeADCS));
+	// housekeepingADCS TxHousekeeping;
+	attitudeADCS TxAttitude;
+	setOpmodeADCS RxOpMode;
+	opmodeADCS TxOpMode;
+	osEvent retvalue1,retvalue;
+	uint8_t cnt1 = 0,cnt2 = 0;
+	char rxBuff[SDL_MAX_PAY_LEN];
+
+  /* Infinite loop */
+  for(;;)
+  {
+
+	 /*-------------------SEND TO OBC-------------------------*/
+	//sampling
+	  /* in theory here we should sample values and fill telemetry structures
+	  telemetryStruct.temp1=...;
+	  telemetryStruct.speed=...;
+	  .....*/
+	
+	 //Receive HouseKeeping sensor values via Queue
+	// retvalue = osMessageGet(ADCSHouseKeepingQueueHandle,300);
+
+	// //printf("OBC Task: Tick_Time: %lu \n",HAL_GetTick());
+
+	// if (retvalue.status == osEventMessage)
+	// {
+	// 	processCombinedData((void*)&retvalue,(void *)&TxHousekeeping,receive_Current_Tempqueue_OBC);
+	// 	//attitude sampling
+	// 	//in this case we just send the local copy of the structure
+	// 	//ALWAYS remember to set message code (use the generated defines
+
+	// 	//printf("OBC: Trying to send attitude \n");
+	// 	//finally we send the message
+
+	// 		printf("OBC TASK: after 7 counts: %lu \n",HAL_GetTick());
+	// 		TxHousekeeping.code=HOUSEKEEPINGADCS_CODE;
+	// 		TxHousekeeping.ticktime=HAL_GetTick();
+	// 		//printf("OBC: Trying to send housekeeping \n");
+	// 		//finally we send the message
+
+	// 		if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){}
+
+	// }
+
+	//Receive Telemetry IMU via Queue
+	retvalue1 = osMessageGet(IMUQueue2Handle, 300);
+
+	if (retvalue1.status == osEventMessage)
+	{
+		processCombinedData((void*)&retvalue1,(void *)&TxAttitude,receive_IMUqueue_OBC);
+		//in this case we just fill the structure with random values
+		//ALWAYS remember to set message code (use the generated defines
+			TxAttitude.code=ATTITUDEADCS_CODE;
+			TxAttitude.ticktime=HAL_GetTick();
+    // printf("OBC TASK:i am alive %lu \r\n",HAL_GetTick());
+    // uint8_t sendStatus = sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0);
+    // printf("OBC TASK: sdlSend status: 0x%02X at %lu \r\n", sendStatus, HAL_GetTick());
+		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
+      printf("OBC TASK:i am connected %lu \r\n",HAL_GetTick());
+    }
+
+
+	}
+
+	opmodeADCS opmodeMsg;
+	opmodeMsg.opmode=opmode;
+	//ALWAYS remember to set message code (use the generated defines
+	opmodeMsg.code=OPMODEADCS_CODE;
+	//finally we send the message (WITH ACK REQUESTED)
+	// printf("OBC: Trying to send opmodeADCS \r\n");
+	if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){
+    printf("OBC: success to send opmodeADCS \r\n");
+  }
+
+
+  	osDelay(2000);
+  }
+  /* USER CODE END StartTask02 */
+}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
