@@ -431,6 +431,9 @@ static void MX_GPIO_Init(void)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
+
+
+
 void IMU_Task(void const * argument)
 {
   /* USER CODE BEGIN 5 */
@@ -476,6 +479,11 @@ void IMU_Task(void const * argument)
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
+  /* vars for bdot */
+  uint32_t t_now = 0, t_prev = HAL_GetTick();
+  float dt = 0.0f, m_con[3] = {0,0,0}, B_prev[3] = {0.0f, 0.0f, 0.0f}, B_curr[3] = {0.0f,0.0f,0.0f}, B_dot[3] = {0.0f,0.0f,0.0f};
+
+
 	/* Infinite loop */
 	for(;;)
 	{
@@ -486,7 +494,9 @@ void IMU_Task(void const * argument)
 		//Se voglio far comunicare IMU e Nucleo con solo le 2 linee UART tx ed Rx basta che disabilito l'hardware flow control
 		//da CubeMx.
 
-
+    t_now = HAL_GetTick();
+    dt = (t_now - t_prev) / 1000.0f; // computing sampling time 
+    t_prev = t_now;
 		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
 		mag[0]/=10000; //1G = 10^-4 Tesla
 		mag[1]/=10000; //1G = 10^-4 Tesla
@@ -515,11 +525,13 @@ void IMU_Task(void const * argument)
 			else
 			{
 				//Riempio struct con valori letti da IMU,per poi inviareli a Task Controllo
+        printf("Actual sampling time: %f \r \n", dt);
 				for (int i = 0; i < 3; i++)
 				{
 					local_imu_struct->gyro_msr[i] = gyro[i];
 					local_imu_struct->mag_msr[i] = mag[i];
 					local_imu_struct->acc_msr[i] = acc[i];
+          B_curr[i] = mag[i];
 					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
 					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
 					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
@@ -532,6 +544,18 @@ void IMU_Task(void const * argument)
 			  //       //printf("Dati Inviati a Control Task \n");
 
 			 	// }
+
+        /* BDOT IMPLEMENTATION HERE */
+        // to add: 1) low pass filter to decrease noise on B, 2)fix first sample spike on bdot bc B_prev init = 0
+        for(int j = 0; j < 3; j++){
+          if(dt<=0.0f) dt = 0.1f;
+          B_dot[j] = (B_curr[j] - B_prev[j]) / dt;
+          B_prev[j] = B_curr[j];
+          m_con[j] = (-2000.0f)*(B_dot[j]);
+          printf("Mcon axis %d, value %f \r \n", j, m_con[j]);
+        }
+        /* BDOT FINISHED */
+
 			 	//Invio queue a OBC Task
 			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
 			    	//printf("Invio a OBC Task fallito \n");
