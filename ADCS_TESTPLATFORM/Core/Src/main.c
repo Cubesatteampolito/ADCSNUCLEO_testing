@@ -480,80 +480,49 @@ void IMU_Task(void const * argument)
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
   /* vars for bdot */
-  uint32_t t_now = 0, t_prev = HAL_GetTick();
-  float dt = 0.0f, m_con[3] = {0,0,0}, B_prev[3] = {0.0f, 0.0f, 0.0f}, B_curr[3] = {0.0f,0.0f,0.0f}, B_dot[3] = {0.0f,0.0f,0.0f};
-
+  uint32_t k = 50;
+  float m_con[3] = {0,0,0}, B[3] = {0,0,0}, b[3] = {0,0,0}, B_norm = 0.0f;
 
 	/* Infinite loop */
 	for(;;)
 	{
-
-		//Non c'è bisogno di settare o resettare il CTS e l'RTS della UART4 per IMU perchè le funzioni
-		//UART_Transmit e UART_Receive gestiscono la cosa automaticamente se dall'altro lato il dispositivo ha abilitato pure
-		//queste due linee per l'UART
-		//Se voglio far comunicare IMU e Nucleo con solo le 2 linee UART tx ed Rx basta che disabilito l'hardware flow control
-		//da CubeMx.
-
-    t_now = HAL_GetTick();
-    dt = (t_now - t_prev) / 1000.0f; // computing sampling time 
-    t_prev = t_now;
 		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
 		mag[0]/=10000; //1G = 10^-4 Tesla
 		mag[1]/=10000; //1G = 10^-4 Tesla
 		mag[2]/=10000; //1G = 10^-4 Tesla
-		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
-		{
-			printf("IMU Task : Taken IMURead_Control control");
-			ret=readIMUPacket(&huart4, gyro, mag, 50);
-			xSemaphoreGive(IMURead_ControlMutex);
-			printf("IMU Task : Released IMURead_Control control");
-		}*/
-    // printf("IMU status %d \r\n",ret);
 		if(ret)
 		{
-			/*for(uint32_t field=0; field<3;field++){
-					printf("%f \t",gyro[field]);
-			}
-			printf("\nMagnetometer: ");
-			for(uint32_t field=0; field<3;field++){
-				printf("%f \t",mag[field]);
-			}
-			printf("\n");*/
 			if (local_imu_struct == NULL) {
 				printf("IMU TASK: allocazione struttura fallita !\n");
 			}
 			else
 			{
 				//Riempio struct con valori letti da IMU,per poi inviareli a Task Controllo
-        printf("Actual sampling time: %f \r \n", dt);
+        
 				for (int i = 0; i < 3; i++)
 				{
 					local_imu_struct->gyro_msr[i] = gyro[i];
 					local_imu_struct->mag_msr[i] = mag[i];
 					local_imu_struct->acc_msr[i] = acc[i];
-          B_curr[i] = mag[i];
 					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
 					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+					printf("Magnetometer axis %d, value %f \r\n", i, mag[i])
 				}
-				// //Invio queue a Control Task
-			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a Control Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-				// } else {
-			  //       //printf("Dati Inviati a Control Task \n");
-
-			 	// }
-
+        
         /* BDOT IMPLEMENTATION HERE */
-        // to add: 1) low pass filter to decrease noise on B, 2)fix first sample spike on bdot bc B_prev init = 0
-        for(int j = 0; j < 3; j++){
-          if(dt<=0.0f) dt = 0.1f;
-          B_dot[j] = (B_curr[j] - B_prev[j]) / dt;
-          B_prev[j] = B_curr[j];
-          m_con[j] = (-2000.0f)*(B_dot[j]);
-          printf("Mcon axis %d, value %f \r \n", j, m_con[j]);
+        // to add: 1) low pass filter to decrease noise on B
+        B_norm = sqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
+        if(B_norm != 0){
+        for(int j = 0; j < 3; j++) b[j] = mag[j] / B_norm; // hat{b}
+        m_con[0] = gyro[1] * b[2] - gyro[2] * b[1];
+        m_con[1] = -(gyro[0] * b[2] - gyro[2] * b[0]); // omega x hat{b}
+        m_con[2] = gyro[0] * b[1] - gyro[1] * b[0];
+        for(int j = 0; j < 3; j++) {
+          m_con[j] = (m_con[j] * k) / B_norm;  // m = (k / norm(B)) * (omega x hat{b}) 
+          printf("Dipole moment axis %d, value %f \r\n", j, m_con[j] )
         }
+        }
+        else{for(int j = 0; j < 3; j++) m_con[j] = 0;}
         /* BDOT FINISHED */
 
 			 	//Invio queue a OBC Task
