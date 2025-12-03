@@ -518,7 +518,7 @@ void IMU_Task(void const * argument)
         m_con[2] = gyro[0] * b[1] - gyro[1] * b[0];
         for(int j = 0; j < 3; j++) {
           m_con[j] = (m_con[j] * k) / B_norm;  // m = (k / norm(B)) * (omega x hat{b}) 
-          printf("Dipole moment axis %d, value %f \r\n", j, m_con[j] )
+          printf("Dipole moment axis %d, value %f \r\n", j, m_con[j] );
         }
         }
         else{for(int j = 0; j < 3; j++) m_con[j] = 0;}
