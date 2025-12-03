@@ -480,8 +480,7 @@ void IMU_Task(void const * argument)
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
   /* vars for bdot */
-  uint32_t k = 50;
-  float m_con[3] = {0,0,0}, B[3] = {0,0,0}, b[3] = {0,0,0}, B_norm = 0.0f;
+  float m_con[3] = {0,0,0}, b[3] = {0,0,0}, B_norm = 0.0f, k = 50.0f;
 
 	/* Infinite loop */
 	for(;;)
@@ -510,7 +509,7 @@ void IMU_Task(void const * argument)
 				}
         
         /* BDOT IMPLEMENTATION HERE */
-        // to add: 1) low pass filter to decrease noise on B
+        // to add: 1) low pass filter to decrease noise on B 2) calibrate imu
         B_norm = sqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
         if(B_norm != 0){
         for(int j = 0; j < 3; j++) b[j] = mag[j] / B_norm; // hat{b}
@@ -523,6 +522,7 @@ void IMU_Task(void const * argument)
         }
         }
         else{for(int j = 0; j < 3; j++) m_con[j] = 0;}
+        // T = m x B
         /* BDOT FINISHED */
 
 			 	//Invio queue a OBC Task
