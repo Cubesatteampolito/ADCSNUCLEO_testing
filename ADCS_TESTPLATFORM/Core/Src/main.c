@@ -505,7 +505,7 @@ void IMU_Task(void const * argument)
 					local_imu_struct->acc_msr[i] = acc[i];
 					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
 					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-					printf("Magnetometer axis %d, value %f \r\n", i, mag[i])
+					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
 				}
         
         /* BDOT IMPLEMENTATION HERE */
