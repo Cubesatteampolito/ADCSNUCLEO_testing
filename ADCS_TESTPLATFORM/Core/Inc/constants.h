@@ -20,7 +20,7 @@
 
 
 #define ln(x) log(x)
-#define N 16
+#define ADC_NUM_CHANNELS 16 //this was N
 #define Vref 3.3 //volt
 
 #define stack_size 4096
