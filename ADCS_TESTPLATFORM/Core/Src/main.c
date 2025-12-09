@@ -32,11 +32,18 @@
 #include "queue_structs.h"
 #include "constants.h"
 #include "simpleDataLink.h"
+#include "pid_conversions.h"
+#include "actuator_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+PID_Inputs_struct PID_Inputs;
+Actuator_struct Reaction1;
+Actuator_struct Reaction2;
+Actuator_struct MagneTorquer1;
+Actuator_struct MagneTorquer2;
+Actuator_struct MagneTorquer3;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -182,7 +189,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   
-  // initDriver_UART();
+  initDriver_UART();
   // uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
   // if (status != 0) {
   //   char err[64];
@@ -209,31 +216,35 @@ int main(void)
 
   /* Create the queue(s) */
   /* definition and creation of IMUQueue1 */
-  osMessageQStaticDef(IMUQueue1, 16, uint16_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
-  IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  // osMessageQStaticDef(IMUQueue1, 16, uint16_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
 
-  /* definition and creation of IMUQueue2 */
-  osMessageQStaticDef(IMUQueue2, 16, uint16_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-  IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  // /* definition and creation of IMUQueue2 */
+  // osMessageQStaticDef(IMUQueue2, 16, uint16_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  // /* definition and creation of IMUQueue1 */
-	// osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
-	// IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  /* definition and creation of IMUQueue1 */
+	osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
+	IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
   /* definition and creation of IMUQueue2 */
 	osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
 	IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
-  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  //osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
+  //IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
-  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityIdle, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  //osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityIdle, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  //OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* definition and creation of ControlAlgorith */
   osThreadStaticDef(ControlAlgorith, Control_Algorithm_Task, osPriorityIdle, 0, 4096, ControlAlgorithBuffer, &ControlAlgorithControlBlock);
@@ -819,10 +830,118 @@ void IMU_Task(void const * argument)
 void OBC_Comm_Task(void const * argument)
 {
   /* USER CODE BEGIN OBC_Comm_Task */
-  /* Infinite loop */
+    //initDriver_UART();
+  //UART1 = for OBC communication
+  // /*uint8_t status = */addDriver_UART(&huart4, UART4_IRQn, keep_new);
+  //addDriver_UART(&huart1,USART1_IRQn,keep_old);
+  /*uint8_t status2 = */addDriver_UART(&huart1, USART1_IRQn, keep_old);
+  // if (status2 == 0) {
+  //   char msg[] = "UART1 Driver initialized OK\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  // } else {
+  //   char msg[] = "UART1 Driver FAILED\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
+  // }
+  static serial_line_handle line1;
+	
+
+  // uint8_t fuck=0x67;
+  // uint8_t status4 = txFunc1(fuck);
+  
+  // char msg[32];
+  // int len = snprintf(msg, sizeof(msg), "txFunc1 returned: %u\r\n", status4);
+  // HAL_UART_Transmit(&huart2, (uint8_t*)msg, len, 100);
+  
+  // if (status4 == 1)  {  // expect 1 byte sent
+  //   char ok[] = "tx OK (1 byte)\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)ok, strlen(ok), 100);
+  // } else {
+  //   char fail[] = "tx FAILED (0 bytes)\r\n";
+  //   HAL_UART_Transmit(&huart2, (uint8_t*)fail, strlen(fail), 100);
+  // }
+  // vTaskDelay(pdMS_TO_TICKS(1000));
+
+  //Inizialize Serial Line for UART1
+  sdlInitLine(&line1,&txFunc1,&rxFunc1,50,2);
+	uint8_t opmode=0;
+	uint32_t rxLen;
+
+	// setAttitudeADCS *RxAttitude = (setAttitudeADCS*) malloc(sizeof(setAttitudeADCS));
+	// housekeepingADCS TxHousekeeping;
+	attitudeADCS TxAttitude;
+	setOpmodeADCS RxOpMode;
+	opmodeADCS TxOpMode;
+	osEvent retvalue1,retvalue;
+	uint8_t cnt1 = 0,cnt2 = 0;
+	char rxBuff[SDL_MAX_PAY_LEN];
+    /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    
+	 /*-------------------SEND TO OBC-------------------------*/
+	//sampling
+	  /* in theory here we should sample values and fill telemetry structures
+	  telemetryStruct.temp1=...;
+	  telemetryStruct.speed=...;
+	  .....*/
+	
+	 //Receive HouseKeeping sensor values via Queue
+	// retvalue = osMessageGet(ADCSHouseKeepingQueueHandle,300);
+
+	// //printf("OBC Task: Tick_Time: %lu \n",HAL_GetTick());
+
+	// if (retvalue.status == osEventMessage)
+	// {
+	// 	processCombinedData((void*)&retvalue,(void *)&TxHousekeeping,receive_Current_Tempqueue_OBC);
+	// 	//attitude sampling
+	// 	//in this case we just send the local copy of the structure
+	// 	//ALWAYS remember to set message code (use the generated defines
+
+	// 	//printf("OBC: Trying to send attitude \n");
+	// 	//finally we send the message
+
+	// 		printf("OBC TASK: after 7 counts: %lu \n",HAL_GetTick());
+	// 		TxHousekeeping.code=HOUSEKEEPINGADCS_CODE;
+	// 		TxHousekeeping.ticktime=HAL_GetTick();
+	// 		//printf("OBC: Trying to send housekeeping \n");
+	// 		//finally we send the message
+
+	// 		if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){}
+
+	// }
+
+	//Receive Telemetry IMU via Queue
+	retvalue1 = osMessageGet(IMUQueue2Handle, 300);
+
+	if (retvalue1.status == osEventMessage)
+	{
+		processCombinedData((void*)&retvalue1,(void *)&TxAttitude,receive_IMUqueue_OBC);
+		//in this case we just fill the structure with random values
+		//ALWAYS remember to set message code (use the generated defines
+			TxAttitude.code=ATTITUDEADCS_CODE;
+			TxAttitude.ticktime=HAL_GetTick();
+    // printf("OBC TASK:i am alive %lu \r\n",HAL_GetTick());
+    // uint8_t sendStatus = sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0);
+    // printf("OBC TASK: sdlSend status: 0x%02X at %lu \r\n", sendStatus, HAL_GetTick());
+		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
+      printf("OBC TASK:i am connected %lu \r\n",HAL_GetTick());
+    }
+
+
+	}
+
+	opmodeADCS opmodeMsg;
+	opmodeMsg.opmode=opmode;
+	//ALWAYS remember to set message code (use the generated defines
+	opmodeMsg.code=OPMODEADCS_CODE;
+	//finally we send the message (WITH ACK REQUESTED)
+	// printf("OBC: Trying to send opmodeADCS \r\n");
+	if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){
+    printf("OBC: success to send opmodeADCS \r\n");
+  }
+
+
+  	osDelay(2000);
   }
   /* USER CODE END OBC_Comm_Task */
 }
@@ -837,10 +956,87 @@ void OBC_Comm_Task(void const * argument)
 void Control_Algorithm_Task(void const * argument)
 {
   /* USER CODE BEGIN Control_Algorithm_Task */
+  uint8_t flag = 0;
+	osEvent retvalue,retvalue1;
+
+	//Inizialize actuators struct
+	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
+	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
+	init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,89000,50); //89 khz
+	init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50);
+	init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz
+
+	//Inizialize PID struct
+	PID_INIT(&PID_Inputs);
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+  //printf("We are in Control Algorithm TASK \n");
+#if enable_printf
+		//printf("We are in Control Algorithm TASK \n");
+#endif
+		//Receive Telemetry IMU via Queue
+
+		// retvalue1 = osMessageGet(setAttitudeADCSQueueHandle,200);
+		// processCombinedData((void*)&retvalue1,(void *)&PID_Inputs,receive_Attitudequeue_control);
+    // the reason why i commented the above is that there is no task sending to that queue therefore its technically useless
+
+		retvalue = osMessageGet(IMUQueue1Handle, 300);
+		processCombinedData((void*)&retvalue,(void *)&PID_Inputs,receive_IMUqueue_control);
+
+
+		//ALGORITHM
+		//PID_main(&PID_Inputs);
+
+		//Update PWM values
+		//X Magnetorquer
+
+		if(!flag)
+		{
+//			actuator_START(&Reaction1);
+//			actuator_START(&Reaction2);
+//			actuator_START(&MagneTorquer1);
+//			actuator_START(&MagneTorquer2);
+//			actuator_START(&MagneTorquer3);
+			flag = 1;
+		}
+
+
+		//No change dir:
+		//update_duty_dir(&Reaction1,50,0);
+		//Change dir :
+		//update_duty_dir(&MagneTorquer1,70,1);
+
+
+
+		//X Magnetorquer
+		//Change dir :
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[0],1);
+		//No change dir:
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[0],0);
+		//Y Magnetorquer
+		//Change dir :
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[1],1);
+		//No change dir:
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[1],0);
+		//Z Magnetorquer
+		//Change dir :
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[2],1);
+		//No change dir:
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[2],0);
+
+
+
+		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE) //If control don't read IMU
+		{
+			printf("Control Task : Taken IMURead_ControlMutex control");
+			//Spegnere i magnetorquer
+			xSemaphoreGive(IMURead_ControlMutex);
+			printf("Control Task : Released IMURead_ControlMutex control");
+		}
+		*/
+		osDelay(2000);
   }
   /* USER CODE END Control_Algorithm_Task */
 }
