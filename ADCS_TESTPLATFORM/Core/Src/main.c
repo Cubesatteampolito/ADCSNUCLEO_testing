@@ -57,6 +57,8 @@ Actuator_struct MagneTorquer3;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
@@ -103,6 +105,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_ADC1_Init(void);
 void IMU_Task(void const * argument);
 void OBC_Comm_Task(void const * argument);
 void Control_Algorithm_Task(void const * argument);
@@ -186,6 +189,7 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   
@@ -216,12 +220,12 @@ int main(void)
 
   /* Create the queue(s) */
   /* definition and creation of IMUQueue1 */
-  // osMessageQStaticDef(IMUQueue1, 16, uint16_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
-  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  osMessageQStaticDef(IMUQueue1, 16, uint16_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
 
-  // /* definition and creation of IMUQueue2 */
-  // osMessageQStaticDef(IMUQueue2, 16, uint16_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  /* definition and creation of IMUQueue2 */
+  osMessageQStaticDef(IMUQueue2, 16, uint16_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -239,12 +243,12 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  //osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
-  //IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
-  //osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityIdle, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  //OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityIdle, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* definition and creation of ControlAlgorith */
   osThreadStaticDef(ControlAlgorith, Control_Algorithm_Task, osPriorityIdle, 0, 4096, ControlAlgorithBuffer, &ControlAlgorithControlBlock);
@@ -317,6 +321,100 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.NbrOfConversion = 5;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.OversamplingMode = ENABLE;
+  hadc1.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_16;
+  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_4;
+  hadc1.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
+  hadc1.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Rank = ADC_REGULAR_RANK_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Rank = ADC_REGULAR_RANK_3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Rank = ADC_REGULAR_RANK_4;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Rank = ADC_REGULAR_RANK_5;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
