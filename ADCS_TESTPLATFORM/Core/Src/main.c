@@ -67,21 +67,21 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId IMUTaskHandle;
-uint32_t IMUTaskBuffer[ 4096 ];
-osStaticThreadDef_t IMUTaskControlBlock;
-osThreadId OBC_CommTaskHandle;
-uint32_t OBC_CommTaskBuffer[ 16384 ];
-osStaticThreadDef_t OBC_CommTaskControlBlock;
-osThreadId ControlAlgorithHandle;
-uint32_t ControlAlgorithBuffer[ 4096 ];
-osStaticThreadDef_t ControlAlgorithControlBlock;
-osMessageQId IMUQueue1Handle;
-uint8_t IMUQueue1Buffer[ 16 * sizeof( uint16_t ) ];
-osStaticMessageQDef_t IMUQueue1ControlBlock;
-osMessageQId IMUQueue2Handle;
-uint8_t IMUQueue2Buffer[ 16 * sizeof( uint16_t ) ];
-osStaticMessageQDef_t IMUQueue2ControlBlock;
+// osThreadId IMUTaskHandle;
+// uint32_t IMUTaskBuffer[ 4096 ];
+// osStaticThreadDef_t IMUTaskControlBlock;
+// osThreadId OBC_CommTaskHandle;
+// uint32_t OBC_CommTaskBuffer[ 16384 ];
+// osStaticThreadDef_t OBC_CommTaskControlBlock;
+// osThreadId ControlAlgorithHandle;
+// uint32_t ControlAlgorithBuffer[ 4096 ];
+// osStaticThreadDef_t ControlAlgorithControlBlock;
+// osMessageQId IMUQueue1Handle;
+// uint8_t IMUQueue1Buffer[ 16 * sizeof( uint16_t ) ];
+// osStaticMessageQDef_t IMUQueue1ControlBlock;
+// osMessageQId IMUQueue2Handle;
+// uint8_t IMUQueue2Buffer[ 16 * sizeof( uint16_t ) ];
+// osStaticMessageQDef_t IMUQueue2ControlBlock;
 /* USER CODE BEGIN PV */
 osThreadId IMUTaskHandle;
 uint32_t IMUTaskBuffer[ stack_size]; //4096
@@ -91,9 +91,17 @@ osThreadId OBC_CommTaskHandle;
 uint32_t OBC_CommTaskBuffer[ stack_size1 ]; //16384
 osStaticThreadDef_t OBC_CommTaskControlBlock;
 
+osThreadId ControlAlgorithmTaskHandle;
+uint32_t ControlAlgorithmTaskBuffer[ stack_size ]; //4096
+osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
+
 osMessageQId IMUQueue2Handle;
 uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
 osStaticMessageQDef_t IMUQueue2ControlBlock;
+
+osMessageQId IMUQueue1Handle;
+uint8_t IMUQueue1Buffer[ 256 * sizeof( imu_queue_struct ) ];
+osStaticMessageQDef_t IMUQueue1ControlBlock;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -220,12 +228,12 @@ int main(void)
 
   /* Create the queue(s) */
   /* definition and creation of IMUQueue1 */
-  osMessageQStaticDef(IMUQueue1, 16, uint16_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
-  IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  // osMessageQStaticDef(IMUQueue1, 16, uint16_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
 
   /* definition and creation of IMUQueue2 */
-  osMessageQStaticDef(IMUQueue2, 16, uint16_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-  IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  // osMessageQStaticDef(IMUQueue2, 16, uint16_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -243,16 +251,16 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
-  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  // osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
+  // IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
-  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityIdle, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  // osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityIdle, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  // OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* definition and creation of ControlAlgorith */
-  osThreadStaticDef(ControlAlgorith, Control_Algorithm_Task, osPriorityIdle, 0, 4096, ControlAlgorithBuffer, &ControlAlgorithControlBlock);
-  ControlAlgorithHandle = osThreadCreate(osThread(ControlAlgorith), NULL);
+  // osThreadStaticDef(ControlAlgorith, Control_Algorithm_Task, osPriorityIdle, 0, 4096, ControlAlgorithBuffer, &ControlAlgorithControlBlock);
+  // ControlAlgorithHandle = osThreadCreate(osThread(ControlAlgorith), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
