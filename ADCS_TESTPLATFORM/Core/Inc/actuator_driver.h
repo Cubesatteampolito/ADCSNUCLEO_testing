@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "constants.h"
+#include "main.h"
 
 //VARIABLES
 extern const float Rsense[]; //Ohm //Rsense value for each motor driver
