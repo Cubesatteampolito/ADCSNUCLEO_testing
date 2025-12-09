@@ -1,7 +1,7 @@
 #ifndef ACTUATOR_DRIVER_H
 #define ACTUATOR_DRIVER_H
-#include "adc.h"
-#include "tim.h"
+//#include "adc.h" now embedded in main.c
+//#include "tim.h" same for tim.h
 #include <stdbool.h>
 #include <math.h>
 #include <stdio.h>
