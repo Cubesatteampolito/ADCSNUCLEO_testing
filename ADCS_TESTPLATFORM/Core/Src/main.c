@@ -32,6 +32,7 @@
 #include "queue_structs.h"
 #include "constants.h"
 #include "simpleDataLink.h"
+#include "bdot.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -476,11 +477,10 @@ void IMU_Task(void const * argument)
 	float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
 	float acc[3] = {7,8,9};
+  float m_con[3] = {0,0,0},  k = 50.0f;
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
-
-  /* vars for bdot */
-  float m_con[3] = {0,0,0}, b[3] = {0,0,0}, B_norm = 0.0f, k = 50.0f;
+  
 
 	/* Infinite loop */
 	for(;;)
@@ -509,19 +509,8 @@ void IMU_Task(void const * argument)
 				}
         
         /* BDOT IMPLEMENTATION HERE */
-        // to add: 1) low pass filter to decrease noise on B 2) calibrate imu
-        B_norm = sqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
-        if(B_norm != 0){
-        for(int j = 0; j < 3; j++) b[j] = mag[j] / B_norm; // hat{b}
-        m_con[0] = gyro[1] * b[2] - gyro[2] * b[1];
-        m_con[1] = -(gyro[0] * b[2] - gyro[2] * b[0]); // omega x hat{b}
-        m_con[2] = gyro[0] * b[1] - gyro[1] * b[0];
-        for(int j = 0; j < 3; j++) {
-          m_con[j] = (m_con[j] * k) / B_norm;  // m = (k / norm(B)) * (omega x hat{b}) 
-          printf("Dipole moment axis %d, value %f \r\n", j, m_con[j] );
-        }
-        }
-        else{for(int j = 0; j < 3; j++) m_con[j] = 0;}
+        compute_mcon(mag, gyro, k, m_con);
+        printf("Dipole Moment: %f %f %f \r\n", m_con[0], m_con[1], m_con[2]);
         // T = m x B
         /* BDOT FINISHED */
 
