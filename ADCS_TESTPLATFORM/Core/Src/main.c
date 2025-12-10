@@ -1071,8 +1071,8 @@ void Control_Algorithm_Task(void const * argument)
   uint8_t flag = 0;
 	osEvent retvalue,retvalue1;
 	//Inizialize actuators struct
-	// init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
-	// init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
+	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
+	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
 	init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,20000,50); //89 khz //this measured 10khz, idkwhy
 	init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
 	init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
@@ -1106,8 +1106,8 @@ void Control_Algorithm_Task(void const * argument)
 
 		if(!flag)
 		{
-			// actuator_START(&Reaction1);
-			// actuator_START(&Reaction2);
+			actuator_START(&Reaction1);
+			actuator_START(&Reaction2);
 			actuator_START(&MagneTorquer1);
 			actuator_START(&MagneTorquer2);
 			actuator_START(&MagneTorquer3);
