@@ -19,8 +19,10 @@ void init_actuator_handler(Actuator_struct *act,TIM_HandleTypeDef* htim,uint32_t
 	act->duty_cycle = duty_cycle;
 	act->dir = 1; //Initially FORWARD
 
-	HAL_TIM_PWM_Stop(act->htim,pwm_channel1);
-	HAL_TIM_PWM_Stop(act->htim,pwm_channel2);
+	// HAL_TIM_PWM_Stop(act->htim,pwm_channel1);
+	// HAL_TIM_PWM_Stop(act->htim,pwm_channel2);
+	HAL_TIM_PWM_Stop(act->htim, act->pwm_channel1);
+	HAL_TIM_PWM_Stop(act->htim, act->pwm_channel2);
 
 	if(pwm_freq > 200000)  pwm_freq = 200000;
 	else if(pwm_freq < 4) pwm_freq = 4;
