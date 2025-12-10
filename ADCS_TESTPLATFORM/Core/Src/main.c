@@ -1112,7 +1112,7 @@ void Control_Algorithm_Task(void const * argument)
 			actuator_START(&MagneTorquer2);
 			actuator_START(&MagneTorquer3);
       printf("I am spinning at %lu ms\r\n", HAL_GetTick());
-			flag = 1;
+			flag = 0;// i am making it running loose ahhhhhhhh
 		}
 
 
