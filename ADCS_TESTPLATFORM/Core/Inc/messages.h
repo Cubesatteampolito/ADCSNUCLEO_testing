@@ -23,7 +23,7 @@ typedef struct {
 	float omega_y;
 	float omega_z;
 	float b_x;
-	float b_y;
+	float b_y;//this is the magnetic value,fuck 
 	float b_z;
 	float acc_x;
 	float acc_y;

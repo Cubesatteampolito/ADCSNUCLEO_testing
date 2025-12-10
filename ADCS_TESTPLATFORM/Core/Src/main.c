@@ -1106,13 +1106,16 @@ void Control_Algorithm_Task(void const * argument)
 
 		if(!flag)
 		{
-			actuator_START(&Reaction1);
-			actuator_START(&Reaction2);
-			actuator_START(&MagneTorquer1);
-			actuator_START(&MagneTorquer2);
-			actuator_START(&MagneTorquer3);
-      printf("I am spinning at %lu ms\r\n", HAL_GetTick());
-			flag = 0;// i am making it running loose ahhhhhhhh
+      //WARNING: WHO EVER WORK ON THIS PART REMEMBER AFTER EVERY TEST TO COMMENT THE PART BELOW 
+      //BECAUSE THE DRIVER ITSELF GET HOT EXTREAMLY FAST, AND IF YOU LEAVE IT OVER NIGHT IT WILL BURN 
+      //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
+			// actuator_START(&Reaction1);
+			// actuator_START(&Reaction2);
+			// actuator_START(&MagneTorquer1);
+			// actuator_START(&MagneTorquer2);
+			// actuator_START(&MagneTorquer3);
+      // printf("I am spinning at %lu ms\r\n", HAL_GetTick());
+			flag = 1;// ALSO SET THIS FLAG BACK TO 1 AFTER TEST JUST TO MAKE SURE 
 		}
 
 
