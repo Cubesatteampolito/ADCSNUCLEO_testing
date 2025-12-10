@@ -26,10 +26,13 @@ void init_actuator_handler(Actuator_struct *act,TIM_HandleTypeDef* htim,uint32_t
 	else if(pwm_freq < 4) pwm_freq = 4;
 	uint32_t prescaler = (40000000 / (pwm_freq * (act->htim->Init.Period + 1))) - 1;
 
-	// Aggiornare il prescaler
+	HAL_TIM_PWM_Stop(act->htim, act->pwm_channel1);
+	HAL_TIM_PWM_Stop(act->htim, act->pwm_channel2);
+
 	__HAL_TIM_SET_PRESCALER(act->htim, prescaler);
-	// Force the prescaler to take effect //comment this if i blow up something
-	_HAL_TIM_GenerateEvent(act->htim, TIM_EVENTSOURCE_UPDATE);
+
+	HAL_TIM_PWM_Start(act->htim, act->pwm_channel1);
+	HAL_TIM_PWM_Start(act->htim, act->pwm_channel2); //if everthing blow up comment this
 
 	uint32_t update_value = (uint32_t)roundf((float)(act->htim->Instance->ARR) * (act->duty_cycle * 0.01));
 	//if(update_value > act->htim->Instance->ARR)	update_value = act->htim->Instance->ARR;
