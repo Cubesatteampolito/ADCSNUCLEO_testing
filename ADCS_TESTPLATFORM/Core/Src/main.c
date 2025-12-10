@@ -1071,12 +1071,12 @@ void Control_Algorithm_Task(void const * argument)
   uint8_t flag = 0;
 	osEvent retvalue,retvalue1;
 	//Inizialize actuators struct
-	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
-	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
+	init_actuator_handler(&Reaction1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
+	init_actuator_handler(&Reaction2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
 	init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,20000,20); //89 khz //this measured 10khz, idkwhy
 	init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
-	init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
-
+	init_actuator_handler(&MagneTorquer3,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
+//12332
 	//Inizialize PID struct
 	PID_INIT(&PID_Inputs);
 
