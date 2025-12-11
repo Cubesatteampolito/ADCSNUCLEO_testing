@@ -19,12 +19,15 @@ typedef struct {
 #define ATTITUDEADCS_CODE 21
 typedef struct {
 	uint8_t code;
-	float omega_x;
-	float omega_y;
-	float omega_z;
+	// float omega_x;
+	// float omega_y;
+	// float omega_z;
 	float b_x;
 	float b_y;//this is the magnetic value,fuck 
 	float b_z;
+	float omega_x;
+	float omega_y;
+	float omega_z;
 	float acc_x;
 	float acc_y;
 	float acc_z;
