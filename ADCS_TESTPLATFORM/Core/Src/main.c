@@ -1148,7 +1148,7 @@ void Control_Algorithm_Task(void const * argument)
     }
 
     // Stop after 5 seconds
-    if(flag && (HAL_GetTick() - start_time) > 5000)
+    if(flag && (HAL_GetTick() - start_time) > 180000)
     {
         actuator_STOP(&Reaction1);
         actuator_STOP(&Reaction2);
