@@ -1144,6 +1144,7 @@ void Control_Algorithm_Task(void const * argument)
         actuator_START(&MagneTorquer3);
         flag = 1;
         start_time = HAL_GetTick();  // Record when actuators started
+        printf("Actuators started at %lu ms\r\n", start_time);
     }
 
     // Stop after 5 seconds
@@ -1155,6 +1156,7 @@ void Control_Algorithm_Task(void const * argument)
         actuator_STOP(&MagneTorquer2);
         actuator_STOP(&MagneTorquer3);
         flag = 0;  // Reset flag to allow restart if needed
+        printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
     }
 
 
