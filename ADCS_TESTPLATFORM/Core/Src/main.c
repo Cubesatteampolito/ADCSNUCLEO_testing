@@ -1007,8 +1007,8 @@ void OBC_Comm_Task(void const * argument)
 	uint8_t opmode=0;
 	uint32_t rxLen;
 
-	// setAttitudeADCS *RxAttitude = (setAttitudeADCS*) malloc(sizeof(setAttitudeADCS));
-	// housekeepingADCS TxHousekeeping;
+	setAttitudeADCS *RxAttitude = (setAttitudeADCS*) malloc(sizeof(setAttitudeADCS));
+	housekeepingADCS TxHousekeeping;
 	attitudeADCS TxAttitude;
 	setOpmodeADCS RxOpMode;
 	opmodeADCS TxOpMode;
@@ -1027,27 +1027,27 @@ void OBC_Comm_Task(void const * argument)
 	  .....*/
 	
 	 //Receive HouseKeeping sensor values via Queue
-	// retvalue = osMessageGet(ADCSHouseKeepingQueueHandle,300);
+	retvalue = osMessageGet(ADCSHouseKeepingQueueHandle,300);
 
 	// //printf("OBC Task: Tick_Time: %lu \n",HAL_GetTick());
 
-	// if (retvalue.status == osEventMessage)
+	if (retvalue.status == osEventMessage)
 	// {
-	// 	processCombinedData((void*)&retvalue,(void *)&TxHousekeeping,receive_Current_Tempqueue_OBC);
-	// 	//attitude sampling
+		processCombinedData((void*)&retvalue,(void *)&TxHousekeeping,receive_Current_Tempqueue_OBC);
+		//attitude sampling
 	// 	//in this case we just send the local copy of the structure
 	// 	//ALWAYS remember to set message code (use the generated defines
 
 	// 	//printf("OBC: Trying to send attitude \n");
 	// 	//finally we send the message
 
-	// 		printf("OBC TASK: after 7 counts: %lu \n",HAL_GetTick());
-	// 		TxHousekeeping.code=HOUSEKEEPINGADCS_CODE;
-	// 		TxHousekeeping.ticktime=HAL_GetTick();
-	// 		//printf("OBC: Trying to send housekeeping \n");
-	// 		//finally we send the message
+			printf("OBC TASK: after 7 counts: %lu \n",HAL_GetTick());
+			TxHousekeeping.code=HOUSEKEEPINGADCS_CODE;
+			TxHousekeeping.ticktime=HAL_GetTick();
+			//printf("OBC: Trying to send housekeeping \n");
+			//finally we send the message
 
-	// 		if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){}
+			if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){}
 
 	// }
 
