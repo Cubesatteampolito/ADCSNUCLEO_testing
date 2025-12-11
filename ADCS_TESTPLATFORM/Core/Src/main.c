@@ -1155,7 +1155,7 @@ void Control_Algorithm_Task(void const * argument)
         actuator_STOP(&MagneTorquer1);
         actuator_STOP(&MagneTorquer2);
         actuator_STOP(&MagneTorquer3);
-        flag = 0;  // Reset flag to allow restart if needed
+        flag = 2;  // put flag 2 to stop after 5 secs
         printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
     }
 
