@@ -44,6 +44,7 @@ Actuator_struct Reaction2;
 Actuator_struct MagneTorquer1;
 Actuator_struct MagneTorquer2;
 Actuator_struct MagneTorquer3;
+uint8_t error_status = 0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -67,27 +68,27 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId IMUTaskHandle;
-uint32_t IMUTaskBuffer[ 4096 ];
-osStaticThreadDef_t IMUTaskControlBlock;
-osThreadId OBC_CommTaskHandle;
-uint32_t OBC_CommTaskBuffer[ 16384 ];
-osStaticThreadDef_t OBC_CommTaskControlBlock;
-osThreadId ControlAlgorithmTaskHandle;
-uint32_t ControlAlgorithmTaskBuffer[ 4096 ];
-osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
-osThreadId FirstCheckTaskHandle;
-uint32_t FirstCheckTaskBuffer[ 4096 ];
-osStaticThreadDef_t FirstCheckTaskControlBlock;
-osMessageQId IMUQueue1Handle;
-uint8_t IMUQueue1Buffer[ 512 * sizeof( uint32_t ) ];
-osStaticMessageQDef_t IMUQueue1ControlBlock;
-osMessageQId IMUQueue2Handle;
-uint8_t IMUQueue2Buffer[ 512 * sizeof( uint32_t ) ];
-osStaticMessageQDef_t IMUQueue2ControlBlock;
-osMessageQId ADCSHouseKeepingQueueHandle;
-uint8_t ADCSHouseKeepingQueueBuffer[ 512 * sizeof( uint32_t ) ];
-osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
+// osThreadId IMUTaskHandle;
+// uint32_t IMUTaskBuffer[ 4096 ];
+// osStaticThreadDef_t IMUTaskControlBlock;
+// osThreadId OBC_CommTaskHandle;
+// uint32_t OBC_CommTaskBuffer[ 16384 ];
+// osStaticThreadDef_t OBC_CommTaskControlBlock;
+// osThreadId ControlAlgorithmTaskHandle;
+// uint32_t ControlAlgorithmTaskBuffer[ 4096 ];
+// osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
+// osThreadId FirstCheckTaskHandle;
+// uint32_t FirstCheckTaskBuffer[ 4096 ];
+// osStaticThreadDef_t FirstCheckTaskControlBlock;
+// osMessageQId IMUQueue1Handle;
+// uint8_t IMUQueue1Buffer[ 512 * sizeof( uint32_t ) ];
+// osStaticMessageQDef_t IMUQueue1ControlBlock;
+// osMessageQId IMUQueue2Handle;
+// uint8_t IMUQueue2Buffer[ 512 * sizeof( uint32_t ) ];
+// osStaticMessageQDef_t IMUQueue2ControlBlock;
+// osMessageQId ADCSHouseKeepingQueueHandle;
+// uint8_t ADCSHouseKeepingQueueBuffer[ 512 * sizeof( uint32_t ) ];
+// osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
 /* USER CODE BEGIN PV */
 osThreadId IMUTaskHandle;
 uint32_t IMUTaskBuffer[ stack_size]; //4096
@@ -100,6 +101,14 @@ osStaticThreadDef_t OBC_CommTaskControlBlock;
 osThreadId ControlAlgorithmTaskHandle;
 uint32_t ControlAlgorithmTaskBuffer[ stack_size ]; //4096
 osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
+
+osThreadId FirstCheckTaskHandle;
+uint32_t FirstCheckTaskBuffer[ stack_size ];//4096
+osStaticThreadDef_t FirstCheckTaskControlBlock;
+
+osMessageQId ADCSHouseKeepingQueueHandle;
+uint8_t ADCSHouseKeepingQueueBuffer[ 256 * sizeof( float ) ];
+osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
 
 osMessageQId IMUQueue2Handle;
 uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
@@ -234,17 +243,17 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  /* definition and creation of IMUQueue1 */
-  osMessageQStaticDef(IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
-  IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  // /* definition and creation of IMUQueue1 */
+  // osMessageQStaticDef(IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
 
-  /* definition and creation of IMUQueue2 */
-  osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-  IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  // /* definition and creation of IMUQueue2 */
+  // osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
 
-  /* definition and creation of ADCSHouseKeepingQueue */
-  osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
-  ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
+  // /* definition and creation of ADCSHouseKeepingQueue */
+  // osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
+  // ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -254,33 +263,39 @@ int main(void)
   /* definition and creation of IMUQueue2 */
 	osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
 	IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  /* definition and creation of ADCSHouseKeepingQueue */
+	osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
+	ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
+  /* definition and creation of FirstCheckTask */
+  osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, stack_size, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
+  FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
   /* definition and creation of IMUTask */
   osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
   IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
   /* definition and creation of OBC_CommTask */
   osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
   OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
-  /* definition and creation of ControlAlgorith */
+  /* definition and creation of ControlAlgorithmTask */
   osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0,stack_size, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
 	ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
-  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  // osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
+  // IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
-  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  // osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  // OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* definition and creation of ControlAlgorithmTask */
-  osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, 4096, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
-  ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
+  // osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, 4096, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
+  // ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
 
   /* definition and creation of FirstCheckTask */
-  osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, 4096, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
-  FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
+  // osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, 4096, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
+  // FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1181,11 +1196,148 @@ void Control_Algorithm_Task(void const * argument)
 void Check_current_temp(void const * argument)
 {
   /* USER CODE BEGIN Check_current_temp */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+//declaring serial line
+	//static serial_line_handle line;
+	//Inizialize Serial Line for UART3
+	//sdlInitLine(&line,&txFunc3,&rxFunc3,50,2);
+	// init_tempsens_handler(&ntc_values);
+	volatile float currentbuf[NUM_ACTUATORS],voltagebuf[NUM_ACTUATORS];
+	Current_Temp_Struct *local_current_temp_struct = (Current_Temp_Struct*) malloc(sizeof(Current_Temp_Struct));
+	static uint8_t count = 0;
+	
+	/*Start calibration */
+	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) !=  HAL_OK)
+	{
+#if enable_printf
+	  	printf("Error with ADC: not calibrated correctly \n");
+#endif
+	}
+
+	/* Infinite loop */
+	for(;;)
+	{
+		//volatile float prev = HAL_GetTick();
+		//printf("We are in CHECK TASK \n");
+#if enable_printf
+		//printf("We are in CHECK TASK \n");
+#endif
+		//----------------------------------------------------------------------
+
+		//GET TEMPERATURES------------------------------------------------------
+		//float prev1 = HAL_GetTick();
+		// get_temperatures(&hspi2,&ntc_values,count);
+		//float next1 = HAL_GetTick();
+		//printf("Execussion of get_temperatures: %.1f ms\n",next1-prev1);
+		count ++;
+		//----------------------------------------------------------------------
+
+		//GET ACTUATORS CURRENT
+		get_actuator_current(&hadc1,voltagebuf,currentbuf,Channels_mask);
+		for(int i=0;i<NUM_DRIVERS;i++)
+		{
+			printf("Actuator %d current value: %f",i,currentbuf[i]);
+		}
+		//----------------------------------------------------------------------
+
+		//CHECK IF THEY ARE OK
+		for(int i=0;i<NUM_ACTUATORS;i++)
+		{
+			if(i>=0 && i<2)
+			{
+				//Check Reaction Wheels currents
+				if(current_buf[i] > 1.0f) //> 1A
+				{
+					printf("MAgnetorquer %d current value: %f is above threshold!!!! ",i,currentbuf[i]);
+					error_status = 5;
+				}
+			}
+			else{
+				//Check MagneTorquers currents
+				if(current_buf[i] > 0.05f) // >50mA
+				{
+					printf("Magnetorquer %d current value: %f is above threshold!!!! ",i,currentbuf[i]);
+					error_status = 4;
+				}
+			}
+		}
+
+		// for(int i=0;i<NUM_TEMP_SENS;i++)
+		// {
+		// 	if(ntc_values.temp[i]>50) //>50 gradi
+		// 	{
+		// 		printf("Temp %d value: %f is above threshold!!!! ",i,ntc_values.temp[i]);
+		// 		error_status = 3;
+		// 	}
+
+		// }
+		 
+		switch(error_status)
+		{
+			case 0:
+				//ALL IS OK
+				//Send Housekeeping to OBC task
+				
+				if (local_current_temp_struct == NULL) {
+#if enable_printf
+					   printf("IMU TASK: allocazione struttura fallita !\n");
+#endif
+				}
+				else
+				{
+					if(count == 8)
+					{
+						for(int i=0;i<NUM_ACTUATORS;i++)
+						{
+							local_current_temp_struct->current[i] = currentbuf[i];
+#if enable_printf
+							printf("Task check: Current n%d,value: %f,current vect:%f \n",i+1,local_current_temp_struct->current[i],currentbuf[i]);
+#endif
+			    	// 	}
+						// for(int i=NUM_ACTUATORS;i<NUM_TEMP_SENS+NUM_ACTUATORS;i++)
+						// {
+						// 	local_current_temp_struct->temperature[i - NUM_ACTUATORS] = ntc_values.temp[i - NUM_ACTUATORS];
+#if enable_printf
+							// printf("Task check: Temperature n%d,ntc value: %f,value: %f \n",i-4,ntc_values.temp[i-NUM_ACTUATORS],local_current_temp_struct->temperature[i-NUM_ACTUATORS]);
+#endif
+						}
+
+						//Invio queue a OBC Task
+						if (osMessagePut(ADCSHouseKeepingQueueHandle,(uint32_t)local_current_temp_struct,300) != osOK) {
+#if enable_printf
+			    		   	printf("Invio a OBC Task fallito \n");
+#endif
+			       			free(local_current_temp_struct); // Ensure the receiving task has time to process
+						} else {
+#if enable_printf
+			    		    printf("Dati Inviati a OBC Task\n");
+#endif
+						}
+						count = 0;
+					}
+				}
+				break;
+			case 1:
+				break;
+			case 2:
+				break;
+			case 3:
+				//PROBLEM WITH TEMPERATURE SENSORS
+				//Fare partire un interrupt
+				break;
+			case 4:
+				//PROBLEM WITH MAGNETORQUERS
+				//Fare partire un interrupt
+				break;
+			case 5:
+				//PROBLEM WITH REACTION WHEELS
+				//Fare partire un interrupt
+				break;
+
+		}
+		//volatile next = HAL_GetTick();
+		//printf("Execussion of check task: %.1f ms\n",next-prev);
+	    osDelay(2000);
+	  }
   /* USER CODE END Check_current_temp */
 }
 
