@@ -483,7 +483,7 @@ void OBC_Comm_Task(void const * argument)
 	housekeepingADCS TxHousekeeping;
 	attitudeADCS TxAttitude;
 	setOpmodeADCS RxOpMode;
-	//opmodeADCS TxOpMode;
+	opmodeADCS TxOpMode;
 	osEvent retvalue1,retvalue;
 	uint8_t cnt1 = 0,cnt2 = 0;
 	char rxBuff[SDL_MAX_PAY_LEN];
