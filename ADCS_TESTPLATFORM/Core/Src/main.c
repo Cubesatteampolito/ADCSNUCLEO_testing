@@ -1135,29 +1135,32 @@ void Control_Algorithm_Task(void const * argument)
 		//Update PWM values
 		//X Magnetorquer
 
-    if(!flag)
-    {
-        actuator_START(&Reaction1);
-        actuator_START(&Reaction2);
-        actuator_START(&MagneTorquer1);
-        actuator_START(&MagneTorquer2);
-        actuator_START(&MagneTorquer3);
-        flag = 1;
-        start_time = HAL_GetTick();  // Record when actuators started
-        printf("Actuators started at %lu ms\r\n", start_time);
-    }
+    // if(!flag)
+    // {   
+    //   //WARNING: WHO EVER WORK ON THIS PART REMEMBER AFTER EVERY TEST TO COMMENT THE PART BELOW 
+    //   //IT WILL STOP AFTER 3 MINS BUT STILL COMMENT THOSE LINE OUT SO THAT IT WONT ACTUATE EVERY STARTUP 
+    //   //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
+    //     actuator_START(&Reaction1);
+    //     actuator_START(&Reaction2);
+    //     actuator_START(&MagneTorquer1);
+    //     actuator_START(&MagneTorquer2);
+    //     actuator_START(&MagneTorquer3);
+    //     flag = 1;
+    //     start_time = HAL_GetTick();  // Record when actuators started
+    //     printf("Actuators started at %lu ms\r\n", start_time);
+    // }
 
-    // Stop after 5 seconds
-    if(flag && (HAL_GetTick() - start_time) > 180000)
-    {
-        actuator_STOP(&Reaction1);
-        actuator_STOP(&Reaction2);
-        actuator_STOP(&MagneTorquer1);
-        actuator_STOP(&MagneTorquer2);
-        actuator_STOP(&MagneTorquer3);
-        flag = 2;  // put flag 2 to stop after 5 secs
-        printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
-    }
+    // // Stop after 5 seconds
+    // if(flag && (HAL_GetTick() - start_time) > 180000)
+    // {
+    //     actuator_STOP(&Reaction1);
+    //     actuator_STOP(&Reaction2);
+    //     actuator_STOP(&MagneTorquer1);
+    //     actuator_STOP(&MagneTorquer2);
+    //     actuator_STOP(&MagneTorquer3);
+    //     flag = 2;  // put flag 2 to stop after 3 mins
+    //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
+    // }
 
 
 		//No change dir:
