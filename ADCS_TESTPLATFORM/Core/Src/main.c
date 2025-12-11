@@ -1100,7 +1100,7 @@ void Control_Algorithm_Task(void const * argument)
   /* USER CODE BEGIN Control_Algorithm_Task */
   uint8_t flag = 0;
 	osEvent retvalue,retvalue1;
-  uint32_t start_time
+  uint32_t start_time;
 	//Inizialize actuators struct
 	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
 	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
