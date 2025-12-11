@@ -79,40 +79,40 @@ void receive_IMUqueue_OBC(void *event,void *attitude) {
 			printf("OBC TASK:Ricezione IMU fallita con status: %d \n\n", ((osEvent *)event)->status);
 		}
 }
-// void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct)
-// {
-// 	Current_Temp_Struct *int_queue_struct;
-// 	housekeepingADCS *int_HK_struct = (housekeepingADCS *)current_temp_struct;
-// 	if (((osEvent *)event)->status == osEventMessage)
-// 	{
-// 		int_queue_struct = (Current_Temp_Struct *)((osEvent *) event)->value.p;
-// #if enable_printf
-// 		printf("OBC TASK: Received Currents and Temperatures values via Queue \n");
-// #endif
-// 		for(int i=0;i<NUM_ACTUATORS+NUM_TEMP_SENS;i++)
-// 		{
-// 			if(i<NUM_ACTUATORS){
-// 	    			int_HK_struct->current[i] = int_queue_struct->current[i];
-// #if enable_printf
-// 	    			printf("OBC Task: Actuator %d current: %f Current_Temp_buff: %f \n",i+1,int_HK_struct->current[i],int_queue_struct->current[i]);
-// #endif
-// 			}
-// 	    	else
-// 	    		if(i<NUM_ACTUATORS+NUM_TEMP_SENS){
-// 	    			int_HK_struct->temperature[i - NUM_ACTUATORS] = int_queue_struct->temperature[i - NUM_ACTUATORS];
-// #if enable_printf
-// 	    			printf("OBC Task: Temperature n%d value: %f Current_Temp_buff: %f \n",i - 4,int_HK_struct->temperature[i - NUM_ACTUATORS],int_queue_struct->temperature[i - NUM_ACTUATORS]);
-// #endif
-// 	    		}
-// 		}
-// 		free(int_queue_struct);
-// 	}
-// 	else
-// 	{
-// 		printf("OBC TASK: Ricezione correnti e temperature fallita con status: %d \n\n", ((osEvent *)event)->status);
-// 	}
+void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct)
+{
+	Current_Temp_Struct *int_queue_struct;
+	housekeepingADCS *int_HK_struct = (housekeepingADCS *)current_temp_struct;
+	if (((osEvent *)event)->status == osEventMessage)
+	{
+		int_queue_struct = (Current_Temp_Struct *)((osEvent *) event)->value.p;
+#if enable_printf
+		printf("OBC TASK: Received Currents and Temperatures values via Queue \n");
+#endif
+		for(int i=0;i<NUM_ACTUATORS+NUM_TEMP_SENS;i++)
+		{
+			if(i<NUM_ACTUATORS){
+	    			int_HK_struct->current[i] = int_queue_struct->current[i];
+#if enable_printf
+	    			printf("OBC Task: Actuator %d current: %f Current_Temp_buff: %f \n",i+1,int_HK_struct->current[i],int_queue_struct->current[i]);
+#endif
+			}
+	    	else
+	    		if(i<NUM_ACTUATORS+NUM_TEMP_SENS){
+	    			int_HK_struct->temperature[i - NUM_ACTUATORS] = int_queue_struct->temperature[i - NUM_ACTUATORS];
+#if enable_printf
+	    			printf("OBC Task: Temperature n%d value: %f Current_Temp_buff: %f \n",i - 4,int_HK_struct->temperature[i - NUM_ACTUATORS],int_queue_struct->temperature[i - NUM_ACTUATORS]);
+#endif
+	    		}
+		}
+		free(int_queue_struct);
+	}
+	else
+	{
+		printf("OBC TASK: Ricezione correnti e temperature fallita con status: %d \n\n", ((osEvent *)event)->status);
+	}
 
-// }
+}
 
 // void receive_Attitudequeue_control(void *event,void * PID_struct)
 // {
