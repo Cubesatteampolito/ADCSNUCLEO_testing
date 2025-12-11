@@ -32,11 +32,18 @@
 #include "queue_structs.h"
 #include "constants.h"
 #include "simpleDataLink.h"
+#include "pid_conversions.h"
+#include "actuator_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+PID_Inputs_struct PID_Inputs;
+Actuator_struct Reaction1;
+Actuator_struct Reaction2;
+Actuator_struct MagneTorquer1;
+Actuator_struct MagneTorquer2;
+Actuator_struct MagneTorquer3;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -50,10 +57,31 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
+TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
+
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
+// osThreadId IMUTaskHandle;
+// uint32_t IMUTaskBuffer[ 4096 ];
+// osStaticThreadDef_t IMUTaskControlBlock;
+// osThreadId OBC_CommTaskHandle;
+// uint32_t OBC_CommTaskBuffer[ 16384 ];
+// osStaticThreadDef_t OBC_CommTaskControlBlock;
+// osThreadId ControlAlgorithHandle;
+// uint32_t ControlAlgorithBuffer[ 4096 ];
+// osStaticThreadDef_t ControlAlgorithControlBlock;
+// osMessageQId IMUQueue1Handle;
+// uint8_t IMUQueue1Buffer[ 16 * sizeof( uint16_t ) ];
+// osStaticMessageQDef_t IMUQueue1ControlBlock;
+// osMessageQId IMUQueue2Handle;
+// uint8_t IMUQueue2Buffer[ 16 * sizeof( uint16_t ) ];
+// osStaticMessageQDef_t IMUQueue2ControlBlock;
 /* USER CODE BEGIN PV */
 osThreadId IMUTaskHandle;
 uint32_t IMUTaskBuffer[ stack_size]; //4096
@@ -63,9 +91,17 @@ osThreadId OBC_CommTaskHandle;
 uint32_t OBC_CommTaskBuffer[ stack_size1 ]; //16384
 osStaticThreadDef_t OBC_CommTaskControlBlock;
 
+osThreadId ControlAlgorithmTaskHandle;
+uint32_t ControlAlgorithmTaskBuffer[ stack_size ]; //4096
+osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
+
 osMessageQId IMUQueue2Handle;
 uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
 osStaticMessageQDef_t IMUQueue2ControlBlock;
+
+osMessageQId IMUQueue1Handle;
+uint8_t IMUQueue1Buffer[ 256 * sizeof( imu_queue_struct ) ];
+osStaticMessageQDef_t IMUQueue1ControlBlock;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,6 +110,13 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_UART4_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM1_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_ADC1_Init(void);
+void IMU_Task(void const * argument);
+void OBC_Comm_Task(void const * argument);
+void Control_Algorithm_Task(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -151,11 +194,14 @@ int main(void)
   MX_USART2_UART_Init();
   MX_UART4_Init();
   MX_USART1_UART_Init();
-  initDriver_UART();
+  MX_TIM1_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   
-  // initDriver_UART();
+  initDriver_UART();
   // uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
   // if (status != 0) {
   //   char err[64];
@@ -180,24 +226,46 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* definition and creation of IMUQueue1 */
+  // osMessageQStaticDef(IMUQueue1, 16, uint16_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+
+  /* definition and creation of IMUQueue2 */
+  // osMessageQStaticDef(IMUQueue2, 16, uint16_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  // /* definition and creation of IMUQueue1 */
-	// osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
-	// IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  /* definition and creation of IMUQueue1 */
+	osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
+	IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
   /* definition and creation of IMUQueue2 */
 	osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
 	IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  /* definition and creation of IMUTask */
+  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  /* definition and creation of OBC_CommTask */
+  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  /* definition and creation of ControlAlgorith */
+  osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0,stack_size, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
+	ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
-  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  // osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
+  // IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
- 	osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  // osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityIdle, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  // OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+
+  /* definition and creation of ControlAlgorith */
+  // osThreadStaticDef(ControlAlgorith, Control_Algorithm_Task, osPriorityIdle, 0, 4096, ControlAlgorithBuffer, &ControlAlgorithControlBlock);
+  // ControlAlgorithHandle = osThreadCreate(osThread(ControlAlgorith), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -266,6 +334,327 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.NbrOfConversion = 1; //this was 5 i turn it to 1 to match the old code
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.OversamplingMode = ENABLE;
+  hadc1.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_16;
+  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_4;
+  hadc1.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
+  hadc1.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  // */
+  //commented out to match the old code with only one channel
+  // sConfig.Rank = ADC_REGULAR_RANK_2;
+  // if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+
+  // /** Configure Regular Channel
+  // */
+  // sConfig.Rank = ADC_REGULAR_RANK_3;
+  // if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+
+  // /** Configure Regular Channel
+  // */
+  // sConfig.Rank = ADC_REGULAR_RANK_4;
+  // if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+
+  // /** Configure Regular Channel
+  // */
+  // sConfig.Rank = ADC_REGULAR_RANK_5;
+  // if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 0;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 199;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+  sBreakDeadTimeConfig.DeadTime = 0;
+  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+  sBreakDeadTimeConfig.BreakFilter = 0;
+  sBreakDeadTimeConfig.Break2State = TIM_BREAK2_DISABLE;
+  sBreakDeadTimeConfig.Break2Polarity = TIM_BREAK2POLARITY_HIGH;
+  sBreakDeadTimeConfig.Break2Filter = 0;
+  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+  if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+  HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 199;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 199;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
 }
 
 /**
@@ -407,14 +796,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD4_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB11 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF3_I2C4;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
@@ -424,13 +805,13 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_IMU_Task */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the IMUTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
+/* USER CODE END Header_IMU_Task */
 void IMU_Task(void const * argument)
 {
   /* USER CODE BEGIN 5 */
@@ -524,14 +905,14 @@ void IMU_Task(void const * argument)
 					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
 					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
 				}
-				// //Invio queue a Control Task
-			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a Control Task fallito \n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-				// } else {
-			  //       //printf("Dati Inviati a Control Task \n");
+				//Invio queue a Control Task
+			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			    	//printf("Invio a Control Task fallito \n");
+			       	free(local_imu_struct); // Ensure the receiving task has time to process
+				} else {
+			        //printf("Dati Inviati a Control Task \n");
 
-			 	// }
+			 	}
 			 	//Invio queue a OBC Task
 			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
 			    	//printf("Invio a OBC Task fallito \n");
@@ -551,19 +932,17 @@ void IMU_Task(void const * argument)
   /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_StartTask02 */
+/* USER CODE BEGIN Header_OBC_Comm_Task */
 /**
 * @brief Function implementing the OBC_CommTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask02 */
+/* USER CODE END Header_OBC_Comm_Task */
 void OBC_Comm_Task(void const * argument)
 {
-  /* USER CODE BEGIN StartTask02 */
-  /* Infinite loop */
-
-  //initDriver_UART();
+  /* USER CODE BEGIN OBC_Comm_Task */
+    //initDriver_UART();
   //UART1 = for OBC communication
   // /*uint8_t status = */addDriver_UART(&huart4, UART4_IRQn, keep_new);
   //addDriver_UART(&huart1,USART1_IRQn,keep_old);
@@ -575,9 +954,7 @@ void OBC_Comm_Task(void const * argument)
   //   char msg[] = "UART1 Driver FAILED\r\n";
   //   HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 100);
   // }
-
-  /* USER CODE BEGIN OBC_Comm_Task */
-	static serial_line_handle line1;
+  static serial_line_handle line1;
 	
 
   // uint8_t fuck=0x67;
@@ -609,11 +986,10 @@ void OBC_Comm_Task(void const * argument)
 	osEvent retvalue1,retvalue;
 	uint8_t cnt1 = 0,cnt2 = 0;
 	char rxBuff[SDL_MAX_PAY_LEN];
-
-  /* Infinite loop */
+    /* Infinite loop */
   for(;;)
   {
-
+    
 	 /*-------------------SEND TO OBC-------------------------*/
 	//sampling
 	  /* in theory here we should sample values and fill telemetry structures
@@ -679,12 +1055,111 @@ void OBC_Comm_Task(void const * argument)
 
   	osDelay(2000);
   }
-  /* USER CODE END StartTask02 */
+  /* USER CODE END OBC_Comm_Task */
+}
+
+/* USER CODE BEGIN Header_Control_Algorithm_Task */
+/**
+* @brief Function implementing the ControlAlgorith thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Control_Algorithm_Task */
+void Control_Algorithm_Task(void const * argument)
+{
+  /* USER CODE BEGIN Control_Algorithm_Task */
+  uint8_t flag = 0;
+	osEvent retvalue,retvalue1;
+	//Inizialize actuators struct
+	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
+	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
+	init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,20000,20); //89 khz //this measured 10khz, idkwhy
+	init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
+	init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
+//12332
+	//Inizialize PID struct
+	PID_INIT(&PID_Inputs);
+
+  /* Infinite loop */
+  for(;;)
+  {
+  //printf("We are in Control Algorithm TASK \n");
+#if enable_printf
+		//printf("We are in Control Algorithm TASK \n");
+#endif
+    printf("I am alive from Control_Algorithm_Task at %lu ms\r\n", HAL_GetTick());
+		//Receive Telemetry IMU via Queue
+
+		// retvalue1 = osMessageGet(setAttitudeADCSQueueHandle,200);
+		// processCombinedData((void*)&retvalue1,(void *)&PID_Inputs,receive_Attitudequeue_control);
+    // the reason why i commented the above is that there is no task sending to that queue therefore its technically useless
+
+		retvalue = osMessageGet(IMUQueue1Handle, 300);
+		processCombinedData((void*)&retvalue,(void *)&PID_Inputs,receive_IMUqueue_control);
+
+
+		//ALGORITHM
+		//PID_main(&PID_Inputs);
+
+		//Update PWM values
+		//X Magnetorquer
+
+		if(!flag)
+		{
+      //WARNING: WHO EVER WORK ON THIS PART REMEMBER AFTER EVERY TEST TO COMMENT THE PART BELOW 
+      //BECAUSE THE DRIVER ITSELF GET HOT EXTREAMLY FAST, AND IF YOU LEAVE IT OVER NIGHT IT WILL BURN 
+      //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
+			// actuator_START(&Reaction1);
+			// actuator_START(&Reaction2);
+			// actuator_START(&MagneTorquer1);
+			// actuator_START(&MagneTorquer2);
+			// actuator_START(&MagneTorquer3);
+      // printf("I am spinning at %lu ms\r\n", HAL_GetTick());
+			flag = 1;// ALSO SET THIS FLAG BACK TO 1 AFTER TEST JUST TO MAKE SURE 
+		}
+
+
+		//No change dir:
+		//update_duty_dir(&Reaction1,50,0);
+		//Change dir :
+		//update_duty_dir(&MagneTorquer1,70,1);
+
+
+
+		//X Magnetorquer
+		//Change dir :
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[0],1);
+		//No change dir:
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[0],0);
+		//Y Magnetorquer
+		//Change dir :
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[1],1);
+		//No change dir:
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[1],0);
+		//Z Magnetorquer
+		//Change dir :
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[2],1);
+		//No change dir:
+		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[2],0);
+
+
+
+		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE) //If control don't read IMU
+		{
+			printf("Control Task : Taken IMURead_ControlMutex control");
+			//Spegnere i magnetorquer
+			xSemaphoreGive(IMURead_ControlMutex);
+			printf("Control Task : Released IMURead_ControlMutex control");
+		}
+		*/
+		osDelay(2000);
+  }
+  /* USER CODE END Control_Algorithm_Task */
 }
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM1 interrupt took place, inside
+  * @note   This function is called  when TIM16 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -695,7 +1170,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM1)
+  if (htim->Instance == TIM16)
   {
     HAL_IncTick();
   }
