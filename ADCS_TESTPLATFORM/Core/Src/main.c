@@ -1142,9 +1142,9 @@ void Control_Algorithm_Task(void const * argument)
 			// actuator_START(&Reaction1);
 			// actuator_START(&Reaction2);
 			// actuator_START(&MagneTorquer1);
-			actuator_START(&MagneTorquer2);
-			actuator_START(&MagneTorquer3);
-      printf("I am spinning at %lu ms\r\n", HAL_GetTick());
+			// actuator_START(&MagneTorquer2);
+			// actuator_START(&MagneTorquer3);
+      // printf("I am spinning at %lu ms\r\n", HAL_GetTick());
 			flag = 1;// ALSO SET THIS FLAG BACK TO 1 AFTER TEST JUST TO MAKE SURE 
 		}
 
