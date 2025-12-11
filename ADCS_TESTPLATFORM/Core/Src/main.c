@@ -1041,14 +1041,14 @@ void OBC_Comm_Task(void const * argument)
 
 	// 	//printf("OBC: Trying to send attitude \n");
 	// 	//finally we send the message
-
-			printf("OBC TASK: after 7 counts: %lu \n",HAL_GetTick());
 			TxHousekeeping.code=HOUSEKEEPINGADCS_CODE;
 			TxHousekeeping.ticktime=HAL_GetTick();
 			//printf("OBC: Trying to send housekeeping \n");
 			//finally we send the message
 
-			if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){}
+			if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){
+        printf("sucess send temp current %lu \r\n",HAL_GetTick());
+      }
 
 	// }
 
@@ -1066,7 +1066,7 @@ void OBC_Comm_Task(void const * argument)
     // uint8_t sendStatus = sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0);
     // printf("OBC TASK: sdlSend status: 0x%02X at %lu \r\n", sendStatus, HAL_GetTick());
 		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
-      printf("OBC TASK:i am connected %lu \r\n",HAL_GetTick());
+      printf("success send ADCS packet %lu \r\n",HAL_GetTick());
     }
 
 
@@ -1236,7 +1236,7 @@ void Check_current_temp(void const * argument)
 		get_actuator_current(&hadc1,voltagebuf,currentbuf,Channels_mask);
 		for(int i=0;i<NUM_DRIVERS;i++)
 		{
-			printf("Actuator %d current value: %f",i,currentbuf[i]);
+			printf("Actuator %d current value: %f \r\n",i,currentbuf[i]);
 		}
 		//----------------------------------------------------------------------
 
@@ -1248,7 +1248,7 @@ void Check_current_temp(void const * argument)
 				//Check Reaction Wheels currents
 				if(currentbuf[i] > 1.0f) //> 1A
 				{
-					printf("MAgnetorquer %d current value: %f is above threshold!!!! ",i,currentbuf[i]);
+					printf("MAgnetorquer %d current value: %f is above threshold!!!! \r\n",i,currentbuf[i]);
 					error_status = 5;
 				}
 			}
@@ -1256,7 +1256,7 @@ void Check_current_temp(void const * argument)
 				//Check MagneTorquers currents
 				if(currentbuf[i] > 0.05f) // >50mA
 				{
-					printf("Magnetorquer %d current value: %f is above threshold!!!! ",i,currentbuf[i]);
+					printf("Magnetorquer %d current value: %f is above threshold!!!! \r\n",i,currentbuf[i]);
 					error_status = 4;
 				}
 			}
