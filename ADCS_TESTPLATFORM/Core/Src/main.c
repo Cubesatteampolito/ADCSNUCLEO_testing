@@ -67,21 +67,27 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-// osThreadId IMUTaskHandle;
-// uint32_t IMUTaskBuffer[ 4096 ];
-// osStaticThreadDef_t IMUTaskControlBlock;
-// osThreadId OBC_CommTaskHandle;
-// uint32_t OBC_CommTaskBuffer[ 16384 ];
-// osStaticThreadDef_t OBC_CommTaskControlBlock;
-// osThreadId ControlAlgorithHandle;
-// uint32_t ControlAlgorithBuffer[ 4096 ];
-// osStaticThreadDef_t ControlAlgorithControlBlock;
-// osMessageQId IMUQueue1Handle;
-// uint8_t IMUQueue1Buffer[ 16 * sizeof( uint16_t ) ];
-// osStaticMessageQDef_t IMUQueue1ControlBlock;
-// osMessageQId IMUQueue2Handle;
-// uint8_t IMUQueue2Buffer[ 16 * sizeof( uint16_t ) ];
-// osStaticMessageQDef_t IMUQueue2ControlBlock;
+osThreadId IMUTaskHandle;
+uint32_t IMUTaskBuffer[ 4096 ];
+osStaticThreadDef_t IMUTaskControlBlock;
+osThreadId OBC_CommTaskHandle;
+uint32_t OBC_CommTaskBuffer[ 16384 ];
+osStaticThreadDef_t OBC_CommTaskControlBlock;
+osThreadId ControlAlgorithmTaskHandle;
+uint32_t ControlAlgorithmTaskBuffer[ 4096 ];
+osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
+osThreadId FirstCheckTaskHandle;
+uint32_t FirstCheckTaskBuffer[ 4096 ];
+osStaticThreadDef_t FirstCheckTaskControlBlock;
+osMessageQId IMUQueue1Handle;
+uint8_t IMUQueue1Buffer[ 512 * sizeof( uint32_t ) ];
+osStaticMessageQDef_t IMUQueue1ControlBlock;
+osMessageQId IMUQueue2Handle;
+uint8_t IMUQueue2Buffer[ 512 * sizeof( uint32_t ) ];
+osStaticMessageQDef_t IMUQueue2ControlBlock;
+osMessageQId ADCSHouseKeepingQueueHandle;
+uint8_t ADCSHouseKeepingQueueBuffer[ 512 * sizeof( uint32_t ) ];
+osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
 /* USER CODE BEGIN PV */
 osThreadId IMUTaskHandle;
 uint32_t IMUTaskBuffer[ stack_size]; //4096
@@ -117,6 +123,7 @@ static void MX_ADC1_Init(void);
 void IMU_Task(void const * argument);
 void OBC_Comm_Task(void const * argument);
 void Control_Algorithm_Task(void const * argument);
+void Check_current_temp(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -228,12 +235,16 @@ int main(void)
 
   /* Create the queue(s) */
   /* definition and creation of IMUQueue1 */
-  // osMessageQStaticDef(IMUQueue1, 16, uint16_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
-  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  osMessageQStaticDef(IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
 
   /* definition and creation of IMUQueue2 */
-  // osMessageQStaticDef(IMUQueue2, 16, uint16_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+
+  /* definition and creation of ADCSHouseKeepingQueue */
+  osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
+  ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -256,16 +267,20 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  // osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
-  // IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
-  // osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityIdle, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  // OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
-  /* definition and creation of ControlAlgorith */
-  // osThreadStaticDef(ControlAlgorith, Control_Algorithm_Task, osPriorityIdle, 0, 4096, ControlAlgorithBuffer, &ControlAlgorithControlBlock);
-  // ControlAlgorithHandle = osThreadCreate(osThread(ControlAlgorith), NULL);
+  /* definition and creation of ControlAlgorithmTask */
+  osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, 4096, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
+  ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
+
+  /* definition and creation of FirstCheckTask */
+  osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, 4096, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
+  FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -364,7 +379,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
-  hadc1.Init.NbrOfConversion = 5; //this was 5 i turn it to 1 to match the old code
+  hadc1.Init.NbrOfConversion = 5;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -394,8 +409,7 @@ static void MX_ADC1_Init(void)
   }
 
   /** Configure Regular Channel
-  // */
-  // commented out to match the old code with only one channel
+  */
   sConfig.Rank = ADC_REGULAR_RANK_2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -1155,6 +1169,24 @@ void Control_Algorithm_Task(void const * argument)
 		osDelay(2000);
   }
   /* USER CODE END Control_Algorithm_Task */
+}
+
+/* USER CODE BEGIN Header_Check_current_temp */
+/**
+* @brief Function implementing the FirstCheckTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Check_current_temp */
+void Check_current_temp(void const * argument)
+{
+  /* USER CODE BEGIN Check_current_temp */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END Check_current_temp */
 }
 
 /**
