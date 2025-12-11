@@ -23,7 +23,8 @@
 #define ADC_NUM_CHANNELS 16 //this was N
 #define Vref 3.3 //volt
 
-#define stack_size 4096
-#define stack_size1 8192
+#define stack_size 768 //was 4096
+#define stack_size1 2816 //was 16384
+//reallocation of stack sizes to reduce memory usage
 
 #endif /* INC_CONSTANTS_H_ */
