@@ -24,10 +24,10 @@ typedef struct{
 	float acc_msr[3];
 } imu_queue_struct;
 
-// typedef struct{
-// 	float current[NUM_ACTUATORS];
-// 	float temperature[NUM_TEMP_SENS];
-// } Current_Temp_Struct;
+typedef struct{
+	float current[NUM_ACTUATORS];
+	float temperature[NUM_TEMP_SENS];
+} Current_Temp_Struct;
 
 // Functions
 /**

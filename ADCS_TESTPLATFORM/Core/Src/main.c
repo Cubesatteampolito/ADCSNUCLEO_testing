@@ -45,6 +45,7 @@ Actuator_struct MagneTorquer1;
 Actuator_struct MagneTorquer2;
 Actuator_struct MagneTorquer3;
 uint8_t error_status = 0;
+uint8_t Channels_mask[NUM_DRIVERS] = {1,1,1,1,1};
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
