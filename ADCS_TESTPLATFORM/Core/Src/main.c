@@ -1246,7 +1246,7 @@ void Check_current_temp(void const * argument)
 			if(i>=0 && i<2)
 			{
 				//Check Reaction Wheels currents
-				if(current_buf[i] > 1.0f) //> 1A
+				if(currentbuf[i] > 1.0f) //> 1A
 				{
 					printf("MAgnetorquer %d current value: %f is above threshold!!!! ",i,currentbuf[i]);
 					error_status = 5;
@@ -1254,7 +1254,7 @@ void Check_current_temp(void const * argument)
 			}
 			else{
 				//Check MagneTorquers currents
-				if(current_buf[i] > 0.05f) // >50mA
+				if(currentbuf[i] > 0.05f) // >50mA
 				{
 					printf("Magnetorquer %d current value: %f is above threshold!!!! ",i,currentbuf[i]);
 					error_status = 4;
