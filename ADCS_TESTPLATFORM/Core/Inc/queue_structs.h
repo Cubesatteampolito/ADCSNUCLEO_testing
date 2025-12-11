@@ -67,7 +67,7 @@ void receive_IMUqueue_OBC(void *event,void *attitude);
 //   * @param	current_temp_struct Second pointer to void variable
 //   * @retval none
 //   */
-// void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct);
+void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct);
 // /**
 //   * @brief  
 //   * @param	event First pointer to void variable
