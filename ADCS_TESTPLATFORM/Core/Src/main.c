@@ -1100,6 +1100,7 @@ void Control_Algorithm_Task(void const * argument)
   /* USER CODE BEGIN Control_Algorithm_Task */
   uint8_t flag = 0;
 	osEvent retvalue,retvalue1;
+  uint32_t start_time
 	//Inizialize actuators struct
 	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
 	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
@@ -1134,19 +1135,27 @@ void Control_Algorithm_Task(void const * argument)
 		//Update PWM values
 		//X Magnetorquer
 
-		if(!flag)
-		{
-      //WARNING: WHO EVER WORK ON THIS PART REMEMBER AFTER EVERY TEST TO COMMENT THE PART BELOW 
-      //BECAUSE THE DRIVER ITSELF GET HOT EXTREAMLY FAST, AND IF YOU LEAVE IT OVER NIGHT IT WILL BURN 
-      //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
-			// actuator_START(&Reaction1);
-			// actuator_START(&Reaction2);
-			// actuator_START(&MagneTorquer1);
-			// actuator_START(&MagneTorquer2);
-			// actuator_START(&MagneTorquer3);
-      // printf("I am spinning at %lu ms\r\n", HAL_GetTick());
-			flag = 1;// ALSO SET THIS FLAG BACK TO 1 AFTER TEST JUST TO MAKE SURE 
-		}
+    if(!flag)
+    {
+        actuator_START(&Reaction1);
+        actuator_START(&Reaction2);
+        actuator_START(&MagneTorquer1);
+        actuator_START(&MagneTorquer2);
+        actuator_START(&MagneTorquer3);
+        flag = 1;
+        start_time = HAL_GetTick();  // Record when actuators started
+    }
+
+    // Stop after 5 seconds
+    if(flag && (HAL_GetTick() - start_time) > 5000)
+    {
+        actuator_STOP(&Reaction1);
+        actuator_STOP(&Reaction2);
+        actuator_STOP(&MagneTorquer1);
+        actuator_STOP(&MagneTorquer2);
+        actuator_STOP(&MagneTorquer3);
+        flag = 0;  // Reset flag to allow restart if needed
+    }
 
 
 		//No change dir:
