@@ -1102,11 +1102,11 @@ void Control_Algorithm_Task(void const * argument)
 	osEvent retvalue,retvalue1;
   uint32_t start_time;
 	//Inizialize actuators struct
-	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
-	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
-	init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,89000,50); //89 khz //this measured 10khz, idkwhy
-	init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
-	init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
+	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,80); //100 khz
+	// init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
+	// init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,89000,50); //89 khz //this measured 10khz, idkwhy
+	// init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
+	// init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
 //12332
 	//Inizialize PID struct
 	PID_INIT(&PID_Inputs);
@@ -1137,35 +1137,38 @@ void Control_Algorithm_Task(void const * argument)
     //WARNING: WHO EVER WORK ON THIS PART REMEMBER AFTER EVERY TEST TO COMMENT THE PART BELOW 
     //IT WILL STOP AFTER 3 MINS BUT STILL COMMENT THOSE LINE OUT SO THAT IT WONT ACTUATE EVERY STARTUP 
     //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
-    // if(!flag)
-    // {   
-    //     actuator_START(&Reaction1);
-    //     actuator_START(&Reaction2);
-    //     actuator_START(&MagneTorquer1);
-    //     actuator_START(&MagneTorquer2);
-    //     actuator_START(&MagneTorquer3);
-    //     flag = 1;
-    //     start_time = HAL_GetTick();  // Record when actuators started
-    //     printf("Actuators started at %lu ms\r\n", start_time);
-    // }
+    if(!flag)
+    {   
+        actuator_START(&Reaction1);
+        // actuator_START(&Reaction2);
+        // actuator_START(&MagneTorquer1);
+        // actuator_START(&MagneTorquer2);
+        // actuator_START(&MagneTorquer3);
+        flag = 1;
+        start_time = HAL_GetTick();  // Record when actuators started
+        printf("Actuators started at %lu ms\r\n", start_time);
+    }
 
-    // // Stop after 5 seconds
-    // if(flag && (HAL_GetTick() - start_time) > 180000)
-    // {
-    //     actuator_STOP(&Reaction1);
-    //     actuator_STOP(&Reaction2);
-    //     actuator_STOP(&MagneTorquer1);
-    //     actuator_STOP(&MagneTorquer2);
-    //     actuator_STOP(&MagneTorquer3);
-    //     flag = 2;  // put flag 2 to stop after 3 mins
-    //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
-    // }
+    // Stop after 3mins seconds
+    if(flag && (HAL_GetTick() - start_time) > 180000)
+    {
+        actuator_STOP(&Reaction1);
+        // actuator_STOP(&Reaction2);
+        // actuator_STOP(&MagneTorquer1);
+        // actuator_STOP(&MagneTorquer2);
+        // actuator_STOP(&MagneTorquer3);
+        flag = 2;  // put flag 2 to stop after 3 mins
+        printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
+    }
 
 
 		//No change dir:
-		//update_duty_dir(&Reaction1,50,0);
+    if(flag && (HAL_GetTick() - start_time) > 5000){
+      update_duty_dir(&Reaction1,50,0);}
 		//Change dir :
-		//update_duty_dir(&MagneTorquer1,70,1);
+    if(flag && (HAL_GetTick() - start_time) > 10000){
+      update_duty_dir(&Reaction1,70,1);}
+
 
 
 
