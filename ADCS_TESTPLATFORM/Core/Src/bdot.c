@@ -16,4 +16,13 @@ void compute_mcon(const float mag[3], const float gyro[3], float k, float m_con[
         }
     }
     else{for(int j = 0; j < 3; j++) m_con[j] = 0;}
+    for(int i = 0; i < 3; i++) {
+        m_con[i] = 0.0f; // Zeroing output for safe
+    //A=0.07225 
+    //n=300
+        i_requred[i]=m_con[i]/(A* n);
+        v_required[i]=i_required[i]*Rmagnetorquer[i];
+    //Rmagnetorquer=30.5,r
+
+    }
 }
