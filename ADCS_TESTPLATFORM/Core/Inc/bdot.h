@@ -8,6 +8,7 @@
 #define BDOT_H
 
 #include <stdint.h>
+#include <math.h>
 
 /**
  * Compute the BDOT commanded dipole moment:
