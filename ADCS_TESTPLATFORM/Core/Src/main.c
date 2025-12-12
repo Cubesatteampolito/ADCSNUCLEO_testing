@@ -1150,7 +1150,7 @@ void Control_Algorithm_Task(void const * argument)
     }
 
     // Stop after 3mins seconds
-    if(flag && (HAL_GetTick() - start_time) > 180000)
+    if(flag && (HAL_GetTick() - start_time) > 30000)
     {
         actuator_STOP(&Reaction1);
         // actuator_STOP(&Reaction2);
@@ -1163,10 +1163,10 @@ void Control_Algorithm_Task(void const * argument)
 
 
 		//No change dir:
-    if(flag && (HAL_GetTick() - start_time) > 60000){
+    if(flag && (HAL_GetTick() - start_time) > 10000){
       update_duty_dir(&Reaction1,50,0);}
 		//Change dir :
-    if(flag && (HAL_GetTick() - start_time) > 120000){
+    if(flag && (HAL_GetTick() - start_time) > 20000){
       update_duty_dir(&Reaction1,70,1);}
 
 
