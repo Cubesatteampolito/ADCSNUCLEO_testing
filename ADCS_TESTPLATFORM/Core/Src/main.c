@@ -510,7 +510,7 @@ void IMU_Task(void const * argument)
         
         /* BDOT IMPLEMENTATION HERE */
         compute_mcon(mag, gyro, k, m_con);
-        printf("Dipole Moment: %f %f %f \r\n", m_con[0], m_con[1], m_con[2]);
+        // printf("Dipole Moment: %f %f %f \r\n", m_con[0], m_con[1], m_con[2]);
         // T = m x B
         /* BDOT FINISHED */
 
