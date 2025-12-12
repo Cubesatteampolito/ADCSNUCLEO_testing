@@ -154,7 +154,7 @@ void update_duty_dir(Actuator_struct *act,float duty,bool dir)
 			//IN1 -> 100% PWM
 			//IN2 -> Duty Cycle PWM
 			act->dir = 1; //REVERSE->FORWARD
-			printf("Change of direction: FORWARD!!!!!!! \n");
+			printf("Change of direction: FORWARD!!!!!!! \r\n");
 			/*Assign the new value of duty cycle to the capture compare register.*/
 			//IN1
 			__HAL_TIM_SET_COMPARE(act->htim, act->pwm_channel1, (uint32_t)(roundf(act->htim->Instance->ARR)));
@@ -166,7 +166,7 @@ void update_duty_dir(Actuator_struct *act,float duty,bool dir)
 			//IN1 -> Duty Cycle PWM
 			//IN2 -> 100% PWM
 			act->dir = 0;	//FORWARD->REVERSE
-			printf("Change of direction: REVERSE!!!!!!! \n");
+			printf("Change of direction: REVERSE!!!!!!! \r\n");
 			/*Assign the new value of duty cycle to the capture compare register.*/
 			//IN1
 			__HAL_TIM_SET_COMPARE(act->htim, act->pwm_channel1, (uint32_t)(roundf(update_value)));
@@ -176,7 +176,7 @@ void update_duty_dir(Actuator_struct *act,float duty,bool dir)
 	}
 	else
 	{
-		printf("Error: Duty Cycle value is not a correct value !!!!!!! \n");
+		printf("Error: Duty Cycle value is not a correct value !!!!!!! \r\n");
 	}
 
 
