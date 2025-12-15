@@ -948,7 +948,7 @@ void IMU_Task(void const * argument)
 			    	//printf("Invio a Control Task fallito \n");
 			       	free(local_imu_struct); // Ensure the receiving task has time to process
 				} else {
-			        //printf("Dati Inviati a Control Task \n");
+			        printf("Dati Inviati a Control Task \n");
 
 			 	}
 			 	//Invio queue a OBC Task
