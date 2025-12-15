@@ -70,29 +70,29 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId IMUTaskHandle;
-uint32_t IMUTaskBuffer[ 4096 ];
-osStaticThreadDef_t IMUTaskControlBlock;
-osThreadId OBC_CommTaskHandle;
-uint32_t OBC_CommTaskBuffer[ 16384 ];
-osStaticThreadDef_t OBC_CommTaskControlBlock;
-osThreadId ControlAlgorithmTaskHandle;
-uint32_t ControlAlgorithmTaskBuffer[ 4096 ];
-osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
-osThreadId FirstCheckTaskHandle;
-uint32_t FirstCheckTaskBuffer[ 4096 ];
-osStaticThreadDef_t FirstCheckTaskControlBlock;
-osMessageQId IMUQueue1Handle;
-uint8_t IMUQueue1Buffer[ 512 * sizeof( uint32_t ) ];
-osStaticMessageQDef_t IMUQueue1ControlBlock;
-osMessageQId IMUQueue2Handle;
-uint8_t IMUQueue2Buffer[ 512 * sizeof( uint32_t ) ];
-osStaticMessageQDef_t IMUQueue2ControlBlock;
-osMessageQId ADCSHouseKeepingQueueHandle;
-uint8_t ADCSHouseKeepingQueueBuffer[ 512 * sizeof( uint32_t ) ];
-osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
-osSemaphoreId IMURead_ControlMutexHandle;
-osStaticSemaphoreDef_t xIMURead_ControlMutexBuffer;
+// osThreadId IMUTaskHandle;
+// uint32_t IMUTaskBuffer[ 4096 ];
+// osStaticThreadDef_t IMUTaskControlBlock;
+// osThreadId OBC_CommTaskHandle;
+// uint32_t OBC_CommTaskBuffer[ 16384 ];
+// osStaticThreadDef_t OBC_CommTaskControlBlock;
+// osThreadId ControlAlgorithmTaskHandle;
+// uint32_t ControlAlgorithmTaskBuffer[ 4096 ];
+// osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
+// osThreadId FirstCheckTaskHandle;
+// uint32_t FirstCheckTaskBuffer[ 4096 ];
+// osStaticThreadDef_t FirstCheckTaskControlBlock;
+// osMessageQId IMUQueue1Handle;
+// uint8_t IMUQueue1Buffer[ 512 * sizeof( uint32_t ) ];
+// osStaticMessageQDef_t IMUQueue1ControlBlock;
+// osMessageQId IMUQueue2Handle;
+// uint8_t IMUQueue2Buffer[ 512 * sizeof( uint32_t ) ];
+// osStaticMessageQDef_t IMUQueue2ControlBlock;
+// osMessageQId ADCSHouseKeepingQueueHandle;
+// uint8_t ADCSHouseKeepingQueueBuffer[ 512 * sizeof( uint32_t ) ];
+// osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
+// osSemaphoreId IMURead_ControlMutexHandle;
+// osStaticSemaphoreDef_t xIMURead_ControlMutexBuffer;
 /* USER CODE BEGIN PV */
 osThreadId IMUTaskHandle;
 uint32_t IMUTaskBuffer[ stack_size]; //4096
@@ -109,6 +109,9 @@ osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
 osThreadId FirstCheckTaskHandle;
 uint32_t FirstCheckTaskBuffer[ stack_size ];//4096
 osStaticThreadDef_t FirstCheckTaskControlBlock;
+
+xSemaphoreHandle IMURead_ControlMutex;
+StaticSemaphore_t xIMURead_ControlMutexBuffer;
 
 osMessageQId ADCSHouseKeepingQueueHandle;
 uint8_t ADCSHouseKeepingQueueBuffer[ 256 * sizeof( float ) ];
@@ -233,15 +236,15 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
-  // IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
-	// configASSERT(IMURead_ControlMutex);
-	// xSemaphoreGive(IMURead_ControlMutex);
+  IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
+	configASSERT(IMURead_ControlMutex);
+	xSemaphoreGive(IMURead_ControlMutex);
   /* USER CODE END RTOS_MUTEX */
 
   /* Create the semaphores(s) */
-  /* definition and creation of IMURead_ControlMutex */
-  osSemaphoreStaticDef(IMURead_ControlMutex, &xIMURead_ControlMutexBuffer);
-  IMURead_ControlMutexHandle = osSemaphoreCreate(osSemaphore(IMURead_ControlMutex), 1);
+  // /* definition and creation of IMURead_ControlMutex */
+  // osSemaphoreStaticDef(IMURead_ControlMutex, &xIMURead_ControlMutexBuffer);
+  // IMURead_ControlMutexHandle = osSemaphoreCreate(osSemaphore(IMURead_ControlMutex), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -251,18 +254,18 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
-  /* Create the queue(s) */
-  /* definition and creation of IMUQueue1 */
-  osMessageQStaticDef(IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
-  IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  // /* Create the queue(s) */
+  // /* definition and creation of IMUQueue1 */
+  // osMessageQStaticDef(IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
 
-  /* definition and creation of IMUQueue2 */
-  osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-  IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  // /* definition and creation of IMUQueue2 */
+  // osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
 
-  /* definition and creation of ADCSHouseKeepingQueue */
-  osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
-  ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
+  // /* definition and creation of ADCSHouseKeepingQueue */
+  // osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
+  // ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -291,20 +294,20 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
-  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  // osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
+  // IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
-  /* definition and creation of OBC_CommTask */
-  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  // /* definition and creation of OBC_CommTask */
+  // osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  // OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
-  /* definition and creation of ControlAlgorithmTask */
-  osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, 4096, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
-  ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
+  // /* definition and creation of ControlAlgorithmTask */
+  // osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, 4096, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
+  // ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
 
-  /* definition and creation of FirstCheckTask */
-  osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, 4096, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
-  FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
+  // /* definition and creation of FirstCheckTask */
+  // osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, 4096, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
+  // FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -911,13 +914,13 @@ void IMU_Task(void const * argument)
 		mag[0]/=10000; //1G = 10^-4 Tesla
 		mag[1]/=10000; //1G = 10^-4 Tesla
 		mag[2]/=10000; //1G = 10^-4 Tesla
-		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
+		if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
 		{
 			printf("IMU Task : Taken IMURead_Control control");
 			ret=readIMUPacket(&huart4, gyro, mag, 50);
 			xSemaphoreGive(IMURead_ControlMutex);
 			printf("IMU Task : Released IMURead_Control control");
-		}*/
+		}
     // printf("IMU status %d \r\n",ret);
 		if(ret)
 		{
@@ -1205,14 +1208,14 @@ void Control_Algorithm_Task(void const * argument)
 
 
 
-		/*if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE) //If control don't read IMU
+		if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE) //If control don't read IMU
 		{
 			printf("Control Task : Taken IMURead_ControlMutex control");
 			//Spegnere i magnetorquer
 			xSemaphoreGive(IMURead_ControlMutex);
 			printf("Control Task : Released IMURead_ControlMutex control");
 		}
-		*/
+		
 		osDelay(2000);
   }
   /* USER CODE END Control_Algorithm_Task */
