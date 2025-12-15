@@ -34,6 +34,7 @@
 #include "simpleDataLink.h"
 #include "pid_conversions.h"
 #include "actuator_driver.h"
+#include "bdot.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -1145,7 +1146,7 @@ void Control_Algorithm_Task(void const * argument)
     //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
     if(!flag)
     {   
-        actuator_START(&Reaction1);
+        // actuator_START(&Reaction1);
         // actuator_START(&Reaction2);
         // actuator_START(&MagneTorquer1);
         // actuator_START(&MagneTorquer2);
@@ -1158,7 +1159,7 @@ void Control_Algorithm_Task(void const * argument)
     // Stop after 3mins seconds
     if(flag && (HAL_GetTick() - start_time) > 30000)
     {
-        actuator_STOP(&Reaction1);
+        // actuator_STOP(&Reaction1);
         // actuator_STOP(&Reaction2);
         // actuator_STOP(&MagneTorquer1);
         // actuator_STOP(&MagneTorquer2);
