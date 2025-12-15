@@ -70,27 +70,29 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-// osThreadId IMUTaskHandle;
-// uint32_t IMUTaskBuffer[ 4096 ];
-// osStaticThreadDef_t IMUTaskControlBlock;
-// osThreadId OBC_CommTaskHandle;
-// uint32_t OBC_CommTaskBuffer[ 16384 ];
-// osStaticThreadDef_t OBC_CommTaskControlBlock;
-// osThreadId ControlAlgorithmTaskHandle;
-// uint32_t ControlAlgorithmTaskBuffer[ 4096 ];
-// osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
-// osThreadId FirstCheckTaskHandle;
-// uint32_t FirstCheckTaskBuffer[ 4096 ];
-// osStaticThreadDef_t FirstCheckTaskControlBlock;
-// osMessageQId IMUQueue1Handle;
-// uint8_t IMUQueue1Buffer[ 512 * sizeof( uint32_t ) ];
-// osStaticMessageQDef_t IMUQueue1ControlBlock;
-// osMessageQId IMUQueue2Handle;
-// uint8_t IMUQueue2Buffer[ 512 * sizeof( uint32_t ) ];
-// osStaticMessageQDef_t IMUQueue2ControlBlock;
-// osMessageQId ADCSHouseKeepingQueueHandle;
-// uint8_t ADCSHouseKeepingQueueBuffer[ 512 * sizeof( uint32_t ) ];
-// osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
+osThreadId IMUTaskHandle;
+uint32_t IMUTaskBuffer[ 4096 ];
+osStaticThreadDef_t IMUTaskControlBlock;
+osThreadId OBC_CommTaskHandle;
+uint32_t OBC_CommTaskBuffer[ 16384 ];
+osStaticThreadDef_t OBC_CommTaskControlBlock;
+osThreadId ControlAlgorithmTaskHandle;
+uint32_t ControlAlgorithmTaskBuffer[ 4096 ];
+osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
+osThreadId FirstCheckTaskHandle;
+uint32_t FirstCheckTaskBuffer[ 4096 ];
+osStaticThreadDef_t FirstCheckTaskControlBlock;
+osMessageQId IMUQueue1Handle;
+uint8_t IMUQueue1Buffer[ 512 * sizeof( uint32_t ) ];
+osStaticMessageQDef_t IMUQueue1ControlBlock;
+osMessageQId IMUQueue2Handle;
+uint8_t IMUQueue2Buffer[ 512 * sizeof( uint32_t ) ];
+osStaticMessageQDef_t IMUQueue2ControlBlock;
+osMessageQId ADCSHouseKeepingQueueHandle;
+uint8_t ADCSHouseKeepingQueueBuffer[ 512 * sizeof( uint32_t ) ];
+osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
+osSemaphoreId IMURead_ControlMutexHandle;
+osStaticSemaphoreDef_t xIMURead_ControlMutexBuffer;
 /* USER CODE BEGIN PV */
 osThreadId IMUTaskHandle;
 uint32_t IMUTaskBuffer[ stack_size]; //4096
@@ -236,6 +238,11 @@ int main(void)
 	// xSemaphoreGive(IMURead_ControlMutex);
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* definition and creation of IMURead_ControlMutex */
+  osSemaphoreStaticDef(IMURead_ControlMutex, &xIMURead_ControlMutexBuffer);
+  IMURead_ControlMutexHandle = osSemaphoreCreate(osSemaphore(IMURead_ControlMutex), 1);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -245,17 +252,17 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  // /* definition and creation of IMUQueue1 */
-  // osMessageQStaticDef(IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
-  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  /* definition and creation of IMUQueue1 */
+  osMessageQStaticDef(IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
 
-  // /* definition and creation of IMUQueue2 */
-  // osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  /* definition and creation of IMUQueue2 */
+  osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
 
-  // /* definition and creation of ADCSHouseKeepingQueue */
-  // osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
-  // ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
+  /* definition and creation of ADCSHouseKeepingQueue */
+  osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
+  ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -284,20 +291,20 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IMUTask */
-  // osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
-  // IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
+  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of OBC_CommTask */
-  // osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  // OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
+  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 
   /* definition and creation of ControlAlgorithmTask */
-  // osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, 4096, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
-  // ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
+  osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, 4096, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
+  ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
 
   /* definition and creation of FirstCheckTask */
-  // osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, 4096, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
-  // FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
+  osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, 4096, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
+  FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
