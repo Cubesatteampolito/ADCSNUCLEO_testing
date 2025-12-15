@@ -1171,11 +1171,11 @@ void Control_Algorithm_Task(void const * argument)
 
 
 		//No change dir:
-    if(flag && (HAL_GetTick() - start_time) > 10000){
-      update_duty_dir(&Reaction1,50,0);}
-		//Change dir :
-    if(flag && (HAL_GetTick() - start_time) > 20000){
-      update_duty_dir(&Reaction1,70,1);}
+    // if(flag && (HAL_GetTick() - start_time) > 10000){
+    //   update_duty_dir(&Reaction1,50,0);}
+		// //Change dir :
+    // if(flag && (HAL_GetTick() - start_time) > 20000){
+    //   update_duty_dir(&Reaction1,70,1);}
 
 
 
