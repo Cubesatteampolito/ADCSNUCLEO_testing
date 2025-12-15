@@ -39,7 +39,7 @@ void receive_IMUqueue_control(void *event,void *PID_struct) {
 	}
 	else
 	{
-		printf("Control Task: Ricezione IMU fallita con status: %d \n\n", ((osEvent *)event)->status);
+		printf("Control Task: Ricezione IMU fallita con status: %d \r\n", ((osEvent *)event)->status);
 	}
 }
 
@@ -76,7 +76,7 @@ void receive_IMUqueue_OBC(void *event,void *attitude) {
 		}
 		else
 		{
-			printf("OBC TASK:Ricezione IMU fallita con status: %d \n\n", ((osEvent *)event)->status);
+			printf("OBC TASK:Ricezione IMU fallita con status: %d \r\n", ((osEvent *)event)->status);
 		}
 }
 void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct)
@@ -109,7 +109,7 @@ void receive_Current_Tempqueue_OBC(void *event,void *current_temp_struct)
 	}
 	else
 	{
-		printf("OBC TASK: Ricezione correnti e temperature fallita con status: %d \n\n", ((osEvent *)event)->status);
+		printf("OBC TASK: Ricezione correnti e temperature fallita con status: %d \r\n", ((osEvent *)event)->status);
 	}
 
 }
