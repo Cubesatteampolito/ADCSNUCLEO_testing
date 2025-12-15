@@ -1119,6 +1119,7 @@ void Control_Algorithm_Task(void const * argument)
   uint8_t flag = 0;
 	osEvent retvalue,retvalue1;
   uint32_t start_time;
+  uint8_t count = 0;
 	//Inizialize actuators struct
 	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,80); //100 khz
 	// init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
@@ -1179,7 +1180,7 @@ void Control_Algorithm_Task(void const * argument)
     //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
     }
 
-
+    count++;
 		//No change dir:
     // if(flag && (HAL_GetTick() - start_time) > 10000){
     //   update_duty_dir(&Reaction1,50,0);}
@@ -1207,15 +1208,15 @@ void Control_Algorithm_Task(void const * argument)
 		//update_duty_dir(&MagneTorquer1,PID_Inputs.th_Dutycycle[2],0);
 
 
-
-		if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE) //If control don't read IMU
-		{
-			printf("Control Task : Taken IMURead_ControlMutex control \r\n");
-			//Spegnere i magnetorquer
-			xSemaphoreGive(IMURead_ControlMutex);
-			printf("Control Task : Released IMURead_ControlMutex control \r\n");
-		}
-		
+    if (count >= 5){
+      if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE) //If control don't read IMU
+      {
+        printf("Control Task : Taken IMURead_ControlMutex control \r\n");
+        //Spegnere i magnetorquer
+        xSemaphoreGive(IMURead_ControlMutex);
+        printf("Control Task : Released IMURead_ControlMutex control \r\n");
+      }
+    }
 		osDelay(2000);
   }
   /* USER CODE END Control_Algorithm_Task */
