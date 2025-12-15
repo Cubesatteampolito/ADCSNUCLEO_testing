@@ -1215,7 +1215,7 @@ void Control_Algorithm_Task(void const * argument)
         //Spegnere i magnetorquer
         xSemaphoreGive(IMURead_ControlMutex);
       //   printf("Control Task : Released IMURead_ControlMutex control \r\n");
-      // }
+      }
     }
 		osDelay(2000);
   }
