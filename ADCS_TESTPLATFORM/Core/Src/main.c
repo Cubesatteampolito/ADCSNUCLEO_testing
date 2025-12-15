@@ -917,7 +917,7 @@ void IMU_Task(void const * argument)
 		if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
 		{
 			printf("IMU Task : Taken IMURead_Control control");
-			ret=readIMUPacket(&huart4, gyro, mag, 50);
+			ret=readIMUPacket(&huart4, gyro, mag, acc, 500);
 			xSemaphoreGive(IMURead_ControlMutex);
 			printf("IMU Task : Released IMURead_Control control");
 		}
