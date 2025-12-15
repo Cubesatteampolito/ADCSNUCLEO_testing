@@ -1120,6 +1120,18 @@ void Control_Algorithm_Task(void const * argument)
 	osEvent retvalue,retvalue1;
   uint32_t start_time;
   uint8_t count = 0;
+  float gyro[3]={1,2,3};
+	float mag[3]={4,5,6};
+	float acc[3] = {7,8,9};
+  float m_con[3] = {0,0,0},  k = 50.0f;
+  float duty_cycle[3] = {0,0,0};
+  uint8_t direction[3] = {0,0,0};
+  const float coil_turn[3] = {2500.0f, 2500.0f, 2500.0f}; //number of turns of the
+  const float coil_area[3] = {0.01f, 0.01f, 0.01f}; //coil area in m^2
+  const float re_coil[3] = {2.0f, 2.0f, 2.0f}; //coil resistance in ohm
+  const float VDD_coil[3] = {12.0f, 12.0f, 12.0f}; //coil supply voltage
+
+	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 	//Inizialize actuators struct
 	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,80); //100 khz
 	// init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
@@ -1145,10 +1157,17 @@ void Control_Algorithm_Task(void const * argument)
     // the reason why i commented the above is that there is no task sending to that queue therefore its technically useless
 
 		retvalue = osMessageGet(IMUQueue1Handle, 300);
-		processCombinedData((void*)&retvalue,(void *)&PID_Inputs,receive_IMUqueue_control);
-
-    printf("i am actuating \r\n");
+		processCombinedData((void*)&retvalue,(void *)&local_imu_struct,receive_IMUqueue_control);
+    //algorithm
+      for (int i = 0; i < 3; i++)
+    {
+      local_imu_struct->gyro_msr[i] = gyro[i];
+      local_imu_struct->mag_msr[i] = mag[i];
+      local_imu_struct->acc_msr[i] = acc[i];
+    }
 		//ALGORITHM
+    compute_mcon(mag, gyro, k, m_con);
+    compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
 		//PID_main(&PID_Inputs);
 
 		//Update PWM values
