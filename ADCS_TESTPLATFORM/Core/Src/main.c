@@ -921,7 +921,7 @@ void IMU_Task(void const * argument)
 			}
 			printf("\n");*/
 			if (local_imu_struct == NULL) {
-				printf("IMU TASK: allocazione struttura fallita !\n");
+				// printf("IMU TASK: allocazione struttura fallita !\n");
 			}
 			else
 			{
@@ -931,10 +931,16 @@ void IMU_Task(void const * argument)
 					local_imu_struct->gyro_msr[i] = gyro[i];
 					local_imu_struct->mag_msr[i] = mag[i];
 					local_imu_struct->acc_msr[i] = acc[i];
-					printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-					printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-					printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+					// printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+					// printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+					// printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
 				}
+
+        /* BDOT IMPLEMENTATION HERE */
+        compute_mcon(mag, gyro, k, m_con);
+        // printf("Dipole Moment: %f %f %f \r\n", m_con[0], m_con[1], m_con[2]);
+        // T = m x B
+        /* BDOT FINISHED */
 				//Invio queue a Control Task
 			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
 			    	//printf("Invio a Control Task fallito \n");
@@ -1047,7 +1053,7 @@ void OBC_Comm_Task(void const * argument)
 			//finally we send the message
 
 			if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){
-        printf("sucess send temp current %lu \r\n",HAL_GetTick());
+        // printf("sucess send temp current %lu \r\n",HAL_GetTick());
       }
 
 	// }
@@ -1066,7 +1072,7 @@ void OBC_Comm_Task(void const * argument)
     // uint8_t sendStatus = sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0);
     // printf("OBC TASK: sdlSend status: 0x%02X at %lu \r\n", sendStatus, HAL_GetTick());
 		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
-      printf("success send ADCS packet %lu \r\n",HAL_GetTick());
+      // printf("success send ADCS packet %lu \r\n",HAL_GetTick());
     }
 
 
@@ -1079,7 +1085,7 @@ void OBC_Comm_Task(void const * argument)
 	//finally we send the message (WITH ACK REQUESTED)
 	// printf("OBC: Trying to send opmodeADCS \r\n");
 	if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){
-    printf("OBC: success to send opmodeADCS \r\n");
+    // printf("OBC: success to send opmodeADCS \r\n");
   }
 
 
@@ -1118,7 +1124,7 @@ void Control_Algorithm_Task(void const * argument)
 #if enable_printf
 		//printf("We are in Control Algorithm TASK \n");
 #endif
-    printf("I am alive from Control_Algorithm_Task at %lu ms\r\n", HAL_GetTick());
+    // printf("I am alive from Control_Algorithm_Task at %lu ms\r\n", HAL_GetTick());
 		//Receive Telemetry IMU via Queue
 
 		// retvalue1 = osMessageGet(setAttitudeADCSQueueHandle,200);
@@ -1146,7 +1152,7 @@ void Control_Algorithm_Task(void const * argument)
         // actuator_START(&MagneTorquer3);
         flag = 1;
         start_time = HAL_GetTick();  // Record when actuators started
-        printf("Actuators started at %lu ms\r\n", start_time);
+        // printf("Actuators started at %lu ms\r\n", start_time);
     }
 
     // Stop after 3mins seconds
@@ -1158,8 +1164,8 @@ void Control_Algorithm_Task(void const * argument)
         // actuator_STOP(&MagneTorquer2);
         // actuator_STOP(&MagneTorquer3);
         flag = 2;  // put flag 2 to stop after 3 mins
-        printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
-    }
+    //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
+    // }
 
 
 		//No change dir:
@@ -1264,7 +1270,7 @@ void Check_current_temp(void const * argument)
 				//Check Reaction Wheels currents
 				if(currentbuf[i] > 1.0f) //> 1A
 				{
-					printf("MAgnetorquer %d current value: %f is above threshold!!!! \r\n",i,currentbuf[i]);
+					// printf("MAgnetorquer %d current value: %f is above threshold!!!! \r\n",i,currentbuf[i]);
 					error_status = 5;
 				}
 			}
@@ -1272,7 +1278,7 @@ void Check_current_temp(void const * argument)
 				//Check MagneTorquers currents
 				if(currentbuf[i] > 0.05f) // >50mA
 				{
-					printf("Magnetorquer %d current value: %f is above threshold!!!! \r\n",i,currentbuf[i]);
+					// printf("Magnetorquer %d current value: %f is above threshold!!!! \r\n",i,currentbuf[i]);
 					error_status = 4;
 				}
 			}
