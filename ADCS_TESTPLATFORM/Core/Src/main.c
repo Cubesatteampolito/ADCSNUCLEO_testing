@@ -923,7 +923,7 @@ void IMU_Task(void const * argument)
 			}
 			printf("\n");*/
 			if (local_imu_struct == NULL) {
-				// printf("IMU TASK: allocazione struttura fallita !\n");
+				printf("IMU TASK: allocazione struttura fallita !\n");
 			}
 			else
 			{
