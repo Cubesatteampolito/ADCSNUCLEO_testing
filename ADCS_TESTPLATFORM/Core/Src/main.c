@@ -916,10 +916,10 @@ void IMU_Task(void const * argument)
 		mag[2]/=10000; //1G = 10^-4 Tesla
 		if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
 		{
-			printf("IMU Task : Taken IMURead_Control control\r\n");
+			// printf("IMU Task : Taken IMURead_Control control\r\n");
 			ret=readIMUPacket(&huart4, gyro, mag, acc, 500);
 			xSemaphoreGive(IMURead_ControlMutex);
-			printf("IMU Task : Released IMURead_Control control\r\n");
+			// printf("IMU Task : Released IMURead_Control control\r\n");
 		}
     // printf("IMU status %d \r\n",ret);
 		if(ret)
@@ -1147,7 +1147,7 @@ void Control_Algorithm_Task(void const * argument)
 		retvalue = osMessageGet(IMUQueue1Handle, 300);
 		processCombinedData((void*)&retvalue,(void *)&PID_Inputs,receive_IMUqueue_control);
 
-
+    printf("i am actuating \r\n");
 		//ALGORITHM
 		//PID_main(&PID_Inputs);
 
@@ -1211,11 +1211,11 @@ void Control_Algorithm_Task(void const * argument)
     if (count >= 5){
       if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE) //If control don't read IMU
       {
-        printf("Control Task : Taken IMURead_ControlMutex control \r\n");
+        // printf("Control Task : Taken IMURead_ControlMutex control \r\n");
         //Spegnere i magnetorquer
         xSemaphoreGive(IMURead_ControlMutex);
-        printf("Control Task : Released IMURead_ControlMutex control \r\n");
-      }
+      //   printf("Control Task : Released IMURead_ControlMutex control \r\n");
+      // }
     }
 		osDelay(2000);
   }
