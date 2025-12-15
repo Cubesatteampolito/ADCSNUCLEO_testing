@@ -885,6 +885,7 @@ void IMU_Task(void const * argument)
 	float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
 	float acc[3] = {7,8,9};
+  float m_con[3] = {0,0,0},  k = 50.0f;
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
@@ -1114,7 +1115,7 @@ void Control_Algorithm_Task(void const * argument)
 	// init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,89000,50); //89 khz //this measured 10khz, idkwhy
 	// init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
 	// init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
-//12332
+  //12332
 	//Inizialize PID struct
 	PID_INIT(&PID_Inputs);
 
@@ -1166,7 +1167,7 @@ void Control_Algorithm_Task(void const * argument)
         // actuator_STOP(&MagneTorquer3);
         flag = 2;  // put flag 2 to stop after 3 mins
     //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
-    // }
+    }
 
 
 		//No change dir:
