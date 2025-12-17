@@ -1131,7 +1131,7 @@ void Control_Algorithm_Task(void const * argument)
   const float re_coil[3] = {30.7f, 30.7f, 23.0f}; //coil resistance in ohm
   const float VDD_coil[3] = {12.0f, 12.0f, 12.0f}; //coil supply voltage
 
-	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
+	imu_queue_struct *local_imu_struct1 =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 	//Inizialize actuators struct
 	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,80); //100 khz
 	// init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
@@ -1157,13 +1157,13 @@ void Control_Algorithm_Task(void const * argument)
     // the reason why i commented the above is that there is no task sending to that queue therefore its technically useless
 
 		retvalue = osMessageGet(IMUQueue1Handle, 300);
-		processCombinedData((void*)&retvalue,(void *)&local_imu_struct,receive_IMUqueue_control);
+		processCombinedData((void*)&retvalue,(void *)&local_imu_struct1,receive_IMUqueue_control);
     //algorithm
       for (int i = 0; i < 3; i++)
     {
-      local_imu_struct->gyro_msr[i] = gyro[i];
-      local_imu_struct->mag_msr[i] = mag[i];
-      local_imu_struct->acc_msr[i] = acc[i];
+      local_imu_struct1->gyro_msr[i] = gyro[i];
+      local_imu_struct1->mag_msr[i] = mag[i];
+      local_imu_struct1->acc_msr[i] = acc[i];
       printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
       printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
       printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
