@@ -1159,15 +1159,15 @@ void Control_Algorithm_Task(void const * argument)
 		retvalue = osMessageGet(IMUQueue1Handle, 300);
 		processCombinedData((void*)&retvalue,(void *)&local_imu_struct1,receive_IMUqueue_control);
     //algorithm
-      for (int i = 0; i < 3; i++)
-    {
-      local_imu_struct1->gyro_msr[i] = gyro[i];
-      local_imu_struct1->mag_msr[i] = mag[i];
-      local_imu_struct1->acc_msr[i] = acc[i];
-      printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-      printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-      printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
-    }
+    //   for (int i = 0; i < 3; i++)
+    // {
+    //   local_imu_struct1->gyro_msr[i] = gyro[i];
+    //   local_imu_struct1->mag_msr[i] = mag[i];
+    //   local_imu_struct1->acc_msr[i] = acc[i];
+    //   printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+    //   printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+    //   printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+    // }
 		// //ALGORITHM
     // compute_mcon(mag, gyro, k, m_con);
     // compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
