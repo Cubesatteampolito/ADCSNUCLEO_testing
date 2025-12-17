@@ -1211,7 +1211,7 @@ void Control_Algorithm_Task(void const * argument)
     // //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
     // }
 
-    // count++;
+    count++;
 		// //No change dir:
     // // if(flag && (HAL_GetTick() - start_time) > 10000){
     // //   update_duty_dir(&Reaction1,50,0);}
@@ -1219,20 +1219,20 @@ void Control_Algorithm_Task(void const * argument)
     // // if(flag && (HAL_GetTick() - start_time) > 20000){
     // //   update_duty_dir(&Reaction1,70,1);}
 
-    // for (int i = 0; i < 3; i++)
-    // {
-    //   if (duty_cycle[i] > 20.0f && flag == 0)
-    //   {
-    //     actuator_START(&coil[i]);
-    //     update_duty_dir(&coil[i], duty_cycle[i], direction[i]);
-    //     flag = 1;
-    //   }
-    //   else
-    //   {
-    //     actuator_STOP(&coil[i]);
-    //     flag = 0;
-    //   }
-    // }
+    for (int i = 0; i < 3; i++)
+    {
+      if (duty_cycle[i] > 20.0f && flag == 0)
+      {
+        actuator_START(&coil[i]);
+        update_duty_dir(&coil[i], duty_cycle[i], direction[i]);
+        flag = 1;
+      }
+      else
+      {
+        actuator_STOP(&coil[i]);
+        flag = 0;
+      }
+    }
 
 
 		//X Magnetorquer
