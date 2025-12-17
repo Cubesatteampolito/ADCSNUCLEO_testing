@@ -1246,7 +1246,7 @@ void Control_Algorithm_Task(void const * argument)
       //   printf("Control Task : Released IMURead_ControlMutex control \r\n");
       }
     }
-    free(local_imu_struct);
+    free(local_imu_struct1);
 		osDelay(2000);
   }
   /* USER CODE END Control_Algorithm_Task */
