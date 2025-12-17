@@ -1171,6 +1171,7 @@ void Control_Algorithm_Task(void const * argument)
     for (int i = 0; i < 3; i++)
     {
       printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
+      printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
       // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
       // printf("Direction axis %d, value %d \r\n", i, direction[i]);
     }
