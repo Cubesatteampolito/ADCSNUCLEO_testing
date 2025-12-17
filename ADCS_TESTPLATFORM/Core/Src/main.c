@@ -958,7 +958,7 @@ void IMU_Task(void const * argument)
 			    	//printf("Invio a Control Task fallito \n");
 			       	free(local_imu_struct); // Ensure the receiving task has time to process
 				} else {
-			        printf("Dati Inviati a Control Task \r\n");
+			        // printf("Dati Inviati a Control Task \r\n");
 
 			 	}
 			 	//Invio queue a OBC Task
@@ -1175,8 +1175,8 @@ void Control_Algorithm_Task(void const * argument)
     compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
     for (int i = 0; i < 3; i++)
     {
-      // printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
-      // printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
+      printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
+      printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
       // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
       // printf("Direction axis %d, value %d \r\n", i, direction[i]);
     }
@@ -1219,20 +1219,20 @@ void Control_Algorithm_Task(void const * argument)
     // // if(flag && (HAL_GetTick() - start_time) > 20000){
     // //   update_duty_dir(&Reaction1,70,1);}
 
-    for (int i = 0; i < 3; i++)
-    {
-      if (duty_cycle[i] > 20.0f && flag == 0)
-      {
-        actuator_START(&coil[i]);
-        update_duty_dir(&coil[i], duty_cycle[i], direction[i]);
-        flag = 1;
-      }
-      else
-      {
-        actuator_STOP(&coil[i]);
-        flag = 0;
-      }
-    }
+    // for (int i = 0; i < 3; i++)
+    // {
+    //   if (duty_cycle[i] > 20.0f && flag == 0)
+    //   {
+    //     actuator_START(&coil[i]);
+    //     update_duty_dir(&coil[i], duty_cycle[i], direction[i]);
+    //     flag = 1;
+    //   }
+    //   else
+    //   {
+    //     actuator_STOP(&coil[i]);
+    //     flag = 0;
+    //   }
+    // }
 
 
 		//X Magnetorquer
@@ -1316,7 +1316,7 @@ void Check_current_temp(void const * argument)
 		get_actuator_current(&hadc1,voltagebuf,currentbuf,Channels_mask);
 		for(int i=0;i<NUM_DRIVERS;i++)
 		{
-			// printf("Actuator %d current value: %f \r\n",i,currentbuf[i]);
+			printf("Actuator %d current value: %f \r\n",i,currentbuf[i]);
 		}
 		//----------------------------------------------------------------------
 
