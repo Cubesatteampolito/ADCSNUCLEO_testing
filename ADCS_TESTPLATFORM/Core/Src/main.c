@@ -1221,14 +1221,16 @@ void Control_Algorithm_Task(void const * argument)
 
     for (int i = 0; i < 3; i++)
     {
-      if (duty_cycle[i] < 20.0f)
-      {
-        actuator_STOP(&coil[i]);
-      }
-      else
+      if (duty_cycle[i] > 20.0f && flag == 0)
       {
         actuator_START(&coil[i]);
         update_duty_dir(&coil[i], duty_cycle[i], direction[i]);
+        flag = 1;
+      }
+      else
+      {
+        actuator_STOP(&coil[i]);
+        flag = 0;
       }
     }
 
