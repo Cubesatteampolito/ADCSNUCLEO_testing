@@ -1164,17 +1164,20 @@ void Control_Algorithm_Task(void const * argument)
       local_imu_struct->gyro_msr[i] = gyro[i];
       local_imu_struct->mag_msr[i] = mag[i];
       local_imu_struct->acc_msr[i] = acc[i];
+      printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+      printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+      printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
     }
-		//ALGORITHM
-    compute_mcon(mag, gyro, k, m_con);
-    compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
-    for (int i = 0; i < 3; i++)
-    {
-      printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
-      printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
-      // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
-      // printf("Direction axis %d, value %d \r\n", i, direction[i]);
-    }
+		// //ALGORITHM
+    // compute_mcon(mag, gyro, k, m_con);
+    // compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
+    // for (int i = 0; i < 3; i++)
+    // {
+    //   printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
+    //   printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
+    //   // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
+    //   // printf("Direction axis %d, value %d \r\n", i, direction[i]);
+    // }
 		//PID_main(&PID_Inputs);
 
 		//Update PWM values
@@ -1243,6 +1246,7 @@ void Control_Algorithm_Task(void const * argument)
       //   printf("Control Task : Released IMURead_ControlMutex control \r\n");
       }
     }
+    free(local_imu_struct);
 		osDelay(2000);
   }
   /* USER CODE END Control_Algorithm_Task */
