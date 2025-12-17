@@ -1130,11 +1130,12 @@ void Control_Algorithm_Task(void const * argument)
   const float coil_area[3] = {0.007225f, 0.007225f, 0.007225f}; //coil area in m^2
   const float re_coil[3] = {30.7f, 30.7f, 23.0f}; //coil resistance in ohm
   const float VDD_coil[3] = {12.0f, 12.0f, 12.0f}; //coil supply voltage
+  uint8_t coil[3] = {&Reaction1,&Reaction2,&MagneTorquer1}; //coil
 
 	imu_queue_struct *local_imu_struct1 =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 	//Inizialize actuators struct
-	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,80); //100 khz
-	// init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
+	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
+	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
 	// init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,89000,50); //89 khz //this measured 10khz, idkwhy
 	// init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
 	// init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
@@ -1186,39 +1187,50 @@ void Control_Algorithm_Task(void const * argument)
     //WARNING: WHO EVER WORK ON THIS PART REMEMBER AFTER EVERY TEST TO COMMENT THE PART BELOW 
     //IT WILL STOP AFTER 3 MINS BUT STILL COMMENT THOSE LINE OUT SO THAT IT WONT ACTUATE EVERY STARTUP 
     //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
-    if(!flag)
-    {   
-        // actuator_START(&Reaction1);
-        // actuator_START(&Reaction2);
-        // actuator_START(&MagneTorquer1);
-        // actuator_START(&MagneTorquer2);
-        // actuator_START(&MagneTorquer3);
-        flag = 1;
-        start_time = HAL_GetTick();  // Record when actuators started
-        // printf("Actuators started at %lu ms\r\n", start_time);
-    }
+    // if(!flag)
+    // {   
+    //     // actuator_START(&Reaction1);
+    //     // actuator_START(&Reaction2);
+    //     // actuator_START(&MagneTorquer1);
+    //     // actuator_START(&MagneTorquer2);
+    //     // actuator_START(&MagneTorquer3);
+    //     flag = 1;
+    //     start_time = HAL_GetTick();  // Record when actuators started
+    //     // printf("Actuators started at %lu ms\r\n", start_time);
+    // }
 
-    // Stop after 3mins seconds
-    if(flag && (HAL_GetTick() - start_time) > 30000)
+    // // Stop after 3mins seconds
+    // if(flag && (HAL_GetTick() - start_time) > 30000)
+    // {
+    //     // actuator_STOP(&Reaction1);
+    //     // actuator_STOP(&Reaction2);
+    //     // actuator_STOP(&MagneTorquer1);
+    //     // actuator_STOP(&MagneTorquer2);
+    //     // actuator_STOP(&MagneTorquer3);
+    //     flag = 2;  // put flag 2 to stop after 3 mins
+    // //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
+    // }
+
+    // count++;
+		// //No change dir:
+    // // if(flag && (HAL_GetTick() - start_time) > 10000){
+    // //   update_duty_dir(&Reaction1,50,0);}
+		// // //Change dir :
+    // // if(flag && (HAL_GetTick() - start_time) > 20000){
+    // //   update_duty_dir(&Reaction1,70,1);}
+
+    for (int i = 0; i < 3; i++)
     {
-        // actuator_STOP(&Reaction1);
-        // actuator_STOP(&Reaction2);
-        // actuator_STOP(&MagneTorquer1);
-        // actuator_STOP(&MagneTorquer2);
-        // actuator_STOP(&MagneTorquer3);
-        flag = 2;  // put flag 2 to stop after 3 mins
-    //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
+      if (duty_cycle[i] < 20.0f)
+      {
+        actuator_STOP(&coil[i]);
+      }
+      else
+      {
+        actuator_START(&coil[i]);
+        update_duty_dir(&coil[i], duty_cycle[i], direction[i]);
+      }
     }
-
-    count++;
-		//No change dir:
-    // if(flag && (HAL_GetTick() - start_time) > 10000){
-    //   update_duty_dir(&Reaction1,50,0);}
-		// //Change dir :
-    // if(flag && (HAL_GetTick() - start_time) > 20000){
-    //   update_duty_dir(&Reaction1,70,1);}
-
-
 
 
 		//X Magnetorquer
