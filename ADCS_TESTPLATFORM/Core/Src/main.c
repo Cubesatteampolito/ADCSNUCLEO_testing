@@ -1130,7 +1130,7 @@ void Control_Algorithm_Task(void const * argument)
   const float coil_area[3] = {0.007225f, 0.007225f, 0.007225f}; //coil area in m^2
   const float re_coil[3] = {30.7f, 30.7f, 23.0f}; //coil resistance in ohm
   const float VDD_coil[3] = {12.0f, 12.0f, 12.0f}; //coil supply voltage
-  Actuator_struct coil[3] = {&Reaction1,&Reaction2,&MagneTorquer1}; //coil
+  Actuator_struct* coil[3] = {&Reaction1,&Reaction2,&MagneTorquer1}; //coil
 
 	imu_queue_struct *local_imu_struct1 =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 	//Inizialize actuators struct
