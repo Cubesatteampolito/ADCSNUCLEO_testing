@@ -1130,13 +1130,14 @@ void Control_Algorithm_Task(void const * argument)
   const float coil_area[3] = {0.007225f, 0.007225f, 0.007225f}; //coil area in m^2
   const float re_coil[3] = {30.7f, 30.7f, 23.0f}; //coil resistance in ohm
   const float VDD_coil[3] = {12.0f, 12.0f, 12.0f}; //coil supply voltage
-  Actuator_struct* coil[3] = {&Reaction1,&Reaction2,&MagneTorquer1}; //coil
+  Actuator_struct* coils[3] = {&Reaction1,&Reaction2,&MagneTorquer1}; //coil
+  static uint8_t active[3] = {0,0,0};
 
 	imu_queue_struct *local_imu_struct1 =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 	//Inizialize actuators struct
 	init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
 	init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
-	// init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,89000,50); //89 khz //this measured 10khz, idkwhy
+	init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,89000,50); //89 khz //this measured 10khz, idkwhy
 	// init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
 	// init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
   //12332
@@ -1219,18 +1220,22 @@ void Control_Algorithm_Task(void const * argument)
     // // if(flag && (HAL_GetTick() - start_time) > 20000){
     // //   update_duty_dir(&Reaction1,70,1);}
 
-    for (int i = 0; i < 3; i++)
-    {
-      if (duty_cycle[i] > 20.0f && flag == 0)
-      {
-        actuator_START(&coil[i]);
-        update_duty_dir(&coil[i], duty_cycle[i], direction[i]);
-        flag = 1;
-      }
-      else
-      {
-        actuator_STOP(&coil[i]);
-        flag = 0;
+    for (int i = 0; i < 3; i++) {
+    // clamp and optional lower threshold during bring-up
+      if (duty_cycle[i] < 0.0f) duty_cycle[i] = 0.0f;
+      if (duty_cycle[i] > 100.0f) duty_cycle[i] = 100.0f;
+
+      if (duty_cycle[i] > 20.0f) {
+        if (!active[i]) {
+          actuator_START(coils[i]);              // start once per axis
+          active[i] = 1;
+        }
+        update_duty_dir(coils[i], duty_cycle[i], direction[i]);
+      } else {
+        if (active[i]) {
+          actuator_STOP(coils[i]);               // stop only if previously active
+          active[i] = 0;
+        }
       }
     }
 
