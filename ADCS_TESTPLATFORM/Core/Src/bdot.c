@@ -33,7 +33,7 @@ void compute_duty_cycle(const float m_con[3], const float coil_turn[3] ,const fl
 
         direction[i] = (duty >= 0.0f) ? 1u : 0u;                     // sign → direction
         duty = fabsf(duty) * 100.0f;                                 // convert to percent
-        if (duty > 100.0f) duty = 100.0f;                            // clamp
+        if (duty > 80.0f) duty = 80.0f;                            // clamp to 80% max
 
         duty_cycle[i] = duty;                                        // 0..100%
     }

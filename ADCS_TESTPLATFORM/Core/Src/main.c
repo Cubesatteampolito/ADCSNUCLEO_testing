@@ -1126,9 +1126,9 @@ void Control_Algorithm_Task(void const * argument)
   float m_con[3] = {0,0,0},  k = 50.0f;
   float duty_cycle[3] = {0,0,0};
   uint8_t direction[3] = {0,0,0};
-  const float coil_turn[3] = {2500.0f, 2500.0f, 2500.0f}; //number of turns of the
-  const float coil_area[3] = {0.01f, 0.01f, 0.01f}; //coil area in m^2
-  const float re_coil[3] = {2.0f, 2.0f, 2.0f}; //coil resistance in ohm
+  const float coil_turn[3] = {300.0f, 300.0f, 210.0f}; //number of turns of the
+  const float coil_area[3] = {0.007225f, 0.007225f, 0.007225f}; //coil area in m^2
+  const float re_coil[3] = {30.7f, 30.7f, 23.0f}; //coil resistance in ohm
   const float VDD_coil[3] = {12.0f, 12.0f, 12.0f}; //coil supply voltage
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
@@ -1168,6 +1168,12 @@ void Control_Algorithm_Task(void const * argument)
 		//ALGORITHM
     compute_mcon(mag, gyro, k, m_con);
     compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
+    for (int i = 0; i < 3; i++)
+    {
+      printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
+      // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
+      // printf("Direction axis %d, value %d \r\n", i, direction[i]);
+    }
 		//PID_main(&PID_Inputs);
 
 		//Update PWM values
