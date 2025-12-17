@@ -1165,20 +1165,20 @@ void Control_Algorithm_Task(void const * argument)
       mag[i] = local_imu_struct1->mag_msr[i];
       acc[i] = local_imu_struct1->acc_msr[i];
       //hi
-      printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-      printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-      printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+      // printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+      // printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+      // printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
     }
 		// //ALGORITHM
-    // compute_mcon(mag, gyro, k, m_con);
-    // compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
-    // for (int i = 0; i < 3; i++)
-    // {
-    //   printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
-    //   printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
-    //   // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
-    //   // printf("Direction axis %d, value %d \r\n", i, direction[i]);
-    // }
+    compute_mcon(mag, gyro, k, m_con);
+    compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
+    for (int i = 0; i < 3; i++)
+    {
+      printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
+      printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
+      // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
+      // printf("Direction axis %d, value %d \r\n", i, direction[i]);
+    }
 		//PID_main(&PID_Inputs);
 
 		//Update PWM values
