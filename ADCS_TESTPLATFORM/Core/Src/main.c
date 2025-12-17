@@ -1165,9 +1165,9 @@ void Control_Algorithm_Task(void const * argument)
       mag[i] = local_imu_struct1->mag_msr[i];
       acc[i] = local_imu_struct1->acc_msr[i];
       //hi
-      // printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-      // printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-      // printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+      printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+      printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+      printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
     }
 		// //ALGORITHM
     // compute_mcon(mag, gyro, k, m_con);
