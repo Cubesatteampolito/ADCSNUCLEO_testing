@@ -33,7 +33,7 @@
 #include "constants.h"
 #include "simpleDataLink.h"
 #include "pid_conversions.h"
-#include "actuator_driver.h"
+#include "magnetorquers_driver.h"
 #include "bdot.h"
 /* USER CODE END Includes */
 
@@ -882,12 +882,12 @@ void IMU_Task(void const * argument)
 
   // osDelay(1000); //when in doubt add a delay
 
-  #if enable_printf
+  #if ( DEBUG_MSGS == 1 )
 	printf("Initializing IMU \n");
   #endif
     //uint8_t ret = 1;
     uint8_t ret = initIMUConfig(&huart4);
-  #if enable_printf
+  #if ( DEBUG_MSGS == 1 )
     if(ret) printf("IMU correctly configured \n");
     else printf("Error configuring IMU \n");
   #endif
@@ -1148,7 +1148,7 @@ void Control_Algorithm_Task(void const * argument)
   for(;;)
   {
   //printf("We are in Control Algorithm TASK \n");
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 		//printf("We are in Control Algorithm TASK \n");
 #endif
     // printf("I am alive from Control_Algorithm_Task at %lu ms\r\n", HAL_GetTick());
@@ -1294,7 +1294,7 @@ void Check_current_temp(void const * argument)
 	/*Start calibration */
 	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) !=  HAL_OK)
 	{
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 	  	printf("Error with ADC: not calibrated correctly \n");
 #endif
 	}
@@ -1304,7 +1304,7 @@ void Check_current_temp(void const * argument)
 	{
 		//volatile float prev = HAL_GetTick();
 		//printf("We are in CHECK TASK \n");
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 		//printf("We are in CHECK TASK \n");
 #endif
 		//----------------------------------------------------------------------
@@ -1364,7 +1364,7 @@ void Check_current_temp(void const * argument)
 				//Send Housekeeping to OBC task
 				
 				if (local_current_temp_struct == NULL) {
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 					   printf("IMU TASK: allocazione struttura fallita !\n");
 #endif
 				}
@@ -1375,26 +1375,26 @@ void Check_current_temp(void const * argument)
 						for(int i=0;i<NUM_ACTUATORS;i++)
 						{
 							local_current_temp_struct->current[i] = currentbuf[i];
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 							printf("Task check: Current n%d,value: %f,current vect:%f \n",i+1,local_current_temp_struct->current[i],currentbuf[i]);
 #endif
 			    	// 	}
 						// for(int i=NUM_ACTUATORS;i<NUM_TEMP_SENS+NUM_ACTUATORS;i++)
 						// {
 						// 	local_current_temp_struct->temperature[i - NUM_ACTUATORS] = ntc_values.temp[i - NUM_ACTUATORS];
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 							// printf("Task check: Temperature n%d,ntc value: %f,value: %f \n",i-4,ntc_values.temp[i-NUM_ACTUATORS],local_current_temp_struct->temperature[i-NUM_ACTUATORS]);
 #endif
 						}
 
 						//Invio queue a OBC Task
 						if (osMessagePut(ADCSHouseKeepingQueueHandle,(uint32_t)local_current_temp_struct,300) != osOK) {
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 			    		   	printf("Invio a OBC Task fallito \n");
 #endif
 			       			free(local_current_temp_struct); // Ensure the receiving task has time to process
 						} else {
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 			    		    printf("Dati Inviati a OBC Task\n");
 #endif
 						}

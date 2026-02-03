@@ -1,5 +1,5 @@
-#ifndef ACTUATOR_DRIVER_H
-#define ACTUATOR_DRIVER_H
+#ifndef MAGNETORQUERS_DRIVER_H
+#define MAGNETORQUERS_DRIVER_H
 //#include "adc.h" now embedded in main.c
 //#include "tim.h" same for tim.h
 #include <stdbool.h>

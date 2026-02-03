@@ -151,7 +151,7 @@ static uint8_t receiveMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pck
 
 			//search for the complete packet with shiftOut active
 			if(searchFrameAdvance(&rxcBuff, &foundPckt, &rule, SHIFTOUT_FULL | SHIFTOUT_NEXT | SHIFTOUT_FAST)){
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 				printf("RAW IMU FRAME:\n");
 #endif
 				//cBuffPrint(&foundPckt,PRINTBUFF_HEX | PRINTBUFF_NOEMPTY);
@@ -172,7 +172,7 @@ static uint8_t receiveMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pck
 						return 1;
 					}else phase=_header;	//continue search from next byte
 				}else return 1;
-#if enable_printf
+#if ( DEBUG_MSGS == 1 )
 				printf("Checksum verification failed!\n");
 #endif
 			}

@@ -1,7 +1,6 @@
+/* Header file of the library that handles temperature sensors, solar sensors and IMU  on the ADCS board */
 #ifndef SENSORS_H
 #define SENSORS_H
-//This is the header file of the library that handles temperature sensors,solar sensors and imu 
-//on the ADCS board
 //#include "spi.h"
 #include "UARTdriver.h"
 #include <math.h>

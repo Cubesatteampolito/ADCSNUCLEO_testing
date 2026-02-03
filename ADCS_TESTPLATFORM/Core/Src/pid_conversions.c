@@ -1,24 +1,23 @@
-//This is the c file for implementation of functions regarding the conversion between torque and pwm
-
+/* Conversion between Torque and PWM */
 #include "pid_conversions.h"
 
 
-const float N_spires[3] = {1000, 1000, 1000};       //[], x,y,z
-const float A_torquers[3] = {0.01, 0.01, 0.01};     //m^2, x,y,z
-const float torquer_Req_Ohm[3] = {142, 142, 142};     //OHMs, x,y,z
-const float torquer_Vdd[3] = {12, 12, 12};         //V_dd , x,y,z
+const float N_spires[3] = {1000, 1000, 1000};         // [], x,y,z
+const float A_torquers[3] = {0.01, 0.01, 0.01};       // m^2, x,y,z
+const float torquer_Req_Ohm[3] = {142, 142, 142};     // OHMs, x,y,z
+const float torquer_Vdd[3] = {12, 12, 12};            // V_dd , x,y,z
 
 
 
 void PID_attitude_error_calculation(PID_Inputs_struct *PID_Inputs){
 
-  PID_Inputs->accell_Error[0] = PID_Inputs->accell_Desired[0] - PID_Inputs->accell_Measured[0];
-  PID_Inputs->accell_Error[1] = PID_Inputs->accell_Desired[1] - PID_Inputs->accell_Measured[1];
-  PID_Inputs->accell_Error[2] = PID_Inputs->accell_Desired[2] - PID_Inputs->accell_Measured[2];
+	PID_Inputs->accell_Error[0] = PID_Inputs->accell_Desired[0] - PID_Inputs->accell_Measured[0];
+	PID_Inputs->accell_Error[1] = PID_Inputs->accell_Desired[1] - PID_Inputs->accell_Measured[1];
+	PID_Inputs->accell_Error[2] = PID_Inputs->accell_Desired[2] - PID_Inputs->accell_Measured[2];
 
-  PID_Inputs->angSpeed_Error[0] = PID_Inputs->angSpeed_Desired[0] - PID_Inputs->angSpeed_Measured[0];
-  PID_Inputs->angSpeed_Error[1] = PID_Inputs->angSpeed_Desired[1] - PID_Inputs->angSpeed_Measured[1];
-  PID_Inputs->angSpeed_Error[2] = PID_Inputs->angSpeed_Desired[2] - PID_Inputs->angSpeed_Measured[2];
+	PID_Inputs->angSpeed_Error[0] = PID_Inputs->angSpeed_Desired[0] - PID_Inputs->angSpeed_Measured[0];
+	PID_Inputs->angSpeed_Error[1] = PID_Inputs->angSpeed_Desired[1] - PID_Inputs->angSpeed_Measured[1];
+	PID_Inputs->angSpeed_Error[2] = PID_Inputs->angSpeed_Desired[2] - PID_Inputs->angSpeed_Measured[2];
 }
 
 
@@ -58,14 +57,11 @@ void PID_current_Derivative_calculation(PID_Inputs_struct *PID_Inputs, const uin
 
 
 void PID_angSpeed_error_2_torque(PID_Inputs_struct *PID_Inputs){
+	PID_Inputs->Torque_required[0] = PID_Inputs->P_Gain[0] * PID_Inputs->angSpeed_Error[0] + PID_Inputs->D_Gain[0] * PID_Inputs->d_AngSpeed_Err_dt[0];
 
+	PID_Inputs->Torque_required[1] = PID_Inputs->P_Gain[1] * PID_Inputs->angSpeed_Error[1] + PID_Inputs->D_Gain[1] * PID_Inputs->d_AngSpeed_Err_dt[1];
 
-    PID_Inputs->Torque_required[0] = PID_Inputs->P_Gain[0] * PID_Inputs->angSpeed_Error[0] + PID_Inputs->D_Gain[0] * PID_Inputs->d_AngSpeed_Err_dt[0];
-
-    PID_Inputs->Torque_required[1] = PID_Inputs->P_Gain[1] * PID_Inputs->angSpeed_Error[1] + PID_Inputs->D_Gain[1] * PID_Inputs->d_AngSpeed_Err_dt[1];
-
-    PID_Inputs->Torque_required[2] = PID_Inputs->P_Gain[2] * PID_Inputs->angSpeed_Error[2] + PID_Inputs->D_Gain[2] * PID_Inputs->d_AngSpeed_Err_dt[2];
-
+	PID_Inputs->Torque_required[2] = PID_Inputs->P_Gain[2] * PID_Inputs->angSpeed_Error[2] + PID_Inputs->D_Gain[2] * PID_Inputs->d_AngSpeed_Err_dt[2];
 }
 
 
@@ -124,28 +120,19 @@ void PID_INIT(PID_Inputs_struct *PID_Inputs){
 }
 
 
-
-
 // MAIN FUCTION! Call it to do PID but read comment before
 void PID_main(PID_Inputs_struct *PID_Inputs){
+	// Update PID_Inputs_struct with gyro measurements and desired attitude and timestamp BEFORE CALLING this fuction
+	PID_attitude_error_calculation(PID_Inputs);
+	PID_attitude_Derivative_calculation(PID_Inputs);
+	PID_angSpeed_error_2_torque(PID_Inputs);
+	PID_torque_2_dipole(PID_Inputs);
+	PID_dipole_2_current(PID_Inputs);
+	PID_current_2_DutyCycle(PID_Inputs);
+	// update of the ERROR buffer
+	for (uint8_t i = 0; i < sizeof(PID_Inputs->d_AngSpeed_Err_dt); i++) {
+		PID_Inputs->angSpeed_Error[i + 3] = PID_Inputs->angSpeed_Error[i];
+		PID_Inputs->angSpeed_Error[i] = 0;
 
-  // Update PID_Inputs_struct with gyro measurements and desired attitude and timestamp BEFORE CALLING this fuction
-
-  PID_attitude_error_calculation(PID_Inputs);
-  PID_attitude_Derivative_calculation(PID_Inputs);
-  PID_angSpeed_error_2_torque(PID_Inputs);
-  PID_torque_2_dipole(PID_Inputs);
-  PID_dipole_2_current(PID_Inputs);
-  PID_current_2_DutyCycle(PID_Inputs);
-
-
-    // update of the ERROR buffer
-  for (uint8_t i = 0; i < sizeof(PID_Inputs->d_AngSpeed_Err_dt); i++) {
-
-    PID_Inputs->angSpeed_Error[i + 3] = PID_Inputs->angSpeed_Error[i];
-    PID_Inputs->angSpeed_Error[i] = 0;
-
-  }
-
-
+	}
 }

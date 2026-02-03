@@ -1,18 +1,13 @@
-/*
- * constants.h
- *
- *  Created on: 30 mag 2024
- *      Author: Utente
- */
+/* Configuration parameters */
 
 #ifndef INC_CONSTANTS_H_
 #define INC_CONSTANTS_H_
 
-#define enable_printf 0
+#define DEBUG_MSGS 0
 
 
-#define POWER_SUPPLY 12 //v
-#define NUM_DRIVERS 5 //#
+#define POWER_SUPPLY 12         // v
+#define NUM_DRIVERS 5           // #
 
 
 #define NUM_ACTUATORS 5
@@ -20,11 +15,11 @@
 
 
 #define ln(x) log(x)
-#define ADC_NUM_CHANNELS 16 //this was N
-#define Vref 3.3 //volt
+#define ADC_NUM_CHANNELS 16     // This was N
+#define Vref 3.3                // Volt
 
-#define stack_size 768 //was 4096
-#define stack_size1 2816 //was 16384
+#define stack_size 768          // was 4096
+#define stack_size1 2816        //was 16384
 //reallocation of stack sizes to reduce memory usage
 
 #endif /* INC_CONSTANTS_H_ */

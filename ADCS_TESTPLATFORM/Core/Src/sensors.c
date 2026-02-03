@@ -113,7 +113,7 @@ void select_input(uint8_t sel)
 //     volatile float data = 0;
 //     if(mode == 0) //Continuous conversion mode
 //     {
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 //     	printf("Continuous conversion mode \n");
 // #endif
 //     	//CS LOW: Enable communication
@@ -126,14 +126,14 @@ void select_input(uint8_t sel)
 //     	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
 //     	dec_data = (spi_data[0]<<8)|spi_data[1];
 //     	data = ((float)dec_data/pow(2,N))*Vref;
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 //         printf("Transmitted packet and received bytes: %d, data =  %f v \n",dec_data,data);
 // #endif
 //         return data;
 //     }
 //     else if(mode == 1) //Single conversion mode
 //     {
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 //     	printf("Single conversion mode \n");
 // #endif
 //     	//CS LOW: Enable communication
@@ -152,14 +152,14 @@ void select_input(uint8_t sel)
 //     	//Process result of conversuion
 //    		dec_data = (spi_data[0]<<8)|spi_data[1];
 //    		data = (((float)dec_data)/(pow(2,N)-1))*Vref;
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 //    		printf("Transmitted packet and received bytes: %d, data =  %f v \n",dec_data,data);
 // #endif
 //    		return data;
 //     }
 //     else if(mode == 2) //Continuous read Mode
 //     {
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 //     	printf("Continuous read mode \n");
 // #endif
 // 		return 1;
@@ -191,7 +191,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		//Single conversion mode
 // 		conv_result = ADC_Conversion(spi_struct,1);
 // 		voltage_to_temperature_conv(conv_result,temp_struct,0);
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("Sensors 1 Temp : %.2f \n",temp_struct->temp[0]);
 // #endif
 // 		//HAL_Delay(100);
@@ -204,7 +204,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		//Single conversion mode
 // 		conv_result = ADC_Conversion(spi_struct,1);
 // 		voltage_to_temperature_conv(conv_result,temp_struct,1);
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("Sensors 2 Temp : %.2f \n",temp_struct->temp[1]);
 // #endif
 // 		//HAL_Delay(100);
@@ -217,7 +217,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		//Single conversion mode
 // 		conv_result = ADC_Conversion(spi_struct,1);
 // 		voltage_to_temperature_conv(conv_result,temp_struct,2);
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("Sensors 3 Temp : %.2f \n",temp_struct->temp[2]);
 // #endif
 // 		//HAL_Delay(100);
@@ -230,7 +230,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		//Single conversion mode
 // 		conv_result = ADC_Conversion(spi_struct,1);
 // 		voltage_to_temperature_conv(conv_result,temp_struct,3);
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("Sensors 4 Temp : %.2f \n",temp_struct->temp[3]);
 // #endif
 // 		//HAL_Delay(100);
@@ -242,7 +242,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		//Single conversion mode
 // 		conv_result = ADC_Conversion(spi_struct,1);
 // 		voltage_to_temperature_conv(conv_result,temp_struct,4);
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("Sensors 5 Temp : %.2f \n",temp_struct->temp[4]);
 // #endif
 // 		//HAL_Delay(100);
@@ -254,7 +254,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		//Single conversion mode
 // 		conv_result = ADC_Conversion(spi_struct,1);
 // 		voltage_to_temperature_conv(conv_result,temp_struct,5);
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("Sensors 6 Temp : %.2f \n",temp_struct->temp[5]);
 // #endif
 // 		//HAL_Delay(100);
@@ -267,7 +267,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		//Single conversion mode
 // 		conv_result = ADC_Conversion(spi_struct,1);
 // 		voltage_to_temperature_conv(conv_result,temp_struct,6);
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("Sensors 7 Temp : %.2f \n",temp_struct->temp[6]);
 // #endif
 // 		//HAL_Delay(100);
@@ -280,7 +280,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		//Single conversion mode
 // 		conv_result = ADC_Conversion(spi_struct,1);
 // 		voltage_to_temperature_conv(conv_result,temp_struct,7);
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("Sensors 8 Temp : %.2f \n",temp_struct->temp[7]);
 // #endif
 // 		//HAL_Delay(100);
@@ -288,7 +288,7 @@ void voltage_to_temperature_conv(float value,Temp_values *s1,uint8_t i){
 // 		break;
 
 // 		default:
-// #if enable_printf
+// #if ( DEBUG_MSGS == 1 )
 // 		printf("CHECK TASK: get_temperatures -> Nothing is happening");
 // #endif
 // 		break;

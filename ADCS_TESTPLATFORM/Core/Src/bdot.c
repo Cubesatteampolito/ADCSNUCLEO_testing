@@ -1,26 +1,50 @@
+/* BDOT Algorithm implementation + duty cycle computation 
+*
+* Data from magnetometer and gyroscope are used to compute angular momentums to apply via the magnetorquers. From the momentum, the duty cycle for the PWM is computed and used to actuate. 
+*
+*/
+
 #include "bdot.h"
 #include "math.h"
-void compute_mcon(const float mag[3], const float gyro[3], float k, float m_con[3])
-{
-    float B_norm = sqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]); // normalizing mag field
+
+
+/* Return the momentum required to compute the duty cycle starting from mag and gyro readings */
+void compute_mcon(
+    const float mag[3],         // Magnetometer readings
+    const float gyro[3],        // Gyroscope readings
+    float k,                    // TODO ?
+    float m_con[3]              // Results buffer
+){
+    float B_norm = sqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);               // normalizing magnetic field
     float b[3] = {0,0,0};
-    if(B_norm != 0){ // avoid division by 0
-        for(int j = 0; j < 3; j++) b[j] = mag[j] / B_norm; // hat{b}
+    if(B_norm != 0){                                                                        // avoid division by 0
+        for(int j = 0; j < 3; j++) b[j] = mag[j] / B_norm;                                  // hat{b}
 
         m_con[0] = gyro[1] * b[2] - gyro[2] * b[1];
-        m_con[1] = -(gyro[0] * b[2] - gyro[2] * b[0]); // omega x hat{b}
+        m_con[1] = -(gyro[0] * b[2] - gyro[2] * b[0]);                                      // omega x hat{b}
         m_con[2] = gyro[0] * b[1] - gyro[1] * b[0];
 
         for(int j = 0; j < 3; j++) {
-            m_con[j] = (m_con[j] * k) / B_norm;  // m = (k / norm(B)) * (omega x hat{b}) 
+            m_con[j] = (m_con[j] * k) / B_norm;                                             // m = (k / norm(B)) * (omega x hat{b}) 
         }
     }
     else{for(int j = 0; j < 3; j++) m_con[j] = 0;}
 }
-void compute_duty_cycle(const float m_con[3], const float coil_turn[3] ,const float coil_area[3] ,const float reg_coil[3] ,const float VDD_coil[3] ,float duty_cycle[3] ,uint8_t direction[3])
-{
+
+/* Update duty_cycle[] to configure PWM on the magnetorquers */
+void compute_duty_cycle(
+    const float m_con[3],           // Angular momentum computed via BDOT
+    const float coil_turn[3],       // n. of physical turns in each coil 
+    const float coil_area[3],       // physical area of the coil
+    const float reg_coil[3],        // Coil's electric resistance
+    const float VDD_coil[3],        // TODO?
+    float duty_cycle[3],            // Results buffer
+    uint8_t direction[3]            // Computed direction for each coil
+){
+    /* For each of the three axes */
     for (int i = 0; i < 3; i++)
     {
+        /* Safe duty cycle setting in case of unexpected values */
         if (coil_turn[i] == 0.0f || coil_area[i] == 0.0f || VDD_coil[i] == 0.0f)
         {
             duty_cycle[i] = 0.0f;
@@ -28,14 +52,14 @@ void compute_duty_cycle(const float m_con[3], const float coil_turn[3] ,const fl
             continue;
         }
 
-        float I_cmd = m_con[i] / (coil_turn[i] * coil_area[i]);      // A
-        float duty  = (I_cmd * reg_coil[i]) / VDD_coil[i];           // signed fraction
+        float I_cmd = m_con[i] / (coil_turn[i] * coil_area[i]);         // I = angular_momentum / (turns * area)
+        float duty  = (I_cmd * reg_coil[i]) / VDD_coil[i];              // duty = (I * R) / VDD. Signed result
 
-        direction[i] = (duty >= 0.0f) ? 1u : 0u;                     // sign → direction
-        duty = fabsf(duty) * 100.0f;                                 // convert to percent
-        if (duty > 80.0f) duty = 80.0f;                            // clamp to 80% max
+        direction[i] = (duty >= 0.0f) ? 1u : 0u;                        // The sign represents the direction
+        duty = fabsf(duty) * 100.0f;                                    // Convert to percentage
+        if (duty > 80.0f) duty = 80.0f;                                 // Clamp to 80% max to avoid over actuation (testing purposes)
 
-        duty_cycle[i] = duty;                                        // 0..100%
+        duty_cycle[i] = duty;                                           // [0,80]%
     }
 }
 
