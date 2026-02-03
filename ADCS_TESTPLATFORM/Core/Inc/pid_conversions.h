@@ -1,18 +1,14 @@
+/* Variable and structs used by PID controller handling utilities */
+
 #ifndef PID_CONVERSIONS_H
 #define PID_CONVERSIONS_H
-//This is the header file of the library that handles the variables and structures used in the PID controller
-//on the ADCS board
+
 #include <stdint.h>
 #include "constants.h"
 
 
-//#DEFINES
 
-//no defines, update the main struct
-
-//STRUCTURES
-//Struct per la memorizzazione dei valori di temperatura degli ntc
-
+/* Storing NTC's values */
 typedef struct{
 
 
@@ -38,10 +34,6 @@ typedef struct{
   float curruent_Error[6];			//Calculated Current Error between measured and wanted
   float d_Current_Err_dt[3];		//Calculated Derivative of the current Error
 
-  
-
-
-
   float Torque_required[3];  //Torque required from PID controller for velocity and speed errors
 
   float dipole_Moment[3];   //Dipole moment required from PID controller
@@ -56,13 +48,9 @@ typedef struct{
 
   float B[3];  //TODO be updated at each Current reading		Dynamic vector  	Current sensor reading
 
-
-
 } PID_Inputs_struct;
 
 
-
-//FUNCTIONS
 void PID_error_calculation(PID_Inputs_struct *PID_Inputs);
 /**
   * @brief  Function to calculate the error between two attitude measurements

@@ -12,7 +12,7 @@
 void compute_mcon(
     const float mag[3],         // Magnetometer readings
     const float gyro[3],        // Gyroscope readings
-    float k,                    // TODO ?
+    float k,                    // BDOT gain
     float m_con[3]              // Results buffer
 ){
     float B_norm = sqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);               // normalizing magnetic field
@@ -37,7 +37,7 @@ void compute_duty_cycle(
     const float coil_turn[3],       // n. of physical turns in each coil 
     const float coil_area[3],       // physical area of the coil
     const float reg_coil[3],        // Coil's electric resistance
-    const float VDD_coil[3],        // TODO?
+    const float VDD_coil[3],        // Supply voltage for each coil
     float duty_cycle[3],            // Results buffer
     uint8_t direction[3]            // Computed direction for each coil
 ){

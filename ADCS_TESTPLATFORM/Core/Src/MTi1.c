@@ -151,9 +151,9 @@ static uint8_t receiveMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pck
 
 			//search for the complete packet with shiftOut active
 			if(searchFrameAdvance(&rxcBuff, &foundPckt, &rule, SHIFTOUT_FULL | SHIFTOUT_NEXT | SHIFTOUT_FAST)){
-#if ( DEBUG_MSGS == 1 )
-				printf("RAW IMU FRAME:\n");
-#endif
+				#if ( DEBUG_MSGS == 1 )
+					printf("RAW IMU FRAME:\n");
+				#endif
 				//cBuffPrint(&foundPckt,PRINTBUFF_HEX | PRINTBUFF_NOEMPTY);
 
 				tmpPckt.mid=mid;

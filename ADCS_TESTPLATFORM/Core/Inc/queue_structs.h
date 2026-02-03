@@ -1,10 +1,4 @@
-/*
- * queue_struct.h
- *
- *  Created on: 8 mag 2024
- *      Author: Utente
- */
-
+/* Structs for inter-process communication header */
 #ifndef INC_QUEUE_STRUCTS_H_
 #define INC_QUEUE_STRUCTS_H_
 #include "sensors.h"
@@ -17,19 +11,20 @@
 #include "messages.h"
 #include "constants.h"
 
-//Structures
+/* IMU data */
 typedef struct{
 	float gyro_msr[3];
 	float mag_msr[3];
 	float acc_msr[3];
 } imu_queue_struct;
 
+/* Current and Temperature data */
 typedef struct{
 	float current[NUM_ACTUATORS];
 	float temperature[NUM_TEMP_SENS];
 } Current_Temp_Struct;
 
-// Functions
+
 /**
   * @brief  Callback function to process data
   * @param	event First pointer to void variable

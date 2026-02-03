@@ -1,21 +1,21 @@
-/* Header file of the library that handles temperature sensors, solar sensors and IMU  on the ADCS board */
+/* Handling temperature sensors, solar sensors and IMU  on the ADCS board */
 #ifndef SENSORS_H
 #define SENSORS_H
-//#include "spi.h"
+
 #include "UARTdriver.h"
 #include <math.h>
-#include <stdio.h> //for printf()
+#include <stdio.h>  // for printf
 #include "constants.h"
 
 
 extern uint8_t single_mode_pckt[2];
-extern uint8_t WRITE_ON_MR; //The first byte to send on DIN to CR to start Conversation in Single MODE
+extern uint8_t WRITE_ON_MR;       //The first byte to send on DIN to CR to start Conversation in Single MODE
 extern uint8_t MR_FOR_SINGLE_MOD; //The second byte to send on DIN to start Conversation in Single MODE
-extern uint8_t READ_DATAREG; //The byte to send on DIN to start obtain the result of Conversation on Dout
-extern uint8_t READ_STATUSREG; //The byte to send on DIN to the CR to obtain the content of Status Reg
-//STRUCTURES
-//Struct per la memorizzazione dei valori di temperatura degli ntc
+extern uint8_t READ_DATAREG;      //The byte to send on DIN to start obtain the result of Conversation on Dout
+extern uint8_t READ_STATUSREG;    //The byte to send on DIN to the CR to obtain the content of Status Reg
 
+
+/* Storing NTC's values */
 typedef struct{
   float R_25;
   float R[8];
@@ -23,12 +23,13 @@ typedef struct{
   float Vdd;
 }T_formula_const;
 
+/* Storing temperature sensor values */
 typedef struct{
   float temp[8];
   T_formula_const values;
-
 }Temp_values;
-//FUNCTIONS
+
+
 // /**
 //   * @brief  Function to initialize all structure and variables needed for management of ADC(internal and external)
 //   * @param	Temp values Struct to handle all variables regarding temperature sensors

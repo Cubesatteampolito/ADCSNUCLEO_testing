@@ -1,7 +1,7 @@
 /**
  * @file bdot.h
  * @author Lazzaro Francesco Sangiovanni (s342674@studenti.polito.it)
- * @brief bdot algorithm implementation
+ * @brief BDOT Algorithm Implementation
  * 
  */
 #ifndef BDOT_H

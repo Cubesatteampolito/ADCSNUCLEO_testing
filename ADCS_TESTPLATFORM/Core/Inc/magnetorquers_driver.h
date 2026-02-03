@@ -1,30 +1,31 @@
+/* Magnetorquers Driver prototypes and structs */
 #ifndef MAGNETORQUERS_DRIVER_H
 #define MAGNETORQUERS_DRIVER_H
-//#include "adc.h" now embedded in main.c
-//#include "tim.h" same for tim.h
+
 #include <stdbool.h>
 #include <math.h>
 #include <stdio.h>
 #include "constants.h"
 #include "main.h"
 
-//VARIABLES
+
 extern const float Rsense[]; //Ohm //Rsense value for each motor driver
 extern const float Aipropri; //Adimensionale //Mirror ratio of driver current mirror circuit
 extern const float Rmagnetorquer[]; //Ohm
-extern bool int_flag1,int_flag2;
 
-//Structure
+// extern bool int_flag1,int_flag2; TODO unused?
+
+/* Actuator structure defining its characteristics */
 typedef struct{
-	TIM_HandleTypeDef* htim;
-	float Freq;
-	uint32_t pwm_channel1;
-	uint32_t pwm_channel2;
-	float duty_cycle;
-	bool dir;
+	TIM_HandleTypeDef* htim;    // Timer handler
+	float Freq;                 // PWM frequency
+	uint32_t pwm_channel1;      // 
+	uint32_t pwm_channel2;      // 
+	float duty_cycle;           // Configured duty cycle
+	bool dir;                   // Current direction
 }Actuator_struct;
 
-//FUNCTIONS
+
 /**
   * @brief Function to define handler of an actuator
   * @param act actuator handler
@@ -69,14 +70,13 @@ void actuator_START(Actuator_struct *act);
   */
 void actuator_STOP(Actuator_struct *act);
 
-
+/* Channel selection for sampling */
 void ADC_Select_CH1 (ADC_HandleTypeDef *hadc);
 void ADC_Select_CH2 (ADC_HandleTypeDef *hadc);
 void ADC_Select_CH3 (ADC_HandleTypeDef *hadc);
 void ADC_Select_CH4 (ADC_HandleTypeDef *hadc);
 void ADC_Select_CH16 (ADC_HandleTypeDef *hadc);
 
-
-
+// TODO not used?
 void set_init_frequency(Actuator_struct *act,uint32_t pwm_freq);
 #endif

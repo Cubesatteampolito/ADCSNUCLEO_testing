@@ -1,3 +1,4 @@
+/* Interrupt driver for UART using FreeRTOS queues */
 #ifndef UARTDRIVER_H
 #define UARTDRIVER_H
 
@@ -5,7 +6,6 @@
 #include "queue.h"
 #include "main.h"
 
-/* Interrupt driver for UART usinf FreeRTOS queues */
 
 //maximum number of uarts the driver can handle
 #define MAX_UART_HANDLE 4

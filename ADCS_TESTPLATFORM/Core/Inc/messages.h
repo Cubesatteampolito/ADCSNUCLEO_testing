@@ -1,3 +1,5 @@
+/* Messages structs for interacting with OBC */
+
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
@@ -23,12 +25,12 @@ typedef struct {
 	float omega_y;
 	float omega_z;
 	float b_x;
-	float b_y;//this is the magnetic value,fuck 
+	float b_y; // Magnetic value  
 	float b_z;
 	float acc_x;
 	float acc_y;
 	float acc_z;
-	// float b_x;
+	// float b_x; // TODO unused?
 	// float b_y;
 	// float b_z;
 	float DC_x;

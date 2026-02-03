@@ -1,8 +1,7 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : Main program body
+  * @brief          : AOCS Main Program Body
   ******************************************************************************
   * @attention
   *
@@ -24,7 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
-#include "UARTdriver.h"//setting on uart.c is added to hal_msp.c file
+#include "UARTdriver.h"               //setting on uart.c is added to hal_msp.c file
 #include <math.h>
 #include <stdbool.h>
 #include "MTi1.h"
@@ -46,7 +45,7 @@ Actuator_struct MagneTorquer1;
 Actuator_struct MagneTorquer2;
 Actuator_struct MagneTorquer3;
 uint8_t error_status = 0;
-uint8_t Channels_mask[NUM_DRIVERS] = {1,1,1,1,1};
+uint8_t Channels_mask[NUM_DRIVERS] = {1,1,1,1,1};       // TODO update to just 3 magnetorquers
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -70,6 +69,7 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
+/* TODO not used? */
 // osThreadId IMUTaskHandle;
 // uint32_t IMUTaskBuffer[ 4096 ];
 // osStaticThreadDef_t IMUTaskControlBlock;
@@ -94,20 +94,22 @@ UART_HandleTypeDef huart2;
 // osSemaphoreId IMURead_ControlMutexHandle;
 // osStaticSemaphoreDef_t xIMURead_ControlMutexBuffer;
 /* USER CODE BEGIN PV */
+
+/* Defining Tasks related variables */
 osThreadId IMUTaskHandle;
-uint32_t IMUTaskBuffer[ stack_size]; //4096
+uint32_t IMUTaskBuffer[ stack_size];                    // 4096
 osStaticThreadDef_t IMUTaskControlBlock;
 
 osThreadId OBC_CommTaskHandle;
-uint32_t OBC_CommTaskBuffer[ stack_size1 ]; //16384
+uint32_t OBC_CommTaskBuffer[ stack_size1 ];             // 16384
 osStaticThreadDef_t OBC_CommTaskControlBlock;
 
 osThreadId ControlAlgorithmTaskHandle;
-uint32_t ControlAlgorithmTaskBuffer[ stack_size ]; //4096
+uint32_t ControlAlgorithmTaskBuffer[ stack_size ];      // 4096
 osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
 
 osThreadId FirstCheckTaskHandle;
-uint32_t FirstCheckTaskBuffer[ stack_size ];//4096
+uint32_t FirstCheckTaskBuffer[ stack_size ];            // 4096
 osStaticThreadDef_t FirstCheckTaskControlBlock;
 
 xSemaphoreHandle IMURead_ControlMutex;
@@ -136,14 +138,22 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_ADC1_Init(void);
+
+/* Readings from IMU */
 void IMU_Task(void const * argument);
+
+/* Communication with OBC - by now simulated with py program */
 void OBC_Comm_Task(void const * argument);
+
+/* Attitude control logic */
 void Control_Algorithm_Task(void const * argument);
+
+/* Current & Temperature monitors  */
 void Check_current_temp(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
-//defining putch to enable printf
+//defining putch to enable printf for debugging 
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
@@ -159,6 +169,8 @@ PUTCHAR_PROTOTYPE{
 	sendDriver_UART(&huart2,&c,1);
 	return c;
 }
+
+// TODO redefined?
 void IMU_Task(void const * argument);
 void OBC_Comm_Task(void const * argument);
 
@@ -471,6 +483,8 @@ static void MX_ADC1_Init(void)
   /* USER CODE END ADC1_Init 2 */
 
 }
+
+/* Timers (TIM 1-3) initialization for magnetorquers actuation */
 
 /**
   * @brief TIM1 Initialization Function
@@ -883,7 +897,7 @@ void IMU_Task(void const * argument)
   // osDelay(1000); //when in doubt add a delay
 
   #if ( DEBUG_MSGS == 1 )
-	printf("Initializing IMU \n");
+	  printf("Initializing IMU \n");
   #endif
     //uint8_t ret = 1;
     uint8_t ret = initIMUConfig(&huart4);
@@ -899,16 +913,14 @@ void IMU_Task(void const * argument)
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
-	/* Infinite loop */
 	for(;;)
 	{
 
-		//Non c'è bisogno di settare o resettare il CTS e l'RTS della UART4 per IMU perchè le funzioni
-		//UART_Transmit e UART_Receive gestiscono la cosa automaticamente se dall'altro lato il dispositivo ha abilitato pure
-		//queste due linee per l'UART
-		//Se voglio far comunicare IMU e Nucleo con solo le 2 linee UART tx ed Rx basta che disabilito l'hardware flow control
-		//da CubeMx.
-
+    /* There is not need to set nor reset the CTS and RTS of UART4 for IMU because the functions 
+    * UART_Transmit and UART_Receive automatically manage this if on the other side the device has enabled these two lines for UART
+    * If I want to make IMU and Nucleo communicate with only the 2 UART tx and Rx lines I just have to disable the hardware flow control
+    * from CubeMx.
+    */
 
 		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
 		mag[0]/=10000; //1G = 10^-4 Tesla
@@ -933,11 +945,13 @@ void IMU_Task(void const * argument)
 			}
 			printf("\n");*/
 			if (local_imu_struct == NULL) {
-				printf("IMU TASK: allocazione struttura fallita !\r\n");
+				#if (DEBUG_MSGS == 1) 
+          printf("IMU Task: Memory allocation for IMU struct failed \r\n");
+        #endif
 			}
 			else
 			{
-				//Riempio struct con valori letti da IMU,per poi inviareli a Task Controllo
+				//Fill the struct with values read from IMU, then send them to Control Task
 				for (int i = 0; i < 3; i++)
 				{
 					local_imu_struct->gyro_msr[i] = gyro[i];
@@ -1147,10 +1161,10 @@ void Control_Algorithm_Task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-  //printf("We are in Control Algorithm TASK \n");
-#if ( DEBUG_MSGS == 1 )
-		//printf("We are in Control Algorithm TASK \n");
-#endif
+    //printf("We are in Control Algorithm TASK \n");
+    #if ( DEBUG_MSGS == 1 )
+        //printf("We are in Control Algorithm TASK \n");
+    #endif
     // printf("I am alive from Control_Algorithm_Task at %lu ms\r\n", HAL_GetTick());
 		//Receive Telemetry IMU via Queue
 
@@ -1161,30 +1175,32 @@ void Control_Algorithm_Task(void const * argument)
 		retvalue = osMessageGet(IMUQueue1Handle, 300);
 		processCombinedData((void*)&retvalue,(void *)&local_imu_struct1,receive_IMUqueue_control);
     //algorithm
-      for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
     {
-      gyro[i] = local_imu_struct1->gyro_msr[i];
-      mag[i] = local_imu_struct1->mag_msr[i];
-      acc[i] = local_imu_struct1->acc_msr[i];
-      //hi
-      // printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-      // printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-      // printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+		gyro[i] = local_imu_struct1->gyro_msr[i];
+		mag[i] = local_imu_struct1->mag_msr[i];
+		acc[i] = local_imu_struct1->acc_msr[i];
+		//hi
+		// printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+		// printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+		// printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
     }
 		// //ALGORITHM
     compute_mcon(mag, gyro, k, m_con);
     compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
     for (int i = 0; i < 3; i++)
     {
-      printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
-      printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
-      // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
-      // printf("Direction axis %d, value %d \r\n", i, direction[i]);
+		#if ( DEBUG_MSGS == 1 )
+			printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
+			printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
+			// printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
+			// printf("Direction axis %d, value %d \r\n", i, direction[i]);
+		#endif
     }
-		//PID_main(&PID_Inputs);
+	//PID_main(&PID_Inputs);
 
-		//Update PWM values
-		//X Magnetorquer
+	//Update PWM values
+	//X Magnetorquer
     //WARNING: WHO EVER WORK ON THIS PART REMEMBER AFTER EVERY TEST TO COMMENT THE PART BELOW 
     //IT WILL STOP AFTER 3 MINS BUT STILL COMMENT THOSE LINE OUT SO THAT IT WONT ACTUATE EVERY STARTUP 
     //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
@@ -1294,9 +1310,9 @@ void Check_current_temp(void const * argument)
 	/*Start calibration */
 	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) !=  HAL_OK)
 	{
-#if ( DEBUG_MSGS == 1 )
-	  	printf("Error with ADC: not calibrated correctly \n");
-#endif
+	#if ( DEBUG_MSGS == 1 )
+		printf("Error with ADC: not calibrated correctly \n");
+	#endif
 	}
 
 	/* Infinite loop */
@@ -1304,9 +1320,9 @@ void Check_current_temp(void const * argument)
 	{
 		//volatile float prev = HAL_GetTick();
 		//printf("We are in CHECK TASK \n");
-#if ( DEBUG_MSGS == 1 )
-		//printf("We are in CHECK TASK \n");
-#endif
+		#if ( DEBUG_MSGS == 1 )
+			//printf("We are in CHECK TASK \n");
+		#endif
 		//----------------------------------------------------------------------
 
 		//GET TEMPERATURES------------------------------------------------------
@@ -1364,9 +1380,9 @@ void Check_current_temp(void const * argument)
 				//Send Housekeeping to OBC task
 				
 				if (local_current_temp_struct == NULL) {
-#if ( DEBUG_MSGS == 1 )
-					   printf("IMU TASK: allocazione struttura fallita !\n");
-#endif
+					#if ( DEBUG_MSGS == 1 )
+						printf("IMU TASK: allocazione struttura fallita !\n");
+					#endif
 				}
 				else
 				{
@@ -1375,28 +1391,28 @@ void Check_current_temp(void const * argument)
 						for(int i=0;i<NUM_ACTUATORS;i++)
 						{
 							local_current_temp_struct->current[i] = currentbuf[i];
-#if ( DEBUG_MSGS == 1 )
-							printf("Task check: Current n%d,value: %f,current vect:%f \n",i+1,local_current_temp_struct->current[i],currentbuf[i]);
-#endif
-			    	// 	}
-						// for(int i=NUM_ACTUATORS;i<NUM_TEMP_SENS+NUM_ACTUATORS;i++)
-						// {
-						// 	local_current_temp_struct->temperature[i - NUM_ACTUATORS] = ntc_values.temp[i - NUM_ACTUATORS];
-#if ( DEBUG_MSGS == 1 )
-							// printf("Task check: Temperature n%d,ntc value: %f,value: %f \n",i-4,ntc_values.temp[i-NUM_ACTUATORS],local_current_temp_struct->temperature[i-NUM_ACTUATORS]);
-#endif
+							#if ( DEBUG_MSGS == 1 )
+								printf("Task check: Current n%d,value: %f,current vect:%f \n",i+1,local_current_temp_struct->current[i],currentbuf[i]);
+							#endif
+			    			// 	}
+							// for(int i=NUM_ACTUATORS;i<NUM_TEMP_SENS+NUM_ACTUATORS;i++)
+							// {
+							// 	local_current_temp_struct->temperature[i - NUM_ACTUATORS] = ntc_values.temp[i - NUM_ACTUATORS];
+							#if ( DEBUG_MSGS == 1 )
+								// printf("Task check: Temperature n%d,ntc value: %f,value: %f \n",i-4,ntc_values.temp[i-NUM_ACTUATORS],local_current_temp_struct->temperature[i-NUM_ACTUATORS]);
+							#endif
 						}
 
 						//Invio queue a OBC Task
 						if (osMessagePut(ADCSHouseKeepingQueueHandle,(uint32_t)local_current_temp_struct,300) != osOK) {
-#if ( DEBUG_MSGS == 1 )
-			    		   	printf("Invio a OBC Task fallito \n");
-#endif
+							#if ( DEBUG_MSGS == 1 )
+								printf("Invio a OBC Task fallito \n");
+							#endif
 			       			free(local_current_temp_struct); // Ensure the receiving task has time to process
 						} else {
-#if ( DEBUG_MSGS == 1 )
-			    		    printf("Dati Inviati a OBC Task\n");
-#endif
+							#if ( DEBUG_MSGS == 1 )
+								printf("Dati Inviati a OBC Task\n");
+							#endif
 						}
 						count = 0;
 					}
@@ -1408,15 +1424,15 @@ void Check_current_temp(void const * argument)
 				break;
 			case 3:
 				//PROBLEM WITH TEMPERATURE SENSORS
-				//Fare partire un interrupt
+				// Trigger an interrupt
 				break;
 			case 4:
 				//PROBLEM WITH MAGNETORQUERS
-				//Fare partire un interrupt
+				// Trigger an interrupt
 				break;
 			case 5:
 				//PROBLEM WITH REACTION WHEELS
-				//Fare partire un interrupt
+				// Trigger an interrupt
 				break;
 
 		}
