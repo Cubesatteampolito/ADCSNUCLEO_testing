@@ -156,9 +156,9 @@ void get_actuator_current(
 *  duty is passed in percentage
 */
 void update_duty_dir(
-	Actuator_struct *act,			//
-	float duty,						//
-	bool dir						//
+	Actuator_struct *act,			
+	float duty,						
+	bool dir						
 ){
 	if(duty != 0)					// TODO: isn't 0 a possible value?
 	{
