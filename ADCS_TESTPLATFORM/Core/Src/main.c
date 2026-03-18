@@ -1181,7 +1181,7 @@ void Control_Algorithm_Task(void const * argument)
       mag[i] = local_imu_struct1->mag_msr[i];
       acc[i] = local_imu_struct1->acc_msr[i];
       #if ( DEBUG_MSGS_CONTROL == 1 )
-        printf("====  IMU VALUES ====");
+        printf("====  IMU VALUES ==== \r\n");
         printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
         printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
         printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
@@ -1196,7 +1196,7 @@ void Control_Algorithm_Task(void const * argument)
     for (int i = 0; i < 3; i++)
     {
       #if ( DEBUG_MSGS_CONTROL == 1 )
-        printf("====  COMPUTED VALUES ====");
+        printf("====  COMPUTED VALUES ====\r\n");
         printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
         printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
         // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
