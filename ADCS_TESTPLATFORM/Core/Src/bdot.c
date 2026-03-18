@@ -1,10 +1,8 @@
 /* BDOT Algorithm implementation + duty cycle computation 
 *
-* Data from magnetometer and gyroscope are used to compute angular momentums to apply via the magnetorquers.  
-*
+* Data from magnetometer and gyroscope are used to compute the spacecraft's magnetic dipole momentum.  
 * From the momentum, the duty cycle for the PWM is computed and used to actuate. 
 * The magnetorquers should then produce this dipole moment to generate a torque that opposes angular velocity. 
-* 
 */
 
 #include "bdot.h"
