@@ -1162,7 +1162,7 @@ void Control_Algorithm_Task(void const * argument)
   for(;;)
   {
     //printf("We are in Control Algorithm TASK \r\n");
-    #if ( DEBUG_MSGS == 1 )
+    #if ( DEBUG_MSGS_CONTROL == 1 )
         //printf("We are in Control Algorithm TASK \r\n");
     #endif
     // printf("I am alive from Control_Algorithm_Task at %lu ms\r\n", HAL_GetTick());
@@ -1180,10 +1180,10 @@ void Control_Algorithm_Task(void const * argument)
       gyro[i] = local_imu_struct1->gyro_msr[i];
       mag[i] = local_imu_struct1->mag_msr[i];
       acc[i] = local_imu_struct1->acc_msr[i];
-      #if ( DEBUG_MSGS == 1 )
-        // printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-        // printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-        // printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+      #if ( DEBUG_MSGS_CONTROL == 1 )
+        printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+        printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+        printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
       #endif
     }
 		// ALGORITHM
@@ -1194,7 +1194,7 @@ void Control_Algorithm_Task(void const * argument)
 
     for (int i = 0; i < 3; i++)
     {
-      #if ( DEBUG_MSGS == 1 )
+      #if ( DEBUG_MSGS_CONTROL == 1 )
         printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
         printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
         // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
