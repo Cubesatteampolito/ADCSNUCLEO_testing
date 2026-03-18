@@ -1230,7 +1230,7 @@ void Control_Algorithm_Task(void const * argument)
 					#if ( DEBUG_MSGS_CONTROL )
 						printf("Coil %d started with direction %d\r\n", i, direction[i]);
 					#endif
-					actuator_START(coils[i]);              // start once per axis
+					//actuator_START(coils[i]);              // start once per axis
 					active[i] = 1;
 				}
 			} else {
@@ -1238,7 +1238,7 @@ void Control_Algorithm_Task(void const * argument)
 					#if ( DEBUG_MSGS_CONTROL )
 						printf("Coil %d stopped\r\n", i);
 					#endif
-					actuator_STOP(coils[i]);               // stop only if previously active
+					//actuator_STOP(coils[i]);               // stop only if previously active
 					active[i] = 0;
 				}
 			}
