@@ -1077,10 +1077,10 @@ void OBC_Comm_Task(void const * argument)
 			TxHousekeeping.ticktime=HAL_GetTick();
 			//printf("OBC: Trying to send housekeeping \n");
 			//finally we send the message
-
+      /*
 			if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){
         // printf("sucess send temp current %lu \r\n",HAL_GetTick());
-      }
+      }*/
 
 	// }
 
@@ -1097,9 +1097,9 @@ void OBC_Comm_Task(void const * argument)
     // printf("OBC TASK:i am alive %lu \r\n",HAL_GetTick());
     // uint8_t sendStatus = sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0);
     // printf("OBC TASK: sdlSend status: 0x%02X at %lu \r\n", sendStatus, HAL_GetTick());
-		if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
+		/*if(sdlSend(&line1,(uint8_t *)&TxAttitude,sizeof(attitudeADCS),0)){
       // printf("success send ADCS packet %lu \r\n",HAL_GetTick());
-    }
+    }*/
 
 
 	}
@@ -1110,9 +1110,9 @@ void OBC_Comm_Task(void const * argument)
 	opmodeMsg.code=OPMODEADCS_CODE;
 	//finally we send the message (WITH ACK REQUESTED)
 	// printf("OBC: Trying to send opmodeADCS \r\n");
-	if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){
+	/*if(sdlSend(&line1,(uint8_t *)&opmodeMsg,sizeof(opmodeADCS),1)){
     // printf("OBC: success to send opmodeADCS \r\n");
-  }
+  }*/
 
 
   	osDelay(2000);
@@ -1243,13 +1243,13 @@ void Control_Algorithm_Task(void const * argument)
 
       if (duty_cycle[i] > 20.0f) {
         if (!active[i]) {
-          actuator_START(coils[i]);              // start once per axis
+          //actuator_START(coils[i]);              // start once per axis
           active[i] = 1;
         }
         update_duty_dir(coils[i], duty_cycle[i], direction[i]);
       } else {
         if (active[i]) {
-          actuator_STOP(coils[i]);               // stop only if previously active
+          //actuator_STOP(coils[i]);               // stop only if previously active
           active[i] = 0;
         }
       }
