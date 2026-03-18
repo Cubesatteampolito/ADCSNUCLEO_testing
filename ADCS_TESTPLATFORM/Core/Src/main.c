@@ -1161,7 +1161,7 @@ void Control_Algorithm_Task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    //printf("We are in Control Algorithm TASK \n");
+    printf("We are in Control Algorithm TASK \n");
     #if ( DEBUG_MSGS == 1 )
         //printf("We are in Control Algorithm TASK \n");
     #endif
