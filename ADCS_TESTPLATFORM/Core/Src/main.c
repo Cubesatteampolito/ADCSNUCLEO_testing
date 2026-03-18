@@ -1141,16 +1141,16 @@ void Control_Algorithm_Task(void const * argument)
 		float acc[3] = {7,8,9};
 	float m_con[3] = {0,0,0};
 
-
+  //tune bdot gain instead of tuning the physical values 
 	float k = 50.0f; // BDOT gain
 	float duty_cycle[3] = {0,0,0};
 	uint8_t direction[3] = {0,0,0};
 
 	// Original ones:
-	//const float coil_turn[3] = {300.0f, 300.0f, 210.0f}; //number of turns of the
-
+	const float coil_turn[3] = {300.0f, 300.0f, 210.0f}; //number of turns of the
+  
 	// Test tweaked values:
-	const float coil_turn[3] = {600.0f, 600.0f, 600.0f}; //number of turns of the
+	//const float coil_turn[3] = {600.0f, 600.0f, 600.0f}; //number of turns of the
 
 	const float coil_area[3] = {0.007225f, 0.007225f, 0.007225f}; //coil area in m^2
 	const float re_coil[3] = {30.7f, 30.7f, 23.0f}; //coil resistance in ohm
@@ -1238,7 +1238,7 @@ void Control_Algorithm_Task(void const * argument)
 					#if ( DEBUG_MSGS_CONTROL )
 						printf("Coil %d stopped\r\n", i);
 					#endif
-					//actuator_STOP(coils[i]);               // stop only if previously active
+					//actuator_STOP(co                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ils[i]);               // stop only if previously active
 					active[i] = 0;
 				}
 			}
