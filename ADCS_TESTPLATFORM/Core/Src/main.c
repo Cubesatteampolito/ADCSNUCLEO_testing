@@ -1223,11 +1223,17 @@ void Control_Algorithm_Task(void const * argument)
 		update_duty_dir(coils[i], duty_cycle[i], direction[i]);  // first update the duty cycle
         if (duty_cycle[i] > 20.0f) {
 			if (!active[i]) {
+				#if ( DEBUG_MSGS_CONTROL )
+					printf("Coil %d started with direction %d\r\n", i, direction[i]);
+				#endif
 				actuator_START(coils[i]);              // start once per axis
 				active[i] = 1;
 			}
         } else {
 			if (active[i]) {
+				#if ( DEBUG_MSGS_CONTROL )
+					printf("Coil %d stopped\r\n", i);
+				#endif
 				actuator_STOP(coils[i]);               // stop only if previously active
 				active[i] = 0;
 			}
