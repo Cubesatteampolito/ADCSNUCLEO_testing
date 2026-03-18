@@ -1175,6 +1175,10 @@ void Control_Algorithm_Task(void const * argument)
 		retvalue = osMessageGet(IMUQueue1Handle, 300);
 		processCombinedData((void*)&retvalue,(void *)&local_imu_struct1,receive_IMUqueue_control);
     //algorithm
+    #if( DEBUG_MSGS_CONTROL )
+      printf("\r\n\r\n");
+    #endif
+    
     for (int i = 0; i < 3; i++)
     {
       gyro[i] = local_imu_struct1->gyro_msr[i];
@@ -1196,7 +1200,7 @@ void Control_Algorithm_Task(void const * argument)
     for (int i = 0; i < 3; i++)
     {
       #if ( DEBUG_MSGS_CONTROL == 1 )
-        printf("====  COMPUTED VALUES ====\r\n");
+        printf("\r\n====  COMPUTED VALUES ====\r\n");
         printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
         printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
         // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
