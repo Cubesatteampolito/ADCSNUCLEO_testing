@@ -123,9 +123,3 @@ void receive_Current_Tempqueue_OBC(
 	}
 
 }
-
-// void receive_Attitudequeue_control(void *event,void * PID_struct)
-// {
-// 	setAttitudeADCS *int_attitude_adcs;
-// 	PID_Inputs_struct *int_PID_struct = (PID_Inputs_struct *)PID_struct;
-// }

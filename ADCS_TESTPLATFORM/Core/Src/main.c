@@ -35,7 +35,7 @@
 #include "magnetorquers_driver.h"
 #include "bdot.h"
 /* USER CODE END Includes */
-
+ 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 PID_Inputs_struct PID_Inputs;
