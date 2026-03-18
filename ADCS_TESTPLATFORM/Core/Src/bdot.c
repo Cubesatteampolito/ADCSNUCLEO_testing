@@ -66,6 +66,7 @@ void compute_duty_cycle(
             continue;
         }
 
+        /* Compute the current I_cmd needed to achieve the required angular momentum m_con */
         float I_cmd = m_con[i] / (coil_turn[i] * coil_area[i]);         // I = angular_momentum / (turns * area)
         float duty  = (I_cmd * reg_coil[i]) / VDD_coil[i];              // duty = (I * R) / VDD. Signed result
 
