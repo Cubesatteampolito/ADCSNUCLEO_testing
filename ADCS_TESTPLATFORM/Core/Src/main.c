@@ -1134,12 +1134,19 @@ void Control_Algorithm_Task(void const * argument)
 	osEvent retvalue,retvalue1;
   uint32_t start_time;
   uint8_t count = 0;
+
+
   float gyro[3]={1,2,3};
 	float mag[3]={4,5,6};
 	float acc[3] = {7,8,9};
-  float m_con[3] = {0,0,0},  k = 50.0f;
+  float m_con[3] = {0,0,0};
+
+
+  float k = 50.0f; // BDOT gain
   float duty_cycle[3] = {0,0,0};
   uint8_t direction[3] = {0,0,0};
+
+
   const float coil_turn[3] = {300.0f, 300.0f, 210.0f}; //number of turns of the
   const float coil_area[3] = {0.007225f, 0.007225f, 0.007225f}; //coil area in m^2
   const float re_coil[3] = {30.7f, 30.7f, 23.0f}; //coil resistance in ohm
@@ -1192,10 +1199,8 @@ void Control_Algorithm_Task(void const * argument)
       #endif
     }
 		// ALGORITHM
-    compute_mcon(mag, gyro, k, m_con);
+    compute_mcon(mag, gyro, k, m_con);  // Compute angular momentum
     compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
-
-
 
     for (int i = 0; i < 3; i++)
     {
@@ -1207,62 +1212,26 @@ void Control_Algorithm_Task(void const * argument)
         // printf("Direction axis %d, value %d \r\n", i, direction[i]);
       #endif
     }
-	//PID_main(&PID_Inputs);
-
-	//Update PWM values
-	//X Magnetorquer
-    //WARNING: WHO EVER WORK ON THIS PART REMEMBER AFTER EVERY TEST TO COMMENT THE PART BELOW 
-    //IT WILL STOP AFTER 3 MINS BUT STILL COMMENT THOSE LINE OUT SO THAT IT WONT ACTUATE EVERY STARTUP 
-    //COMMENT AND PUSH AND PULL FROM THE LENOVO AND RUN AGAIN IN CUBE MX 
-    // if(!flag)
-    // {   
-    //     // actuator_START(&Reaction1);
-    //     // actuator_START(&Reaction2);
-    //     // actuator_START(&MagneTorquer1);
-    //     // actuator_START(&MagneTorquer2);
-    //     // actuator_START(&MagneTorquer3);
-    //     flag = 1;
-    //     start_time = HAL_GetTick();  // Record when actuators started
-    //     // printf("Actuators started at %lu ms\r\n", start_time);
-    // }
-
-    // // Stop after 3mins seconds
-    // if(flag && (HAL_GetTick() - start_time) > 30000)
-    // {
-    //     // actuator_STOP(&Reaction1);
-    //     // actuator_STOP(&Reaction2);
-    //     // actuator_STOP(&MagneTorquer1);
-    //     // actuator_STOP(&MagneTorquer2);
-    //     // actuator_STOP(&MagneTorquer3);
-    //     flag = 2;  // put flag 2 to stop after 3 mins
-    // //     printf("Actuators stopped at %lu ms\r\n", HAL_GetTick());
-    // }
 
     count++;
-		// //No change dir:
-    // // if(flag && (HAL_GetTick() - start_time) > 10000){
-    // //   update_duty_dir(&Reaction1,50,0);}
-		// // //Change dir :
-    // // if(flag && (HAL_GetTick() - start_time) > 20000){
-    // //   update_duty_dir(&Reaction1,70,1);}
 
     for (int i = 0; i < 3; i++) {
-    // clamp and optional lower threshold during bring-up
-      if (duty_cycle[i] < 0.0f) duty_cycle[i] = 0.0f;
-      if (duty_cycle[i] > 100.0f) duty_cycle[i] = 100.0f;
+      // clamp and optional lower threshold during bring-up
+        if (duty_cycle[i] < 0.0f) duty_cycle[i] = 0.0f;
+        if (duty_cycle[i] > 100.0f) duty_cycle[i] = 100.0f;
 
-      if (duty_cycle[i] > 20.0f) {
-        if (!active[i]) {
-          //actuator_START(coils[i]);              // start once per axis
-          active[i] = 1;
+		update_duty_dir(coils[i], duty_cycle[i], direction[i]);  // first update the duty cycle
+        if (duty_cycle[i] > 20.0f) {
+			if (!active[i]) {
+				actuator_START(coils[i]);              // start once per axis
+				active[i] = 1;
+			}
+        } else {
+			if (active[i]) {
+				actuator_STOP(coils[i]);               // stop only if previously active
+				active[i] = 0;
+			}
         }
-        update_duty_dir(coils[i], duty_cycle[i], direction[i]);
-      } else {
-        if (active[i]) {
-          //actuator_STOP(coils[i]);               // stop only if previously active
-          active[i] = 0;
-        }
-      }
     }
 
 
@@ -1292,7 +1261,7 @@ void Control_Algorithm_Task(void const * argument)
       //   printf("Control Task : Released IMURead_ControlMutex control \r\n");
       }
     }
-    free(local_imu_struct1);
+    free(local_imu_struct1);   // TODO must be checked
 		osDelay(2000);
   }
   /* USER CODE END Control_Algorithm_Task */
