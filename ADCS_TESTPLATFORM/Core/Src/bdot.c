@@ -67,13 +67,13 @@ void compute_duty_cycle(
         }
 
         /* Compute the current I_cmd needed to achieve the required angular momentum m_con */
-        float I_cmd = m_con[i] / (coil_turn[i] * coil_area[i]);         // I = angular_momentum / (turns * area)
+        float I_cmd = m_con[i] / (coil_turn[i] * coil_area[i]);     // I = angular_momentum / (turns * area)
         
         /* Compute the duty cycle needed to achieve the required current in the coils */
-        float duty  = (I_cmd * reg_coil[i]) / VDD_coil[i];              // duty = (I * R) / VDD. Signed result
+        float duty  = (I_cmd * reg_coil[i]) / VDD_coil[i];          // duty = (I * R) / VDD. Signed result
 
-        direction[i] = (duty >= 0.0f) ? 1u : 0u;                        // The sign represents the direction
-        duty = fabsf(duty) * 100.0f;                                    // Convert to percentage
+        direction[i] = (duty >= 0.0f) ? 1u : 0u;                    // The sign represents the direction
+        duty = fabsf(duty) * 100.0f;                                // Convert to percentage
         
         /* Clamp the duty cycle to 80% to avoid overactuation for testing purposes */
         if (duty > 80.0f) duty = 80.0f;                                 
