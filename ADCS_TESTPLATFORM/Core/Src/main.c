@@ -1177,25 +1177,29 @@ void Control_Algorithm_Task(void const * argument)
     //algorithm
     for (int i = 0; i < 3; i++)
     {
-		gyro[i] = local_imu_struct1->gyro_msr[i];
-		mag[i] = local_imu_struct1->mag_msr[i];
-		acc[i] = local_imu_struct1->acc_msr[i];
-		//hi
-		// printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
-		// printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
-		// printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+      gyro[i] = local_imu_struct1->gyro_msr[i];
+      mag[i] = local_imu_struct1->mag_msr[i];
+      acc[i] = local_imu_struct1->acc_msr[i];
+      #if ( DEBUG_MSGS == 1 ){
+        // printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
+        // printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
+        // printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
+      }
     }
-		// //ALGORITHM
+		// ALGORITHM
     compute_mcon(mag, gyro, k, m_con);
     compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
+
+
+
     for (int i = 0; i < 3; i++)
     {
-		#if ( DEBUG_MSGS == 1 )
-			printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
-			printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
-			// printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
-			// printf("Direction axis %d, value %d \r\n", i, direction[i]);
-		#endif
+      #if ( DEBUG_MSGS == 1 )
+        printf("duty cycle %f, direction %d \r\n", duty_cycle[i], direction[i]);
+        printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
+        // printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
+        // printf("Direction axis %d, value %d \r\n", i, direction[i]);
+      #endif
     }
 	//PID_main(&PID_Inputs);
 
@@ -1337,7 +1341,7 @@ void Check_current_temp(void const * argument)
 		get_actuator_current(&hadc1,voltagebuf,currentbuf,Channels_mask);
 		for(int i=0;i<NUM_DRIVERS;i++)
 		{
-			printf("Actuator %d current value: %f \r\n",i,currentbuf[i]);
+			//printf("Actuator %d current value: %f \r\n",i,currentbuf[i]);
 		}
 		//----------------------------------------------------------------------
 
