@@ -7,7 +7,7 @@
 #include "constants.h"
 
 
-
+ 
 /* Storing NTC's values */
 typedef struct{
 

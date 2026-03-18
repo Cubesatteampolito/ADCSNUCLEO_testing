@@ -7,7 +7,7 @@ const float A_torquers[3] = {0.01, 0.01, 0.01};       // m^2, x,y,z
 const float torquer_Req_Ohm[3] = {142, 142, 142};     // OHMs, x,y,z
 const float torquer_Vdd[3] = {12, 12, 12};            // V_dd , x,y,z
 
-
+ 
 
 void PID_attitude_error_calculation(PID_Inputs_struct *PID_Inputs){
 
