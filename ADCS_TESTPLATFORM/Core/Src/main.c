@@ -897,13 +897,13 @@ void IMU_Task(void const * argument)
   // osDelay(1000); //when in doubt add a delay
 
   #if ( DEBUG_MSGS == 1 )
-	  printf("Initializing IMU \n");
+	  printf("Initializing IMU \r\n");
   #endif
     //uint8_t ret = 1;
     uint8_t ret = initIMUConfig(&huart4);
   #if ( DEBUG_MSGS == 1 )
-    if(ret) printf("IMU correctly configured \n");
-    else printf("Error configuring IMU \n");
+    if(ret) printf("IMU correctly configured \r\n");
+    else printf("Error configuring IMU \r\n");
   #endif
 
 	float gyro[3]={1,2,3};
@@ -969,7 +969,7 @@ void IMU_Task(void const * argument)
         /* BDOT FINISHED */
 				//Invio queue a Control Task
 			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			    	//printf("Invio a Control Task fallito \n");
+			    	//printf("Invio a Control Task fallito \r\n");
 			       	free(local_imu_struct); // Ensure the receiving task has time to process
 				} else {
 			        // printf("Dati Inviati a Control Task \r\n");
@@ -977,15 +977,15 @@ void IMU_Task(void const * argument)
 			 	}
 			 	//Invio queue a OBC Task
 			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			    	//printf("Invio a OBC Task fallito \n");
+			    	//printf("Invio a OBC Task fallito \r\n");
 			       	free(local_imu_struct); // Ensure the receiving task has time to process
 			 	} else {
-			    	//printf("Dati a Control Inviati \n");
+			    	//printf("Dati a Control Inviati \r\n");
 				}
 			}
 		}
 		else{
-			//printf("IMU: Error configuring IMU \n");
+			//printf("IMU: Error configuring IMU \r\n");
 			osDelay(2000);
 		}
     // printf("Hello from STM32L4\r\n");
@@ -1062,7 +1062,7 @@ void OBC_Comm_Task(void const * argument)
 	 //Receive HouseKeeping sensor values via Queue
 	retvalue = osMessageGet(ADCSHouseKeepingQueueHandle,300);
 
-	// //printf("OBC Task: Tick_Time: %lu \n",HAL_GetTick());
+	// //printf("OBC Task: Tick_Time: %lu \r\n",HAL_GetTick());
 
 	if (retvalue.status == osEventMessage)
 	// {
@@ -1071,11 +1071,11 @@ void OBC_Comm_Task(void const * argument)
 	// 	//in this case we just send the local copy of the structure
 	// 	//ALWAYS remember to set message code (use the generated defines
 
-	// 	//printf("OBC: Trying to send attitude \n");
+	// 	//printf("OBC: Trying to send attitude \r\n");
 	// 	//finally we send the message
 			TxHousekeeping.code=HOUSEKEEPINGADCS_CODE;
 			TxHousekeeping.ticktime=HAL_GetTick();
-			//printf("OBC: Trying to send housekeeping \n");
+			//printf("OBC: Trying to send housekeeping \r\n");
 			//finally we send the message
       /*
 			if(sdlSend(&line1,(uint8_t *)&TxHousekeeping,sizeof(housekeepingADCS),0)){
@@ -1161,9 +1161,9 @@ void Control_Algorithm_Task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    printf("We are in Control Algorithm TASK \n");
+    //printf("We are in Control Algorithm TASK \r\n");
     #if ( DEBUG_MSGS == 1 )
-        //printf("We are in Control Algorithm TASK \n");
+        //printf("We are in Control Algorithm TASK \r\n");
     #endif
     // printf("I am alive from Control_Algorithm_Task at %lu ms\r\n", HAL_GetTick());
 		//Receive Telemetry IMU via Queue
@@ -1315,7 +1315,7 @@ void Check_current_temp(void const * argument)
 	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) !=  HAL_OK)
 	{
 	#if ( DEBUG_MSGS == 1 )
-		printf("Error with ADC: not calibrated correctly \n");
+		printf("Error with ADC: not calibrated correctly \r\n");
 	#endif
 	}
 
@@ -1323,9 +1323,9 @@ void Check_current_temp(void const * argument)
 	for(;;)
 	{
 		//volatile float prev = HAL_GetTick();
-		//printf("We are in CHECK TASK \n");
+		//printf("We are in CHECK TASK \r\n");
 		#if ( DEBUG_MSGS == 1 )
-			//printf("We are in CHECK TASK \n");
+			//printf("We are in CHECK TASK \r\n");
 		#endif
 		//----------------------------------------------------------------------
 
@@ -1396,21 +1396,21 @@ void Check_current_temp(void const * argument)
 						{
 							local_current_temp_struct->current[i] = currentbuf[i];
 							#if ( DEBUG_MSGS == 1 )
-								printf("Task check: Current n%d,value: %f,current vect:%f \n",i+1,local_current_temp_struct->current[i],currentbuf[i]);
+								printf("Task check: Current n%d,value: %f,current vect:%f \r\n",i+1,local_current_temp_struct->current[i],currentbuf[i]);
 							#endif
 			    			// 	}
 							// for(int i=NUM_ACTUATORS;i<NUM_TEMP_SENS+NUM_ACTUATORS;i++)
 							// {
 							// 	local_current_temp_struct->temperature[i - NUM_ACTUATORS] = ntc_values.temp[i - NUM_ACTUATORS];
 							#if ( DEBUG_MSGS == 1 )
-								// printf("Task check: Temperature n%d,ntc value: %f,value: %f \n",i-4,ntc_values.temp[i-NUM_ACTUATORS],local_current_temp_struct->temperature[i-NUM_ACTUATORS]);
+								// printf("Task check: Temperature n%d,ntc value: %f,value: %f \r\n",i-4,ntc_values.temp[i-NUM_ACTUATORS],local_current_temp_struct->temperature[i-NUM_ACTUATORS]);
 							#endif
 						}
 
 						//Invio queue a OBC Task
 						if (osMessagePut(ADCSHouseKeepingQueueHandle,(uint32_t)local_current_temp_struct,300) != osOK) {
 							#if ( DEBUG_MSGS == 1 )
-								printf("Invio a OBC Task fallito \n");
+								printf("Invio a OBC Task fallito \r\n");
 							#endif
 			       			free(local_current_temp_struct); // Ensure the receiving task has time to process
 						} else {
