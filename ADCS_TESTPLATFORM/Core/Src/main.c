@@ -1144,7 +1144,7 @@ void Control_Algorithm_Task(void const * argument)
   //tune bdot gain instead of tuning the physical values 
 	//float k = 50.0f; // BDOT gain
   //tunning
-  float k = 10.0f; // BDOT gain tunning
+  float k = 30.0f; // BDOT gain tunning
 	float duty_cycle[3] = {0,0,0};
 	uint8_t direction[3] = {0,0,0};
 
