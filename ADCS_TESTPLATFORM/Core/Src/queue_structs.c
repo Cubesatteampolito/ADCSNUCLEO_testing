@@ -27,11 +27,11 @@ void receive_IMUqueue_control(
 		for(int i=0 ; i < 3 ; i++){
 				int_pid_struct->angSpeed_Measured[i] = int_queue_struct->gyro_msr[i];
 				#if ( DEBUG_MSGS == 1 )
-					printf("Control: Giro[%d] : %f \n",i,int_pid_struct->angSpeed_Measured[i]);
+					printf("Control: Giro[%d] : %f \r\n",i,int_pid_struct->angSpeed_Measured[i]);
 				#endif
 				int_pid_struct->B[i] = int_queue_struct->mag_msr[i];
 				#if ( DEBUG_MSGS == 1 )
-					printf("Control: Magn Field[%d] : %f \n",i,int_pid_struct->B[i]);
+					printf("Control: Magn Field[%d] : %f \r\n",i,int_pid_struct->B[i]);
 				#endif
 		}
 		free(int_queue_struct);
