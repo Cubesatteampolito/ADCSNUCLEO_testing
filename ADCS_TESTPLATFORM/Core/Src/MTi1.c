@@ -6,46 +6,6 @@
 
 #endif
 
-#define IMU_ACK_DELAY 100	//maximum time to wait for ack
-#define IMU_CONFIG_RETRY 2 //number of times configuration commands will be sent if ack is not received
-
-
-//structure to pass message data
-//(excluding preamble, bid and crc)
-typedef struct{
-	uint8_t mid;
-	uint8_t len;
-	uint8_t* data;
-} imu_packet_struct;
-
-//defines
-#define IMU_PREAMBLE 	0xfa
-#define IMU_BID			0xff
-//MID definitions
-#define IMU_GOTO_CONFIG_MID			0x30
-#define IMU_GOTO_CONFIG_ACK_MID		0x31
-#define IMU_SET_OCONFIG_MID 		0xC0
-#define IMU_SET_OCONFIG_ACK_MID		0xC1
-#define IMU_GOTO_MEAS_MID 			0x10
-#define IMU_GOTO_MEAS_ACK_MID		0x11
-#define IMU_DATA_PACKET_MID 		0x36
-//LEN definitions (for messages with LEN!=0)
-#define IMU_SET_OCONFIG_LEN 		sizeof(outputConfigData)
-#define IMU_SET_OCONFIG_ACK_LEN 	sizeof(outputConfigAckData)
-#define IMU_DATA_PACKET_LEN			45
-//data definitions
-#define IMU_OUTPUT_CONFIG 		0x80, 0x20, 0x04, 0x80, /* Rate of turn */ \
-								0xC0, 0x20, 0x04, 0x80, /* Magnetic Field */\
-								0x40, 0x20, 0x04, 0x80 /*Accelerometer data*/
-
-#define IMU_OUTPUT_CONFIG_ACK 	0x80, 0x20, 0x04, 0x80, /* Rate of turn */ \
-								0xC0, 0x20, 0x04, 0x80, /* Magnetic Field */\
-								0x40, 0x20, 0x04, 0x80 /*Accelerometer data*/
-//others
-#define IMU_DATA_GYRO_INDEX	3	//starting index (inside data) for gyroscope data
-#define IMU_DATA_MAG_INDEX	18	//starting index (inside data) of magnetometer data
-#define IMU_DATA_ACC_INDEX 33 //starting index (inside data) of accelerometer data
-
 const uint8_t outputConfigData[]=		{IMU_OUTPUT_CONFIG};
 const uint8_t outputConfigAckData[]=	{IMU_OUTPUT_CONFIG_ACK};
 
@@ -53,18 +13,20 @@ circular_buffer_handle rxcBuff; //rx and search buffer
 uint8_t rxBuffer[IMU_BUFFER_LEN]; //memory buffer for rxBuff
 uint8_t tmpBuff[IMU_BUFFER_LEN]; //temporary buffer where to store received packets
 
-//function to compute message checksum
+/* Function to compute message checksum: sum of all bytes including checksum must be 0 */
 static uint8_t computeChecksum(imu_packet_struct * pckt){
-	if(pckt==NULL) return 0;
+	if (pckt == NULL) return 0;
 
-	uint8_t crc=IMU_BID+pckt->mid+pckt->len;
-	for(uint32_t d=0;d<pckt->len;d++){
-		crc+=pckt->data[d];
+	uint8_t crc = IMU_BID + pckt->mid + pckt->len;
+	for (uint32_t d = 0; d < pckt->len; d++)
+	{
+		crc += pckt->data[d];
 	}
+
 	return -crc;
 }
 
-//function to send message
+/* Function to send message from MCU to IMU */
 static void sendMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pckt){
 	if(pckt==NULL) return;
 
