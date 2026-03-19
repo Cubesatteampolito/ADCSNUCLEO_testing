@@ -3,6 +3,7 @@
 *  Only the limited subset of needed functionalieties has been implemented
 *  IMU <-> MCU communication happens over UART. 
 *  Data is exchanged using a packed-based protocol (Xbus). Packet structure: [Preamble][BID][MID][LEN][DATA][CHECKSUM]
+*  The code uses blocking polling for UART reception, no interrupt-based communication nor Direct Memory Access.
 */
 
 #ifndef MTI1_H
@@ -49,7 +50,8 @@
 #define IMU_DATA_ACC_INDEX  33 //starting index (inside data) of accelerometer data
 
 /* Struct used to transmit IMU data (excluding [Preamble][BID] and [CHECKSUM]) */
-typedef struct{
+typedef struct
+{
 	uint8_t  mid;
 	uint8_t  len;
 	uint8_t *data;
@@ -64,33 +66,19 @@ static void sendMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pckt);
 /* Function to continuously read UART transmission from IMU to MCU */
 static uint8_t receiveMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pckt, imu_packet_struct* format, uint8_t checkCRC, uint32_t timeout);
 
-/* Function to wait for IMU acknowledgement after MCU to IMU communication */
+/* Function to send command MCU -> IMU and wait for IMU acknowledgement after MCU to IMU communication */
 static uint8_t imuAckTransaction(UART_HandleTypeDef* IMUhandle, imu_packet_struct * cmd, imu_packet_struct * ack, uint32_t timeout);
 
-
+/* Function to configure the Xsens Mti IMU before you start reading data.
+*  It must be called ONLY after HAL_Init() and SystemClock_Config(), or delays and interrupts will break if the system timer interrupts are not running. */
 uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle)
+
+/* Function to combine 4 bytes into a big-endian 32-bit integer [byte0][byte1][byte2][byte3] -> uint32_t */
 uint32_t buff2Int32(uint8_t buff[4])
+
+/* Function to convert 4 big-endian [MSB][...][LSB] uint8_t frames into uint32_t little-endian [LSB][...][MSB] and store in data array for all dataSize data fields */
 void writeIMUDataArray(uint8_t* frame, uint32_t* data, uint32_t dataSize)
+
+/* Function to extract sensor data from IMU communications */
 uint8_t readIMUPacket(UART_HandleTypeDef* IMUhandle, float gyroscope[3], float magnetometer[3], float accelerometer[3] ,uint32_t timeout);
 
-
-/**
- * @brief Initializes the MTI-1 IMU by configuring it through a series of commands and acknowledgments. It delays so it must be called when HAL_GetTick interrupts are enabled
- * @param IMUhandle Pointer to the UART handle associated with the IMU communication
- * @return uint8_t Returns 1 if the initialization is successful 
- */
-uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle);
-
-
-/**
- * @brief Waits for and reads an IMU data packet from the specified UART handle, extracting gyroscope, magnetometer, and accelerometer data into provided buffers.
- * @param IMUhandle Pointer to the UART handle associated with the IMU communication
- * @param gyroscope Output buffer to store the extracted gyroscope data (3 elements)
- * @param magnetometer Output buffer to store the extracted magnetometer data (3 elements)
- * @param accelerometer Output buffer to store the extracted accelerometer data (3 elements)
- * @param timeout Maximum time to wait for the IMU packet (in milliseconds)
- * @return uint8_t Returns 1 if a valid IMU packet is received and data is successfully extracted, 0 otherwise
- */
-uint8_t readIMUPacket(UART_HandleTypeDef* IMUhandle, float gyroscope[3], float magnetometer[3], float accelerometer[3], uint32_t timeout);
-
-#endif
