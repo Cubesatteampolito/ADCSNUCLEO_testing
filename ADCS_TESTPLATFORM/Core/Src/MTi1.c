@@ -41,15 +41,6 @@ static void sendMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pckt){
 	sendDriver_UART(IMUhandle, &tmp, 1);
 }
 
-//function to receive next message, returns 1 if something was
-//received, otherwise returns 0
-//places the eventually received message inside pckt, if this is not needed pckt can be set NULL
-//if checkCRC is !=0 the message CRC will be checked to approve the message
-//NB. not checking crc is risky for many reasons but one of the worst is that
-//len field could arrive corrupted so always check that len is the expected one
-//format can be passed if a specific mid and len are required, otherwise can be left to NULL
-//the buffer is automatically shifted out and filled at every call, user can eventually
-//flush buffers before calling to get most recent messages
 /* Function that reads bytes from UART -> finds a valide IMU packet -> optionally checks CRC -> returns it. Always flush buffers before calling this function. */
 static uint8_t receiveMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pckt, imu_packet_struct* format, uint8_t checkCRC, uint32_t timeout)
 {
@@ -178,7 +169,7 @@ static uint8_t receiveMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pck
 		}
 
 	} while ((HAL_GetTick() - startTick) < timeout); // keep looping until timeout expires
-
+3
 	return 0;
 }
 
