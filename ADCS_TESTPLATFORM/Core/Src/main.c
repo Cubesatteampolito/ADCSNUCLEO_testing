@@ -95,37 +95,7 @@ UART_HandleTypeDef huart2;
 // osStaticSemaphoreDef_t xIMURead_ControlMutexBuffer;
 /* USER CODE BEGIN PV */
 
-/* Defining Tasks related variables */
-osThreadId IMUTaskHandle;
-uint32_t IMUTaskBuffer[ stack_size];                    // 4096
-osStaticThreadDef_t IMUTaskControlBlock;
 
-osThreadId OBC_CommTaskHandle;
-uint32_t OBC_CommTaskBuffer[ stack_size1 ];             // 16384
-osStaticThreadDef_t OBC_CommTaskControlBlock;
-
-osThreadId ControlAlgorithmTaskHandle;
-uint32_t ControlAlgorithmTaskBuffer[ stack_size ];      // 4096
-osStaticThreadDef_t ControlAlgorithmTaskControlBlock;
-
-osThreadId FirstCheckTaskHandle;
-uint32_t FirstCheckTaskBuffer[ stack_size ];            // 4096
-osStaticThreadDef_t FirstCheckTaskControlBlock;
-
-xSemaphoreHandle IMURead_ControlMutex;
-StaticSemaphore_t xIMURead_ControlMutexBuffer;
-
-osMessageQId ADCSHouseKeepingQueueHandle;
-uint8_t ADCSHouseKeepingQueueBuffer[ 256 * sizeof( float ) ];
-osStaticMessageQDef_t ADCSHouseKeepingQueueControlBlock;
-
-osMessageQId IMUQueue2Handle;
-uint8_t IMUQueue2Buffer[ 256 * sizeof( imu_queue_struct ) ];
-osStaticMessageQDef_t IMUQueue2ControlBlock;
-
-osMessageQId IMUQueue1Handle;
-uint8_t IMUQueue1Buffer[ 256 * sizeof( imu_queue_struct ) ];
-osStaticMessageQDef_t IMUQueue1ControlBlock;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -138,18 +108,6 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_ADC1_Init(void);
-
-/* Readings from IMU */
-void IMU_Task(void const * argument);
-
-/* Communication with OBC - by now simulated with py program */
-void OBC_Comm_Task(void const * argument);
-
-/* Attitude control logic */
-void Control_Algorithm_Task(void const * argument);
-
-/* Current & Temperature monitors  */
-void Check_current_temp(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -193,8 +151,6 @@ uint32_t sdlTimeTick(){
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-
 /* USER CODE END 0 */
 
 /**
@@ -210,19 +166,14 @@ int main(void)
 
   /* MCU Configuration--------------------------------------------------------*/
 
+
+
+  /* USER CODE BEGIN Init */
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
   /* Configure the system clock */
   SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
@@ -233,9 +184,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_ADC1_Init();
-  /* USER CODE BEGIN 2 */
 
-  
   initDriver_UART();
   // uint8_t status = addDriver_UART(&huart2, UART4_IRQn, keep_new);
   // if (status != 0) {
@@ -243,7 +192,12 @@ int main(void)
   //   int len = snprintf(err, sizeof(err), "addDriver_UART failed: %d\r\n", status);
   //   HAL_UART_Transmit(&huart2, (uint8_t*)err, len, 100);
   // }
+  /* USER CODE END Init */
 
+  /* USER CODE BEGIN SysInit */
+  /* USER CODE END SysInit */
+
+  /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
   /* Initialize RTOS mutex and queues */
@@ -252,14 +206,12 @@ int main(void)
   /* Start RTOS scheduler */
   osKernelStart();
 
-  /* We should never get here as control is now taken by the scheduler */
+  /* EXECUTION MUST NEVER GET HERE: SCHEDULING IS UP TO THE OS KERNEL */
 
-  /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

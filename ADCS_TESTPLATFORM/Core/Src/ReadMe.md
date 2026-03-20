@@ -24,6 +24,8 @@ MX_FREERTOS_Init()
 
 Finally, it starts the RTOS scheduler, which takes control of the CPU, starts running tasks and switches between them. The while(1) loop in main() is empty because main() is not in charge, the scheduler is. Execution should never reach while(1) unless `osKernelStart()` fails or RTOS misconfigured. Using RTOS in place of a bare-metal loop allows real-time scheduling and task prioritization.
 
+# freertos.c
+
 # MTi1.c
 
 File MTi1.c contains functions used to initialize and read the Inertial Measurement Unit (IMU). When IMU_GROUND_CALIBRATION is defined, the estimated gyroscope bias is printed out. Gyroscope can only be calibrated when the system is stationary on the ground; it cannot be calibrated in orbit, as the system will be tumbling when it is turned on.

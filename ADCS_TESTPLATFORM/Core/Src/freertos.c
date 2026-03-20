@@ -49,7 +49,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void MX_FREERTOS_Init(void);
 /* USER CODE END FunctionPrototypes */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
@@ -97,6 +97,5 @@ void MX_FREERTOS_Init(void)
   OBC_CommTaskHandle          = osThreadCreate(osThread(OBC_CommTask), NULL);
   ControlAlgorithmTaskHandle  = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
 }
-
 
 /* USER CODE END Application */
