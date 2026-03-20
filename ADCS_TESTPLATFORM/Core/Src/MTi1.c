@@ -28,9 +28,9 @@ static uint8_t computeChecksum(imu_packet_struct * pckt){
 
 /* Function to send message from MCU to IMU */
 static void sendMsg(UART_HandleTypeDef* IMUhandle, imu_packet_struct * pckt){
-	if(pckt==NULL) return;
+	if (pckt == NULL) return;
 
-	uint8_t tmp=IMU_PREAMBLE;
+	uint8_t tmp = IMU_PREAMBLE;
 	sendDriver_UART(IMUhandle, &tmp, 1);
 	tmp=IMU_BID;
 	sendDriver_UART(IMUhandle, &tmp, 1);
@@ -243,6 +243,10 @@ uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle)
 		else if (retry == (IMU_CONFIG_RETRY - 1)) return 0;
 	}
 
+#ifdef IMU_GROUND_CALIBRATION
+	estimate_stationary_gyro_bias()
+#endif
+
 	return 1;
 }
 
@@ -300,3 +304,48 @@ uint8_t readIMUPacket(UART_HandleTypeDef* IMUhandle, float gyroscope[3], float m
 
 	return 0;
 }
+
+#ifdef IMU_GROUND_CALIBRATION
+/* Function used during initialization to estimate and remove gyroscope bias on the ground. ONLY USE WHEN SYSTEM STATIONARY ON THE GROUND. */
+static void static void estimate_stationary_gyro_bias()
+{
+	/* Let measurements stabilize */
+	HAL_Delay(500);
+
+	/* Average bias over N samples */
+	const uint32_t N = 1000;
+
+	/* Make sure bias is initialized to zero */
+	gyro_bias[0] = 0.0f;
+	gyro_bias[1] = 0.0f;
+	gyro_bias[2] = 0.0f;
+
+	/* Array to store IMU data (3 bytes per sensor) */
+	float gyro_data[3];
+	float mag_data[3];
+	float acc_data[3];
+
+	/* Read N data samples and accumulate gyroscope bias */
+	for (int i = 0; i < N; i++)
+	{
+		if (readIMUPacket(IMUhandle, gyro_data, mag_data, acc_data, 100))
+		{
+			gyro_bias[0] += gyro_data[0];
+			gyro_bias[1] += gyro_data[1];
+			gyro_bias[3] += gyro_data[3];
+		}
+		else
+		{
+			i--;	// retry if packet failed
+		}
+	}
+
+	/* Compute the average of the biases over N samples */
+	gyro_bias[0] =/ N;
+	gyro_bias[1] =/ N;
+	gyro_bias[2] =/ N;
+
+	/* Print the bias so you can store it */
+	printf("Gyro bias: %f \t %f \t %f\n", gyro_bias[0], gyro_bias[1], gyro_bias[2]);
+}
+#endif

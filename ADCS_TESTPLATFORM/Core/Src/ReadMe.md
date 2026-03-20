@@ -1,0 +1,1 @@
+File Mti.c contains functions used to initialize and read the Inertial Measurement Unit (IMU). When IMU_GROUND_CALIBRATION is defined, the estimated gyroscope bias is printed out. Gyroscope can only be calibrated when the system is stationary on the ground; it cannot be calibrated in space, as the system will be tumbling when it is turned on.

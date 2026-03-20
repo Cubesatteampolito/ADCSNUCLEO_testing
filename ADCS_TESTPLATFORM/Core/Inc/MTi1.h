@@ -16,6 +16,8 @@
 #ifndef MTI1_H
 #define MTI1_H
 
+#define IMU_GROUND_CALIBRATION	// undefine only for ground calibration, not flight calibration
+
 #include <stdint.h>
 #include <stddef.h>
 #include "frameUtils.h"
@@ -31,29 +33,33 @@
 #define IMU_CONFIG_RETRY 2 //number of times configuration commands will be sent if ack is not received
 
 /* Definition of Message IDs (MID) - find them in chapter 5.3 of the Communication Protocol PDF */
-#define IMU_GOTO_CONFIG_MID			0x30	// GoToConfig: 			switch device state from measurement to configuration (MCU -> IMU)
-#define IMU_GOTO_CONFIG_ACK_MID		0x31	// GoToConfigAck:	(IMU -> MCU)
-#define IMU_GOTO_MEAS_MID 			0x10	// GoToMeasurement: 	switch device state from configuration to measurement (MCU -> IMU)
-#define IMU_GOTO_MEAS_ACK_MID		0x11	// GoToMeasurementAck:	(IMU -> MCU)
+#define IMU_GOTO_CONFIG_MID			0x30	// GoToConfig: switch device state from measurement to configuration (MCU -> IMU)
+#define IMU_GOTO_CONFIG_ACK_MID		0x31	// GoToConfigAck: (IMU -> MCU)
+#define IMU_GOTO_MEAS_MID 			0x10	// GoToMeasurement: switch device state from configuration to measurement (MCU -> IMU)
+#define IMU_GOTO_MEAS_ACK_MID		0x11	// GoToMeasurementAck: (IMU -> MCU)
 #define IMU_SET_OCONFIG_MID 		0xC0	// SetOutputConfiguration: request the output configuration of the device
 #define IMU_SET_OCONFIG_ACK_MID		0xC1	// SetOutputConfigurationAck
 #define IMU_DATA_PACKET_MID 		0x36	// MTData2: MID that specifies that packet contains measurement data (IMU -> MCU)
 
 /* Definitions of DATA lengths (when DATA field is not null) */
-#define IMU_SET_OCONFIG_LEN 		sizeof(outputConfigData)		// specifies how many byte are in the data payload
+#define IMU_SET_OCONFIG_LEN 		sizeof(outputConfigData)		// specifies how many bytes are in the data payload
 #define IMU_SET_OCONFIG_ACK_LEN 	sizeof(outputConfigAckData)
 #define IMU_DATA_PACKET_LEN			45								// total packet length (12 bytes/sensor * 3 sensors) = 36 measurement bytes) + overhead
 
-/* Data definitions MCU -> IMU (don't be tempted to collect the Quaternion directly, as you need to combine IMU data with other sensors to get the right attitude quaternion) */
- 
-#define IMU_OUTPUT_CONFIG 		0x80, 0x20, 0x04, 0x80, 	\ 	// Gyroscope: 0x8020,
-								0xC0, 0x20, 0x04, 0x80, 	\ 	// Magnetometer: 0xC020,
-								0x40, 0x20, 0x04, 0x80 			// Accelerometer: 0x4020,
+/* What data to output and how (MCU -> IMU) (don't be tempted to collect the Quaternion directly, as you need to combine IMU data with other sensors to get the right attitude quaternion).
+*  Gyroscope: 		0x8020
+*  Magnetometer:	0xC020
+*  Accelerometer:	0x4020
+*  Sampling period: 0x0480 (100 Hz)
+*/
+#define IMU_OUTPUT_CONFIG 		0x80, 0x20, 0x04, 0x80,		\ 	
+								0xC0, 0x20, 0x04, 0x80,		\
+								0x40, 0x20, 0x04, 0x80 			
 
 /* Data definitions IMU -> MCU */
-#define IMU_OUTPUT_CONFIG_ACK 	0x80, 0x20, 0x04, 0x80, /* Rate of turn */ \
-								0xC0, 0x20, 0x04, 0x80, /* Magnetic Field */\
-								0x40, 0x20, 0x04, 0x80 /*Accelerometer data*/
+#define IMU_OUTPUT_CONFIG_ACK 	0x80, 0x20, 0x04, 0x80,		\
+								0xC0, 0x20, 0x04, 0x80,		\
+								0x40, 0x20, 0x04, 0x80 
 
 /* Offsets for sensor data within the DATA packet */
 #define IMU_DATA_GYRO_INDEX	3	//starting index (inside data) for gyroscope data
@@ -67,6 +73,9 @@ typedef struct
 	uint8_t  len;
 	uint8_t *data;
 } imu_packet_struct;
+
+/* Array used to store gyroscope bias */
+float gyro_bias[3] = {0.0f, 0.0f, 0.0f};
 
 /* Function to compute checksum of IMU packet */
 static uint8_t computeChecksum(imu_packet_struct * pckt);
@@ -93,3 +102,7 @@ void writeIMUDataArray(uint8_t* frame, uint32_t* data, uint32_t dataSize)
 /* Function to extract sensor data from IMU communications */
 uint8_t readIMUPacket(UART_HandleTypeDef* IMUhandle, float gyroscope[3], float magnetometer[3], float accelerometer[3] ,uint32_t timeout);
 
+#ifdef IMU_GROUND_CALIBRATION
+/* Function used during STATIONARY GROUND initialization to estimate and remove gyroscope bias on the ground. ONLY USE WHEN SYSTEM STATIONARY ON THE GROUND. */
+static void estimate_stationary_gyro_bias();
+#endif
