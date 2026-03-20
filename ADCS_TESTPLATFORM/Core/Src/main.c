@@ -246,86 +246,10 @@ int main(void)
 
   /* USER CODE END 2 */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
-	configASSERT(IMURead_ControlMutex);
-	xSemaphoreGive(IMURead_ControlMutex);
-  /* USER CODE END RTOS_MUTEX */
+  /* Initialize RTOS mutex and queues */
+  MX_FREERTOS_Init();
 
-  /* Create the semaphores(s) */
-  // /* definition and creation of IMURead_ControlMutex */
-  // osSemaphoreStaticDef(IMURead_ControlMutex, &xIMURead_ControlMutexBuffer);
-  // IMURead_ControlMutexHandle = osSemaphoreCreate(osSemaphore(IMURead_ControlMutex), 1);
-
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  // /* Create the queue(s) */
-  // /* definition and creation of IMUQueue1 */
-  // osMessageQStaticDef(IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
-  // IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
-
-  // /* definition and creation of IMUQueue2 */
-  // osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-  // IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
-
-  // /* definition and creation of ADCSHouseKeepingQueue */
-  // osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
-  // ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* definition and creation of IMUQueue1 */
-	osMessageQStaticDef(IMUQueue1, 512, uint32_t,IMUQueue1Buffer, &IMUQueue1ControlBlock);
-	IMUQueue1Handle = osMessageCreate(osMessageQ(IMUQueue1), NULL);
-  /* definition and creation of IMUQueue2 */
-	osMessageQStaticDef(IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
-	IMUQueue2Handle = osMessageCreate(osMessageQ(IMUQueue2), NULL);
-  /* definition and creation of ADCSHouseKeepingQueue */
-	osMessageQStaticDef(ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
-	ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
-  /* definition and creation of FirstCheckTask */
-  osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, stack_size, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
-  FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
-  /* definition and creation of IMUTask */
-  osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
-  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
-  /* definition and creation of OBC_CommTask */
-  osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
-  /* definition and creation of ControlAlgorithmTask */
-  osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0,stack_size, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
-	ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* definition and creation of IMUTask */
-  // osThreadStaticDef(IMUTask, IMU_Task, osPriorityNormal, 0, 4096, IMUTaskBuffer, &IMUTaskControlBlock);
-  // IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
-
-  // /* definition and creation of OBC_CommTask */
-  // osThreadStaticDef(OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, 16384, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  // OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
-
-  // /* definition and creation of ControlAlgorithmTask */
-  // osThreadStaticDef(ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, 4096, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
-  // ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
-
-  // /* definition and creation of FirstCheckTask */
-  // osThreadStaticDef(FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, 4096, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
-  // FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
-
-  /* Start scheduler */
+  /* Start RTOS scheduler */
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */

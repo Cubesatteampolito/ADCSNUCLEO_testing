@@ -19,10 +19,7 @@ initDriver_UART();
 It also creates RTOS objects (mutex, queues) and threads (First Check, IMU Task, OBC Communication Task, Control Algorithm Task):
 
 ```
-FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
-IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
-OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
-ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
+MX_FREERTOS_Init()
 ```
 
 Finally, it starts the RTOS scheduler, which takes control of the CPU, starts running tasks and switches between them. The while(1) loop in main() is empty because main() is not in charge, the scheduler is. Execution should never reach while(1) unless `osKernelStart()` fails or RTOS misconfigured. Using RTOS in place of a bare-metal loop allows real-time scheduling and task prioritization.

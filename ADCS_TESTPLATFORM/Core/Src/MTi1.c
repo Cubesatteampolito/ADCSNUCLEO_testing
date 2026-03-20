@@ -244,7 +244,7 @@ uint8_t initIMUConfig(UART_HandleTypeDef* IMUhandle)
 	}
 
 #ifdef IMU_GROUND_CALIBRATION
-	estimate_stationary_gyro_bias()
+	estimate_stationary_gyro_bias();
 #endif
 
 	return 1;

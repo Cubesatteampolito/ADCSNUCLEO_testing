@@ -71,4 +71,32 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 
+/* Function to initialize FreeRTOS */
+void MX_FREERTOS_Init(void)
+{
+  /* Create Mutex and Semaphore */
+  IMURead_ControlMutex = xSemaphoreCreateMutexStatic(&xIMURead_ControlMutexBuffer);
+  configASSERT(IMURead_ControlMutex);
+  xSemaphoreGive(IMURead_ControlMutex);
+
+  /* Create RTOS QUEUES: IMU1, IMU2 and housekeeping */
+  osMessageQStaticDef (IMUQueue1, 512, uint32_t, IMUQueue1Buffer, &IMUQueue1ControlBlock);
+  osMessageQStaticDef (IMUQueue2, 512, uint32_t, IMUQueue2Buffer, &IMUQueue2ControlBlock);
+  osMessageQStaticDef (ADCSHouseKeepingQueue, 512, uint32_t, ADCSHouseKeepingQueueBuffer, &ADCSHouseKeepingQueueControlBlock);
+  IMUQueue1Handle             = osMessageCreate(osMessageQ(IMUQueue1), NULL);
+  IMUQueue2Handle             = osMessageCreate(osMessageQ(IMUQueue2), NULL);
+  ADCSHouseKeepingQueueHandle = osMessageCreate(osMessageQ(ADCSHouseKeepingQueue), NULL);
+  
+  /* Create RTOS threads: FirstCheckTask, IMUTask, OBC_CommTask, ControlAlgorithmTask */
+  osThreadStaticDef (FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, stack_size, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
+  osThreadStaticDef (IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
+  osThreadStaticDef (OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  osThreadStaticDef (ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0,stack_size, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
+  FirstCheckTaskHandle        = osThreadCreate(osThread(FirstCheckTask), NULL);
+  IMUTaskHandle               = osThreadCreate(osThread(IMUTask), NULL);
+  OBC_CommTaskHandle          = osThreadCreate(osThread(OBC_CommTask), NULL);
+  ControlAlgorithmTaskHandle  = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
+}
+
+
 /* USER CODE END Application */
