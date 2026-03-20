@@ -1,6 +1,6 @@
 # main.c
 
-File main.c, within main(), there are all hardware initialization functions (GPIO, UART4, USART1, USART2, timers TIM1, TIM2, TIM3, ADC),
+File main.c, within main(), contains all hardware initialization functions (GPIO, UART4, USART1, USART2, timers TIM1, TIM2, TIM3, ADC):
 
 ```
 Hal_init()
@@ -16,7 +16,7 @@ MX_ADC1_Init();
 initDriver_UART();
 ```
 
-it creates RTOS objects (mutex, queues) and threads (First Check, IMU Task, OBC Communication Task, Control Algorithm Task),
+It also creates RTOS objects (mutex, queues) and threads (First Check, IMU Task, OBC Communication Task, Control Algorithm Task):
 
 ```
 FirstCheckTaskHandle = osThreadCreate(osThread(FirstCheckTask), NULL);
@@ -24,6 +24,8 @@ IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 OBC_CommTaskHandle = osThreadCreate(osThread(OBC_CommTask), NULL);
 ControlAlgorithmTaskHandle = osThreadCreate(osThread(ControlAlgorithmTask), NULL);
 ```
+
+Finally, it starts the RTOS scheduler, which takes control of the CPU, starts running tasks and switches between them. The while(1) loop in main() is empty because main() is not in charge, the scheduler is. Execution should never reach while(1) unless `osKernelStart()` fails or RTOS misconfigured. Using RTOS in place of a bare-metal loop allows real-time scheduling and task prioritization.
 
 # MTi1.c
 
