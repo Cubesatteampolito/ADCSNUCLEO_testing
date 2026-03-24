@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "FreeRTOS.h"
+#include "freertos.h"
 #include "task.h"
 #include "main.h"
 
@@ -89,9 +89,9 @@ void MX_FREERTOS_Init(void)
   
   /* Create RTOS threads: FirstCheckTask, IMUTask, OBC_CommTask, ControlAlgorithmTask */
   osThreadStaticDef (FirstCheckTask, Check_current_temp, osPriorityAboveNormal, 0, stack_size, FirstCheckTaskBuffer, &FirstCheckTaskControlBlock);
-  osThreadStaticDef (IMUTask, IMU_Task, osPriorityNormal, 0,stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
-  osThreadStaticDef (OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0,stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
-  osThreadStaticDef (ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0,stack_size, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
+  osThreadStaticDef (IMUTask, IMU_Task, osPriorityNormal, 0, stack_size, IMUTaskBuffer, &IMUTaskControlBlock);
+  osThreadStaticDef (OBC_CommTask, OBC_Comm_Task, osPriorityAboveNormal, 0, stack_size1, OBC_CommTaskBuffer, &OBC_CommTaskControlBlock);
+  osThreadStaticDef (ControlAlgorithmTask, Control_Algorithm_Task, osPriorityNormal, 0, stack_size, ControlAlgorithmTaskBuffer, &ControlAlgorithmTaskControlBlock);
   FirstCheckTaskHandle        = osThreadCreate(osThread(FirstCheckTask), NULL);
   IMUTaskHandle               = osThreadCreate(osThread(IMUTask), NULL);
   OBC_CommTaskHandle          = osThreadCreate(osThread(OBC_CommTask), NULL);

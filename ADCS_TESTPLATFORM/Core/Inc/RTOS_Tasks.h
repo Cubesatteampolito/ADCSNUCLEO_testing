@@ -1,4 +1,5 @@
-/* Defining Tasks related variables */ osThreadId IMUTaskHandle; 
+/* Defining Task related variables */ 
+osThreadId IMUTaskHandle; 
 uint32_t IMUTaskBuffer[stack_size]; 
 // 4096 osStaticThreadDef_t IMUTaskControlBlock; 
 osThreadId OBC_CommTaskHandle; 
@@ -21,8 +22,6 @@ osStaticMessageQDef_t IMUQueue2ControlBlock;
 osMessageQId IMUQueue1Handle; 
 uint8_t IMUQueue1Buffer[ 256 * sizeof(imu_queue_struct)]; 
 osStaticMessageQDef_t IMUQueue1ControlBlock; 
-
-
 
 /* Readings from IMU */ 
 void IMU_Task(void const * argument); 

@@ -26,6 +26,12 @@ Finally, it starts the RTOS scheduler, which takes control of the CPU, starts ru
 
 # freertos.c
 
+File freertos.c contains the freeRTOS initialization function used to create mutexes and semaphores, 3 queues (IMU1, IMU2 and housekeeping) and 4 threads (first check task, IMU task, OBC communication task and Control task).
+
+# RTOS_Tasks.c
+
+File RTOS_Tasks.c contains the function definitions for all tasks.
+
 # MTi1.c
 
 File MTi1.c contains functions used to initialize and read the Inertial Measurement Unit (IMU). When IMU_GROUND_CALIBRATION is defined, the estimated gyroscope bias is printed out. Gyroscope can only be calibrated when the system is stationary on the ground; it cannot be calibrated in orbit, as the system will be tumbling when it is turned on.
