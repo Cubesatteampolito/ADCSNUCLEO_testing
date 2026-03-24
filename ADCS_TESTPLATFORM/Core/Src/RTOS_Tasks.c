@@ -1,3 +1,6 @@
+#include RTOS_Task.h
+
+
 /* USER CODE BEGIN Header_IMU_Task */
 /**
   * @brief  Function implementing the IMUTask thread.
@@ -51,6 +54,7 @@ void IMU_Task(void const * argument)
 
 	imu_queue_struct *local_imu_struct =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 
+	/* Infinite loop that runs forever under RTOS scheduling */
 	for(;;)
 	{
 
@@ -60,14 +64,16 @@ void IMU_Task(void const * argument)
     * from CubeMx.
     */
 
-		ret=readIMUPacket(&huart4, gyro, mag, acc, 500); //mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
-		mag[0]/=10000; //1G = 10^-4 Tesla
-		mag[1]/=10000; //1G = 10^-4 Tesla
-		mag[2]/=10000; //1G = 10^-4 Tesla
-		if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t)10) == pdTRUE)//If reading IMU DO NOT CONTROL
+		ret = readIMUPacket(&huart4, gyro, mag, acc, 500); // mag measured in Gauss(G) unit -> 1G = 10^-4 Tesla
+		mag[0] /= 10000; //1G = 10^-4 Tesla
+		mag[1] /= 10000; //1G = 10^-4 Tesla
+		mag[2] /= 10000; //1G = 10^-4 Tesla
+
+		/* Mutex protection: while reading the IMU, the control task must not interfere */
+		if (xSemaphoreTake(IMURead_ControlMutex, (TickType_t) 10) == pdTRUE) //If reading IMU DO NOT CONTROL
 		{
 			// printf("IMU Task : Taken IMURead_Control control\r\n");
-			ret=readIMUPacket(&huart4, gyro, mag, acc, 500);
+			ret = readIMUPacket(&huart4, gyro, mag, acc, 500);
 			xSemaphoreGive(IMURead_ControlMutex);
 			// printf("IMU Task : Released IMURead_Control control\r\n");
 		}

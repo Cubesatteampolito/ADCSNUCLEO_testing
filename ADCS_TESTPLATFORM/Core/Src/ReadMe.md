@@ -34,7 +34,17 @@ It also contains the freeRTOS initialization function MX_FREERTOS_Init() used to
 
 File RTOS_Tasks.c contains the function definitions for all tasks.
 
-## MTi1.c
+## IMU_Task()
+
+This task acquires sensor data, packages it and sends it to the rest of the system.
+
+## OBC_Comm_Task()
+
+## Control_Algorithm_Task()
+
+## Check_current_temp()
+
+# MTi1.c
 
 File MTi1.c contains functions used to initialize and read the Inertial Measurement Unit (IMU). When IMU_GROUND_CALIBRATION is defined, the estimated gyroscope bias is printed out. Gyroscope can only be calibrated when the system is stationary on the ground; it cannot be calibrated in orbit, as the system will be tumbling when it is turned on.
 
