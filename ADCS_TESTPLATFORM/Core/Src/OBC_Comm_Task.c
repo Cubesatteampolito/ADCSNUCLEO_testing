@@ -1,14 +1,12 @@
 #include "RTOS_Tasks.h"
 
-/* USER CODE BEGIN Header_OBC_Comm_Task */
-/**
-* @brief Function implementing the OBC_CommTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_OBC_Comm_Task */
+/* RTOS thread (task) responsible for handling communication between the Attitude Determination and Control System (ADCS) and the On-Board Computer (OBC).
+ * It collects data from queues, packages telemetry and sends it over UART using a serial protocol (SDL). 
+ */
+
 void OBC_Comm_Task(void const * argument)
 {
+    /* THREAD INITIALIZATION */
   /* USER CODE BEGIN OBC_Comm_Task */
     //initDriver_UART();
   //UART1 = for OBC communication
