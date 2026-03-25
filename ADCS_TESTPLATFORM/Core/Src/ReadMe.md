@@ -30,15 +30,15 @@ File freertos.c contains the OS variable definitions
 
 It also contains the freeRTOS initialization function MX_FREERTOS_Init() used to create mutexes and semaphores, 3 queues (IMU1, IMU2 and housekeeping) and 4 threads (first check task, IMU task, OBC communication task and Control task).
 
-# RTOS_Tasks.c
-
-File RTOS_Tasks.c contains the function definitions for all tasks.
+# RTOS TASKS
 
 ## IMU_Task()
 
 This task acquires sensor data, packages it and sends it to the rest of the system.
 
 ## OBC_Comm_Task()
+
+This file implements an RTOS task that manages communication between the ADCS and the OBC. It initializes the UART interface and a serial communication later, then continuously runs in a loop where it waits for incoming data from internal queues (housekeeping and IMU), processes that data into telemetry packets, and prepares them with identifiers and timestamps. It also periodically creates a message containing the current operating mode of the ADCS.
 
 ## Control_Algorithm_Task()
 
