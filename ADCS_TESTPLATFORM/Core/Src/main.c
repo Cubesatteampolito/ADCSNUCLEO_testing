@@ -1216,35 +1216,38 @@ void Control_Algorithm_Task(void const * argument)
 			printf("Magnetic Dipole Moment axis %d, value %f \r\n", i, m_con[i]);
 			// printf("Duty Cycle axis %d, value %f \r\n", i, duty_cycle[i]);
 			// printf("Direction axis %d, value %d \r\n", i, direction[i]);
+      
 		#endif
 		}
 
 		count++;
+    
 
 		for (int i = 0; i < 3; i++) {
-		// clamp and optional lower threshold during bring-up
-			if (duty_cycle[i] < 0.0f) duty_cycle[i] = 0.0f;
-			if (duty_cycle[i] > 100.0f) duty_cycle[i] = 100.0f;
+		// // clamp and optional lower threshold during bring-up
+		// 	if (duty_cycle[i] < 0.0f) duty_cycle[i] = 0.0f;
+		// 	if (duty_cycle[i] > 100.0f) duty_cycle[i] = 100.0f;
 
-			update_duty_dir(coils[i], duty_cycle[i], direction[i]);  // first update the duty cycle
-			if (duty_cycle[i] > 20.0f) {
-				if (!active[i]) {
-					#if ( DEBUG_MSGS_CONTROL )
-						printf("Coil %d started with direction %d\r\n", i, direction[i]);
-					#endif
-					//actuator_START(coils[i]);              // start once per axis
-					active[i] = 1;
-				}
-			} else {
-				if (active[i]) {
-					#if ( DEBUG_MSGS_CONTROL )
-						printf("Coil %d stopped\r\n", i);
-					#endif
-					//actuator_STOP(co                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ils[i]);               // stop only if previously active
-					active[i] = 0;
-				}
-			}
-		}
+		// 	update_duty_dir(coils[i], duty_cycle[i], direction[i]);  // first update the duty cycle
+		// 	if (duty_cycle[i] > 20.0f) {
+		// 		if (!active[i]) {
+		// 			#if ( DEBUG_MSGS_CONTROL )
+		// 				printf("Coil %d started with direction %d\r\n", i, direction[i]);
+		// 			#endif
+		// 			//actuator_START(coils[i]);              // start once per axis
+		// 			active[i] = 1;
+		// 		}
+		// 	} else {
+		// 		if (active[i]) {
+		// 			#if ( DEBUG_MSGS_CONTROL )
+		// 				printf("Coil %d stopped\r\n", i);
+		// 			#endif
+		// 			//actuator_STOP(co                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ils[i]);               // stop only if previously active
+		// 			active[i] = 0;
+		// 		}
+		// 	}
+     actuator_START(coils[0]);              
+		 }
 
 
 			//X Magnetorquer
