@@ -1162,7 +1162,7 @@ void Control_Algorithm_Task(void const * argument)
 
 		imu_queue_struct *local_imu_struct1 =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
 		//Inizialize actuators struct
-		init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
+		init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,80); //100 khz
 		init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
 		init_actuator_handler(&MagneTorquer1,&htim3,TIM_CHANNEL_1,TIM_CHANNEL_2,89000,50); //89 khz //this measured 10khz, idkwhy
 		// init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
