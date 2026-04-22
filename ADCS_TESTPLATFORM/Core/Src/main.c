@@ -1179,10 +1179,14 @@ void Control_Algorithm_Task(void const * argument)
   //12332
   //Inizialize PID struct
   PID_INIT(&PID_Inputs);
-
+  int test_counter=0;
+  if (test_counter == 0) {
   actuator_START(coils[0]);
   active[0] = 1;
   vTaskDelay(pdMS_TO_TICKS(60000));
+  test_counter++;
+  }
+
 
 	/* Infinite loop */
 	for(;;)
