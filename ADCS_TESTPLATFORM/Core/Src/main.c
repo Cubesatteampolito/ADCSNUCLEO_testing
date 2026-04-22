@@ -967,23 +967,23 @@ void IMU_Task(void const * argument)
         // printf("Dipole Moment: %f %f %f \r\n", m_con[0], m_con[1], m_con[2]);
         // T = m x B
         /* BDOT FINISHED */
-				//Invio queue a Control Task ****
-			 	// if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
-			  //   	//printf("Invio a Control Task fallito \r\n");
-			  //      	free(local_imu_struct); // Ensure the receiving task has time to process
-				// } else {
-			  //       // printf("Dati Inviati a Control Task \r\n");
-
-			 	// }
-
-        // Testing the timeout** 
-        if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
+				// Invio queue a Control Task ****
+			 	if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
 			    	//printf("Invio a Control Task fallito \r\n");
-			       	// free(local_imu_struct); // Ensure the receiving task has time to process
+			       	free(local_imu_struct); // Ensure the receiving task has time to process
 				} else {
 			        // printf("Dati Inviati a Control Task \r\n");
 
 			 	}
+
+        // Testing the timeout** 
+        // if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
+			  //   	//printf("Invio a Control Task fallito \r\n");
+			  //      	// free(local_imu_struct); // Ensure the receiving task has time to process
+				// } else {
+			  //       // printf("Dati Inviati a Control Task \r\n");
+
+			 	// }
 			 	//Invio queue a OBC Task
 			 	if (osMessagePut(IMUQueue2Handle,(uint32_t)local_imu_struct,300) != osOK) {
 			    	//printf("Invio a OBC Task fallito \r\n");
@@ -1195,7 +1195,7 @@ void Control_Algorithm_Task(void const * argument)
     if (test_counter == 0) {
       // actuator_START(coils[0]);
       printf("Starting delay\r\n");
-      osDelay(10000);
+      osDelay(100);
       // 
       // vTaskDelay(pdMS_TO_TICKS(10000));
       printf("delay ended\r\n");
