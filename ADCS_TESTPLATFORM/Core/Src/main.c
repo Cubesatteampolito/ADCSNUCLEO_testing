@@ -979,7 +979,7 @@ void IMU_Task(void const * argument)
         // Testing the timeout** 
         if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
 			    	//printf("Invio a Control Task fallito \r\n");
-			       	free(local_imu_struct); // Ensure the receiving task has time to process
+			       	// free(local_imu_struct); // Ensure the receiving task has time to process
 				} else {
 			        // printf("Dati Inviati a Control Task \r\n");
 
@@ -1325,7 +1325,7 @@ void Control_Algorithm_Task(void const * argument)
 		//   printf("Control Task : Released IMURead_ControlMutex control \r\n");
 		}
 		}
-		free(local_imu_struct1);   // TODO must be checked
+		// free(local_imu_struct1);   // TODO must be checked
 		osDelay(2000);
 	}
 	/* USER CODE END Control_Algorithm_Task */
