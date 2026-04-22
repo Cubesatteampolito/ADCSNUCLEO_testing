@@ -1253,7 +1253,7 @@ void Control_Algorithm_Task(void const * argument)
               printf("Coil %d started with direction %d\r\n", i, direction[i]);
             #endif
             // update the i-th duty cycle and dir based on BDOT output
-            update_duty_dir(coils[i],PID_Inputs.th_Dutycycle[i],direction[i]);
+            update_duty_dir(coils[i], duty_cycle[i], direction[i]);
             actuator_START(coils[i]);              // start once per axis
             active[i] = 1;
           }
