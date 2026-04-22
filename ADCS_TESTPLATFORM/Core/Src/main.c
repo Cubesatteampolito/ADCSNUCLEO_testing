@@ -1137,8 +1137,8 @@ void Control_Algorithm_Task(void const * argument)
 
 
 	float gyro[3]={1,2,3};
-		float mag[3]={4,5,6};
-		float acc[3] = {7,8,9};
+	float mag[3]={4,5,6};
+	float acc[3] = {7,8,9};
 	float m_con[3] = {0,0,0};
 
   //tune bdot gain instead of tuning the physical values 
@@ -1204,7 +1204,8 @@ void Control_Algorithm_Task(void const * argument)
 			printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
 		#endif
 		}
-			// ALGORITHM
+		
+    // ALGORITHM
 		compute_mcon(mag, gyro, k, m_con);  // Compute angular momentum
 		compute_duty_cycle(m_con, coil_turn, coil_area, re_coil, VDD_coil, duty_cycle, direction); 
 
@@ -1220,33 +1221,37 @@ void Control_Algorithm_Task(void const * argument)
 		#endif
 		}
 
-		count++;
+		// not required anymore
+    count++;
     
-
 		for (int i = 0; i < 3; i++) {
-		// // clamp and optional lower threshold during bring-up
-		// 	if (duty_cycle[i] < 0.0f) duty_cycle[i] = 0.0f;
-		// 	if (duty_cycle[i] > 100.0f) duty_cycle[i] = 100.0f;
+      // clamp and optional lower threshold during bring-up
+        if (duty_cycle[i] < 0.0f) duty_cycle[i] = 0.0f;
+        if (duty_cycle[i] > 100.0f) duty_cycle[i] = 100.0f;
 
-		// 	update_duty_dir(coils[i], duty_cycle[i], direction[i]);  // first update the duty cycle
-		// 	if (duty_cycle[i] > 20.0f) {
-		// 		if (!active[i]) {
-		// 			#if ( DEBUG_MSGS_CONTROL )
-		// 				printf("Coil %d started with direction %d\r\n", i, direction[i]);
-		// 			#endif
-		// 			//actuator_START(coils[i]);              // start once per axis
-		// 			active[i] = 1;
-		// 		}
-		// 	} else {
-		// 		if (active[i]) {
-		// 			#if ( DEBUG_MSGS_CONTROL )
-		// 				printf("Coil %d stopped\r\n", i);
-		// 			#endif
-		// 			//actuator_STOP(co                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ils[i]);               // stop only if previously active
-		// 			active[i] = 0;
-		// 		}
-		// 	}
-     actuator_START(coils[0]);              
+      // 	update_duty_dir(coils[i], duty_cycle[i], direction[i]);  // first update the duty cycle
+        if (duty_cycle[i] > 20.0f) {
+          if (!active[i]) {
+            #if ( DEBUG_MSGS_CONTROL )
+              printf("Coil %d started with direction %d\r\n", i, direction[i]);
+            #endif
+            // update the i-th duty cycle and dir based on BDOT output
+            update_duty_dir(coils[i],PID_Inputs.th_Dutycycle[i],direction[i]);
+            actuator_START(coils[i]);              // start once per axis
+            active[i] = 1;
+          }
+        } else {
+          if (active[i]) {
+            #if ( DEBUG_MSGS_CONTROL )
+              printf("Coil %d stopped\r\n", i);
+            #endif
+            // Stop it
+            actuator_STOP(coils[i]);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ils[i]);               // stop only if previously active
+            active[i] = 0;
+          }
+        }
+        // just for debugging
+        //actuator_START(coils[0]);              
 		 }
 
 

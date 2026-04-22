@@ -4,7 +4,7 @@
 #define INC_CONSTANTS_H_
 
 #define DEBUG_MSGS 0           // Enable/Disable debug messages via printf (1/0)
-#define DEBUG_MSGS_CONTROL 1    /* Debug MSGS for Control Algorithm */
+#define DEBUG_MSGS_CONTROL 0    /* Debug MSGS for Control Algorithm */
 
 
 #define POWER_SUPPLY 12         // Volt
