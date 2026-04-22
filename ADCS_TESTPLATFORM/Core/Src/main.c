@@ -1186,19 +1186,19 @@ void Control_Algorithm_Task(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{ 
-    // printf("i am alive\r\n");
-    // if (test_counter == 0) {
-    //   actuator_START(coils[0]);
-    //   // printf("Starting delay\r\n");
-    //   osDelay(2000);
-    //   // 
-    //   vTaskDelay(pdMS_TO_TICKS(10000));
-    //   printf("delay ended\r\n");
-    //   // actuator_STOP(coils[0]);
-    //   active[0] = 0;
-    //   test_counter++;
-    // }
-		//printf("We are in Control Algorithm TASK \r\n");
+    printf("i am alive\r\n");
+    if (test_counter == 0) {
+      // actuator_START(coils[0]);
+      // printf("Starting delay\r\n");
+      osDelay(2000);
+      // 
+      vTaskDelay(pdMS_TO_TICKS(10000));
+      printf("delay ended\r\n");
+      // actuator_STOP(coils[0]);
+      active[0] = 0;
+      test_counter++;
+    }
+		printf("We are in Control Algorithm TASK \r\n");
 		#if ( DEBUG_MSGS_CONTROL == 1 )
 			//printf("We are in Control Algorithm TASK \r\n");
 		#endif
@@ -1210,6 +1210,10 @@ void Control_Algorithm_Task(void const * argument)
 		// the reason why i commented the above is that there is no task sending to that queue therefore its technically useless
 
 			retvalue = osMessageGet(IMUQueue1Handle, 300);
+
+      #if( DEBUG_MSGS_CONTROL )
+      printf("Return value from IMU Queue: %d \r\n", retvalue.status);
+      #endif
 			processCombinedData((void*)&retvalue,(void *)&local_imu_struct1,receive_IMUqueue_control);
 		//algorithm
 		#if( DEBUG_MSGS_CONTROL )
