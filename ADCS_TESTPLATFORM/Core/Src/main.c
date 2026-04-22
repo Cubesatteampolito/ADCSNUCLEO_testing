@@ -1193,6 +1193,7 @@ void Control_Algorithm_Task(void const * argument)
       vTaskDelay(pdMS_TO_TICKS(10000));
       printf("delay ended\r\n");
       actuator_STOP(coils[0]);
+      active[0] = 0;
       test_counter++;
     }
 		//printf("We are in Control Algorithm TASK \r\n");
