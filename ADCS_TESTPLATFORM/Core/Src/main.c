@@ -1180,20 +1180,21 @@ void Control_Algorithm_Task(void const * argument)
   //Inizialize PID struct
   PID_INIT(&PID_Inputs);
   int test_counter=0;
-  printf("i am alive\r\r");
-  if (test_counter == 0) {
-    actuator_START(coils[0]);
-    active[0] = 1;
-    printf("Starting delay\r\n");
-    vTaskDelay(pdMS_TO_TICKS(60000));
-    printf("delay ended\r\n");
-    test_counter++;
-  }
+  
 
 
 	/* Infinite loop */
 	for(;;)
-	{
+	{ 
+    printf("i am alive\r\r");
+    if (test_counter == 0) {
+      actuator_START(coils[0]);
+      active[0] = 1;
+      printf("Starting delay\r\n");
+      vTaskDelay(pdMS_TO_TICKS(60000));
+      printf("delay ended\r\n");
+      test_counter++;
+    }
 		//printf("We are in Control Algorithm TASK \r\n");
 		#if ( DEBUG_MSGS_CONTROL == 1 )
 			//printf("We are in Control Algorithm TASK \r\n");
