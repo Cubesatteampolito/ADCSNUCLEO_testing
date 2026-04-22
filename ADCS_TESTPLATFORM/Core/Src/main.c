@@ -1181,6 +1181,7 @@ void Control_Algorithm_Task(void const * argument)
   PID_INIT(&PID_Inputs);
 
   actuator_START(coils[0]);
+  active[0] = 1;
   vTaskDelay(pdMS_TO_TICKS(60000));
 
 	/* Infinite loop */
