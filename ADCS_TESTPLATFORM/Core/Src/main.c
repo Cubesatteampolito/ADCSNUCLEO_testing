@@ -1201,7 +1201,7 @@ void Control_Algorithm_Task(void const * argument)
     if (test_counter == 0) {
       // actuator_START(coils[0]);
       printf("Starting delay\r\n");
-      osDelay(100);
+      osDelay(2000);
       // 
       // vTaskDelay(pdMS_TO_TICKS(10000));
       printf("delay ended\r\n");
