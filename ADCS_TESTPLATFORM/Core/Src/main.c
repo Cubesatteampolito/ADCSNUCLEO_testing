@@ -1224,11 +1224,8 @@ void Control_Algorithm_Task(void const * argument)
 			  // printf("IMUQueue1Handle: %p\r\n", IMUQueue1Handle);
 		  // #endif
 			retvalue = osMessageGet(IMUQueue1Handle, 300);
-
-      #if( DEBUG_MSGS_CONTROL )
-      printf("Return value from IMU Queue: %d \r\n", retvalue.status);
-      #endif
 			processCombinedData((void*)&retvalue,(void *)&local_imu_struct1,receive_IMUqueue_control);
+      
 		//algorithm
 		#if( DEBUG_MSGS_CONTROL )
 		printf("\r\n\r\n");
