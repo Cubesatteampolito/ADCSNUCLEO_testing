@@ -1186,7 +1186,7 @@ void Control_Algorithm_Task(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{ 
-    printf("i am alive\r\r");
+    printf("i am alive\r\n");
     if (test_counter == 0) {
       actuator_START(coils[0]);
       active[0] = 1;
