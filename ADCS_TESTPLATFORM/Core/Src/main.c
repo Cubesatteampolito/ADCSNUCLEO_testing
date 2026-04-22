@@ -977,7 +977,7 @@ void IMU_Task(void const * argument)
 			 	// }
 
         // Testing the timeout** 
-        if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,10300) != osOK) {
+        if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,0) != osOK) {
 			    	//printf("Invio a Control Task fallito \r\n");
 			       	free(local_imu_struct); // Ensure the receiving task has time to process
 				} else {
@@ -1220,7 +1220,7 @@ void Control_Algorithm_Task(void const * argument)
       // #if ( DEBUG_MSGS_CONTROL == 1 )
 			  // printf("IMUQueue1Handle: %p\r\n", IMUQueue1Handle);
 		  // #endif
-			retvalue = osMessageGet(IMUQueue1Handle, 300);
+			retvalue = osMessageGet(IMUQueue1Handle, osWaitForever);
 
       #if( DEBUG_MSGS_CONTROL )
       printf("Return value from IMU Queue: %d \r\n", retvalue.status);
