@@ -1218,7 +1218,7 @@ void Control_Algorithm_Task(void const * argument)
 			// processCombinedData((void*)&retvalue1,(void *)&PID_Inputs,receive_Attitudequeue_control);
 		// the reason why i commented the above is that there is no task sending to that queue therefore its technically useless
       // #if ( DEBUG_MSGS_CONTROL == 1 )
-			  printf("IMUQueue1Handle: %p\r\n", IMUQueue1Handle);
+			  // printf("IMUQueue1Handle: %p\r\n", IMUQueue1Handle);
 		  // #endif
 			retvalue = osMessageGet(IMUQueue1Handle, osWaitForever);
 
