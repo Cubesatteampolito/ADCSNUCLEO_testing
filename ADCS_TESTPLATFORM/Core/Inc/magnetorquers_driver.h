@@ -32,6 +32,8 @@ typedef struct{
   * @param htim timer handler
   * @param pwm_channel1 htim timer channel 1
   * @param pwm_channel2 htim timer channel 2
+  * @param pwm_freq Timer frequecy
+  * @param duty_cycle Initial duty cycle
   * @retval none
   */
 void init_actuator_handler(Actuator_struct *act,TIM_HandleTypeDef* htim,uint32_t pwm_channel1,uint32_t pwm_channel2,uint32_t pwm_freq,uint8_t duty_cycle);
