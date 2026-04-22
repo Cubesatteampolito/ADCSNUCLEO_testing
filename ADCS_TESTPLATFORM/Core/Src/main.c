@@ -1187,17 +1187,17 @@ void Control_Algorithm_Task(void const * argument)
 	for(;;)
 	{ 
     printf("i am alive\r\n");
-    // if (test_counter == 0) {
-    //   // actuator_START(coils[0]);
-    //   printf("Starting delay\r\n");
-    //   osDelay(2000);
-    //   // 
-    //   // vTaskDelay(pdMS_TO_TICKS(10000));
-    //   printf("delay ended\r\n");
-    //   // actuator_STOP(coils[0]);
-    //   active[0] = 0;
-    //   test_counter++;
-    // }
+    if (test_counter == 0) {
+      // actuator_START(coils[0]);
+      printf("Starting delay\r\n");
+      osDelay(2000);
+      // 
+      // vTaskDelay(pdMS_TO_TICKS(10000));
+      printf("delay ended\r\n");
+      // actuator_STOP(coils[0]);
+      // active[0] = 0;
+      test_counter++;
+    }
 		printf("We are in Control Algorithm TASK \r\n");
 		#if ( DEBUG_MSGS_CONTROL == 1 )
 			//printf("We are in Control Algorithm TASK \r\n");
