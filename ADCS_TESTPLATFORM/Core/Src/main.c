@@ -1191,7 +1191,13 @@ void Control_Algorithm_Task(void const * argument)
   int test_counter=0;
   
 
-  printf("i am alive\r\n");
+  
+
+	/* Infinite loop */
+	for(;;)
+	{ 
+    
+    printf("i am alive\r\n");
     if (test_counter == 0) {
       // actuator_START(coils[0]);
       printf("Starting delay\r\n");
@@ -1204,10 +1210,6 @@ void Control_Algorithm_Task(void const * argument)
       test_counter++;
     }
 
-	/* Infinite loop */
-	for(;;)
-	{ 
-    
 		printf("We are in Control Algorithm TASK \r\n");
 		#if ( DEBUG_MSGS_CONTROL == 1 )
 			//printf("We are in Control Algorithm TASK \r\n");
