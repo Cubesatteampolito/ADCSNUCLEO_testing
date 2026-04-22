@@ -1225,7 +1225,7 @@ void Control_Algorithm_Task(void const * argument)
 		  // #endif
 			retvalue = osMessageGet(IMUQueue1Handle, 300);
 			processCombinedData((void*)&retvalue,(void *)&local_imu_struct1,receive_IMUqueue_control);
-      
+
 		//algorithm
 		#if( DEBUG_MSGS_CONTROL )
 		printf("\r\n\r\n");
@@ -1236,12 +1236,12 @@ void Control_Algorithm_Task(void const * argument)
 		gyro[i] = local_imu_struct1->gyro_msr[i];
 		mag[i] = local_imu_struct1->mag_msr[i];
 		acc[i] = local_imu_struct1->acc_msr[i];
-		#if ( DEBUG_MSGS_CONTROL == 1 )
+		// #if ( DEBUG_MSGS_CONTROL == 1 )
 			printf("\r\n ====  IMU VALUES ==== \r\n");
 			printf("Accelerometer axis %d, value %f \r\n", i, acc[i]);
 			printf("Gyroscope axis %d, value %f \r\n", i, gyro[i]);
 			printf("Magnetometer axis %d, value %f \r\n", i, mag[i]);
-		#endif
+		// #endif
 		}
 		
     // ALGORITHM
