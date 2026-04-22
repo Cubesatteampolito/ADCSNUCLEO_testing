@@ -1189,11 +1189,12 @@ void Control_Algorithm_Task(void const * argument)
     printf("i am alive\r\n");
     if (test_counter == 0) {
       actuator_START(coils[0]);
-      printf("Starting delay\r\n");
+      // printf("Starting delay\r\n");
       osDelay(2000);
-      // vTaskDelay(pdMS_TO_TICKS(10000));
+      // 
+      vTaskDelay(pdMS_TO_TICKS(10000));
       printf("delay ended\r\n");
-      actuator_STOP(coils[0]);
+      // actuator_STOP(coils[0]);
       active[0] = 0;
       test_counter++;
     }
@@ -1259,7 +1260,7 @@ void Control_Algorithm_Task(void const * argument)
               printf("Coil %d started with direction %d\r\n", i, direction[i]);
             #endif
             // update the i-th duty cycle and dir based on BDOT output
-          actuator_START(coils[i]);              // start once per axis
+          // actuator_START(coils[i]);              // start once per axis
           active[i] = 1;
           printf("Coil %d started with direction %d\r\n", i, direction[i]);
         }
@@ -1270,7 +1271,7 @@ void Control_Algorithm_Task(void const * argument)
               printf("Coil %d stopped\r\n", i);
             #endif
             // Stop it
-            actuator_STOP(coils[i]); 
+            // actuator_STOP(coils[i]); 
             printf("Coil %d stopped\r\n", i);
             active[i] = 0;
           }
