@@ -1160,25 +1160,27 @@ void Control_Algorithm_Task(void const * argument)
 	Actuator_struct* coils[3] = {&Reaction1,&Reaction2,&MagneTorquer1}; //coil
 	static uint8_t active[3] = {0,0,0};
 
-		imu_queue_struct *local_imu_struct1 =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
-		//Inizialize actuators struct
-		init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,20); //100 khz
-		init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
-                    
-		init_actuator_handler(
-      &MagneTorquer1,       // Magnetorquer struct
-      &htim3,               // Timer handler
-      TIM_CHANNEL_1,        // Timer channels
-      TIM_CHANNEL_2,        
-      89000,                // PWM Frequency
-      50                    // Initial duty cycle
-    ); //89 khz //this measured 10khz, idkwhy
+  imu_queue_struct *local_imu_struct1 =(imu_queue_struct*) malloc(sizeof(imu_queue_struct));
+  //Inizialize actuators struct
+  init_actuator_handler(&Reaction1,&htim1,TIM_CHANNEL_1,TIM_CHANNEL_2,100000,50); //100 khz
+  init_actuator_handler(&Reaction2,&htim2,TIM_CHANNEL_3,TIM_CHANNEL_4,20000,50);
+                  
+  init_actuator_handler(
+    &MagneTorquer1,       // Magnetorquer struct
+    &htim3,               // Timer handler
+    TIM_CHANNEL_1,        // Timer channels
+    TIM_CHANNEL_2,        
+    89000,                // PWM Frequency
+    50                    // Initial duty cycle
+  ); //89 khz //this measured 10khz, idkwhy
 
-		// init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
-		// init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
-	  //12332
-		//Inizialize PID struct
-		PID_INIT(&PID_Inputs);
+  // init_actuator_handler(&MagneTorquer2,&htim3,TIM_CHANNEL_3,TIM_CHANNEL_4,10000,50); //also this
+  // init_actuator_handler(&MagneTorquer3,&htim2,TIM_CHANNEL_1,TIM_CHANNEL_2,94000,50); //94 khz // this measured 100khz, idkwhy
+  //12332
+  //Inizialize PID struct
+  PID_INIT(&PID_Inputs);
+
+  vTaskDelay(pdMS_TO_TICKS(60000));
 
 	/* Infinite loop */
 	for(;;)
