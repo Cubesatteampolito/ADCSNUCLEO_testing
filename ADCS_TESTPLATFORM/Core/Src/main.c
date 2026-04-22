@@ -1189,7 +1189,7 @@ void Control_Algorithm_Task(void const * argument)
     printf("i am alive\r\n");
     if (test_counter == 0) {
       // actuator_START(coils[0]);
-      // printf("Starting delay\r\n");
+      printf("Starting delay\r\n");
       osDelay(2000);
       // 
       vTaskDelay(pdMS_TO_TICKS(10000));
