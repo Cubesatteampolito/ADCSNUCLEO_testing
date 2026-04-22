@@ -977,7 +977,7 @@ void IMU_Task(void const * argument)
 			 	// }
 
         // Testing the timeout** 
-        if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,0) != osOK) {
+        if (osMessagePut(IMUQueue1Handle,(uint32_t)local_imu_struct,300) != osOK) {
 			    	//printf("Invio a Control Task fallito \r\n");
 			       	free(local_imu_struct); // Ensure the receiving task has time to process
 				} else {
@@ -1191,11 +1191,7 @@ void Control_Algorithm_Task(void const * argument)
   int test_counter=0;
   
 
-
-	/* Infinite loop */
-	for(;;)
-	{ 
-    printf("i am alive\r\n");
+  printf("i am alive\r\n");
     if (test_counter == 0) {
       // actuator_START(coils[0]);
       printf("Starting delay\r\n");
@@ -1207,6 +1203,11 @@ void Control_Algorithm_Task(void const * argument)
       // active[0] = 0;
       test_counter++;
     }
+
+	/* Infinite loop */
+	for(;;)
+	{ 
+    
 		printf("We are in Control Algorithm TASK \r\n");
 		#if ( DEBUG_MSGS_CONTROL == 1 )
 			//printf("We are in Control Algorithm TASK \r\n");
@@ -1220,7 +1221,7 @@ void Control_Algorithm_Task(void const * argument)
       // #if ( DEBUG_MSGS_CONTROL == 1 )
 			  // printf("IMUQueue1Handle: %p\r\n", IMUQueue1Handle);
 		  // #endif
-			retvalue = osMessageGet(IMUQueue1Handle, osWaitForever);
+			retvalue = osMessageGet(IMUQueue1Handle, 300);
 
       #if( DEBUG_MSGS_CONTROL )
       printf("Return value from IMU Queue: %d \r\n", retvalue.status);
