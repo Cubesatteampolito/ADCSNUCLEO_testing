@@ -1181,10 +1181,12 @@ void Control_Algorithm_Task(void const * argument)
   PID_INIT(&PID_Inputs);
   int test_counter=0;
   if (test_counter == 0) {
-  actuator_START(coils[0]);
-  active[0] = 1;
-  vTaskDelay(pdMS_TO_TICKS(60000));
-  test_counter++;
+    actuator_START(coils[0]);
+    active[0] = 1;
+    printf("Starting delay");
+    vTaskDelay(pdMS_TO_TICKS(60000));
+    printf("delay ended");
+    test_counter++;
   }
 
 
@@ -1254,6 +1256,7 @@ void Control_Algorithm_Task(void const * argument)
             #endif
             // update the i-th duty cycle and dir based on BDOT output
             update_duty_dir(coils[i], duty_cycle[i], direction[i]);
+            printf("Duty cycle updated for coil %d: %f%%\r\n", i, duty_cycle[i]);
             actuator_START(coils[i]);              // start once per axis
             active[i] = 1;
           }
@@ -1264,6 +1267,7 @@ void Control_Algorithm_Task(void const * argument)
             #endif
             // Stop it
             actuator_STOP(coils[i]); 
+            printf("Coil %d stopped\r\n", i);
             active[i] = 0;
           }
         }
