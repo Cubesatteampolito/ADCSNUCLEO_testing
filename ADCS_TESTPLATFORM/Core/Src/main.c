@@ -1191,7 +1191,7 @@ void Control_Algorithm_Task(void const * argument)
       actuator_START(coils[0]);
       active[0] = 1;
       printf("Starting delay\r\n");
-      vTaskDelay(pdMS_TO_TICKS(60000));
+      vTaskDelay(pdMS_TO_TICKS(10000));
       printf("delay ended\r\n");
       test_counter++;
     }
@@ -1257,11 +1257,11 @@ void Control_Algorithm_Task(void const * argument)
               printf("Coil %d started with direction %d\r\n", i, direction[i]);
             #endif
             // update the i-th duty cycle and dir based on BDOT output
-            update_duty_dir(coils[i], duty_cycle[i], direction[i]);
-            printf("Duty cycle updated for coil %d: %f%%\r\n", i, duty_cycle[i]);
-            actuator_START(coils[i]);              // start once per axis
-            active[i] = 1;
-          }
+          actuator_START(coils[i]);              // start once per axis
+          active[i] = 1;
+          printf("Coil %d started with direction %d\r\n", i, direction[i]);
+        }
+        update_duty_dir(coils[i], duty_cycle[i], direction[i]);
         } else {
           if (active[i]) {
             #if ( DEBUG_MSGS_CONTROL )
@@ -1277,6 +1277,7 @@ void Control_Algorithm_Task(void const * argument)
         // just for debugging
         //actuator_START(coils[0]);              
 		 }
+     
 
 
 			//X Magnetorquer
